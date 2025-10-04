@@ -9,7 +9,6 @@
     "verify": "node scripts/verify.mjs"
   },
   "dependencies": {
-    "@vercel/node": "^3.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
