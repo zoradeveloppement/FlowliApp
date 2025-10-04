@@ -1,0 +1,114 @@
+---
+alwaysApply: true
+---
+
+# Rule: Environnements & Déploiement — Single Base, Same Keys, One Webhook
+
+## Intent
+- **Une seule base** (Airtable + Supabase) pour dev & prod.
+- **Mêmes clés** partout (pas de switch).
+- **Un seul webhook** `/api/webhook/airtable`.
+- Rester safe avec 1–2 garde-fous simples côté code.
+
+## Variables d’environnement (identiques en dev & prod)
+- `AIRTABLE_TOKEN`
+- `AIRTABLE_BASE_ID`
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE`
+- `WEBHOOK_SECRET`  ← **un seul secret** vérifié par le webhook
+- *(optionnel)* `PUSH_DEFAULT_AUDIENCE=testers` (valeurs: `testers` | `all`)
+
+## Découplage *dans les données*
+- **Airtable**: champ bool `isTest` sur les records (si tu veux marquer tes données de test).
+- **Supabase**: champ bool `isTester` sur `public.devices` (les devices de tes comptes testeurs).
+
+## Webhook (un seul)
+- URL: `POST /api/webhook/airtable`
+- Exige le header `X-Webhook-Secret: ${WEBHOOK_SECRET}` (même secret en dev/prod).
+- **Politique d’envoi par défaut (safe)** :
+  - Si `PUSH_DEFAULT_AUDIENCE=testers` (recommandé au début) → n’envoie **qu’aux devices `isTester = true`**.
+  - Pour envoyer au public réel, tu bascules `PUSH_DEFAULT_AUDIENCE=all` (changement **dans Vercel**, pas dans Airtable).
+- *(Option pro mais toujours 1 webhook)* Tu peux autoriser un override par header:
+  - `X-Push-Audience: testers|all`
+  - Le code applique la priorité: **header > env > fallback = testers**.
+
+## API surface (rappel minimal)
+- `POST /api/devices/register` → upsert device `{ userId, expoPushToken, platform, isTester }`.
+- `GET /api/process/:customerId` → lecture Airtable (lecture simple; tu peux filtrer `isTest=true` si `isTester=true`).
+- `POST /api/webhook/airtable` → vérifie secret → calcule l’audience (`testers`/`all`) → envoie push via Expo.
+
+## Garde-fous ultra-simples
+1. **Par défaut, n’envoie qu’aux testeurs** (`PUSH_DEFAULT_AUDIENCE=testers`).  
+2. **Pour activer la prod**, change **UNE** variable (ou ajoute le header) → pas besoin de modifier Airtable ni l’URL.  
+3. **Badge visuel** dans l’app (si `isTester=true`) pour savoir sur quel compte tu es.  
+4. **Logs**: trace `audience`, `customerId`, `nbTokens`, statut de l’API Expo.
+
+## Check-list avant d’ouvrir au public
+- [ ] `PUSH_DEFAULT_AUDIENCE=all` (ou header `X-Push-Audience: all` dans l’automation si tu préfères).
+- [ ] Comptes testeurs isolés (`isTester=true`) pour continuer à tester sans bruit.
+- [ ] Un test réel (device iOS/Android) validé.
+
+## Rollback en 10s
+- Remets `PUSH_DEFAULT_AUDIENCE=testers` dans Vercel (ou retire le header override).
+- Redeploy (ou recharger env) → les pushes redeviennent “testeurs only”.
+
+## Pourquoi c’est safe malgré 1 webhook ?
+- **Une bascule unique et explicite** (env var / header), pas de changements d’URL ni de clés.
+- **Par défaut** tu n’atteins jamais les clients réels.
+- Tu gardes la simplicité “une base / une URL / mêmes clés” sans te piéger.
+# Rule: Environnements & Déploiement — Single Base, Same Keys, One Webhook
+
+## Intent
+- **Une seule base** (Airtable + Supabase) pour dev & prod.
+- **Mêmes clés** partout (pas de switch).
+- **Un seul webhook** `/api/webhook/airtable`.
+- Rester safe avec 1–2 garde-fous simples côté code.
+
+## Variables d’environnement (identiques en dev & prod)
+- `AIRTABLE_TOKEN`
+- `AIRTABLE_BASE_ID`
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE`
+- `WEBHOOK_SECRET`  ← **un seul secret** vérifié par le webhook
+- *(optionnel)* `PUSH_DEFAULT_AUDIENCE=testers` (valeurs: `testers` | `all`)
+
+## Découplage *dans les données*
+- **Airtable**: champ bool `isTest` sur les records (si tu veux marquer tes données de test).
+- **Supabase**: champ bool `isTester` sur `public.devices` (les devices de tes comptes testeurs).
+
+## Webhook (un seul)
+- URL: `POST /api/webhook/airtable`
+- Exige le header `X-Webhook-Secret: ${WEBHOOK_SECRET}` (même secret en dev/prod).
+- **Politique d’envoi par défaut (safe)** :
+  - Si `PUSH_DEFAULT_AUDIENCE=testers` (recommandé au début) → n’envoie **qu’aux devices `isTester = true`**.
+  - Pour envoyer au public réel, tu bascules `PUSH_DEFAULT_AUDIENCE=all` (changement **dans Vercel**, pas dans Airtable).
+- *(Option pro mais toujours 1 webhook)* Tu peux autoriser un override par header:
+  - `X-Push-Audience: testers|all`
+  - Le code applique la priorité: **header > env > fallback = testers**.
+
+## API surface (rappel minimal)
+- `POST /api/devices/register` → upsert device `{ userId, expoPushToken, platform, isTester }`.
+- `GET /api/process/:customerId` → lecture Airtable (lecture simple; tu peux filtrer `isTest=true` si `isTester=true`).
+- `POST /api/webhook/airtable` → vérifie secret → calcule l’audience (`testers`/`all`) → envoie push via Expo.
+
+## Garde-fous ultra-simples
+1. **Par défaut, n’envoie qu’aux testeurs** (`PUSH_DEFAULT_AUDIENCE=testers`).  
+2. **Pour activer la prod**, change **UNE** variable (ou ajoute le header) → pas besoin de modifier Airtable ni l’URL.  
+3. **Badge visuel** dans l’app (si `isTester=true`) pour savoir sur quel compte tu es.  
+4. **Logs**: trace `audience`, `customerId`, `nbTokens`, statut de l’API Expo.
+
+## Check-list avant d’ouvrir au public
+- [ ] `PUSH_DEFAULT_AUDIENCE=all` (ou header `X-Push-Audience: all` dans l’automation si tu préfères).
+- [ ] Comptes testeurs isolés (`isTester=true`) pour continuer à tester sans bruit.
+- [ ] Un test réel (device iOS/Android) validé.
+
+## Rollback en 10s
+- Remets `PUSH_DEFAULT_AUDIENCE=testers` dans Vercel (ou retire le header override).
+- Redeploy (ou recharger env) → les pushes redeviennent “testeurs only”.
+
+## Pourquoi c’est safe malgré 1 webhook ?
+- **Une bascule unique et explicite** (env var / header), pas de changements d’URL ni de clés.
+- **Par défaut** tu n’atteins jamais les clients réels.
+- Tu gardes la simplicité “une base / une URL / mêmes clés” sans te piéger.

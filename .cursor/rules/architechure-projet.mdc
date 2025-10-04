@@ -1,0 +1,155 @@
+---
+alwaysApply: true
+---
+# Rule: Architecture Globale — Portail Client (MVP)
+
+## Purpose
+- Définir l’architecture de référence **MVP** (lecture Airtable + push uniquement).
+- Garantir **maintenabilité** et **scalabilité** (20–50 users, extensible).
+
+## Non-Goals (MVP)
+- Pas d’e-mails.
+- Pas d’écriture dans Airtable côté client.
+- Pas de SEO public/landing avancé.
+
+## Constraints
+- Un seul codebase **web + mobile** (Expo/React Native).
+- Secrets côté **serveur uniquement** (jamais dans l’app).
+- Airtable = **source de vérité** métier (lecture).
+- Auth gérée par **Supabase Auth** (JWT).
+- Notifications via **Expo Push**.
+
+## Target Stack
+- **App**: TypeScript, React Native + **Expo** (iOS/Android/Web).
+- **Backend**: **Vercel Functions** (TS).
+- **Auth**: **Supabase Auth**.
+- **Data métier**: **Airtable** (REST API).
+- **Push**: **Expo Push API**.
+
+## High-Level Diagram (ASCII)
+App (Expo: iOS/Android/Web) --HTTPS/JWT--> API (Vercel)
+API --REST--> Airtable (read)
+API --REST--> Supabase (table devices)
+API --REST--> Expo Push (send notifications)
+
+## Core Responsibilities
+- **App**: UI, login Supabase, récupération et enregistrement du push token, affichage du suivi.
+- **API**: lecture Airtable, webhooks Airtable → envoi push, gestion table `devices`.
+- **Airtable**: stockage processus (status, steps, documents, actions).
+- **Supabase**: Auth + `public.devices` (tokens).
+- **Expo Push**: transport des notifications.
+
+## Data Model (MVP)
+**Airtable: `Processes`**
+- `customerId`: text (clé d’accès).
+- `status`: single select.
+- `steps`: long text / linked records.
+- `documents`: attachments/URLs.
+- `actions`: text/single select.
+- `updatedAt`: last modified time.
+
+**Supabase: `public.devices`**
+- `id`: uuid (pk).
+- `user_id`: uuid (fk → `auth.users`).
+- `expo_push_token`: text.
+- `platform`: enum (`ios`|`android`|`web`).
+- `updated_at`: timestamptz.
+
+## API Surface (MVP)
+- `POST /api/devices/register`
+  - Auth: JWT (Supabase).
+  - Body: `{ userId, expoPushToken, platform }`.
+  - Effet: **upsert** dans `public.devices`.
+  - 200: `{ ok: true }`.
+
+- `GET /api/process/:customerId`
+  - Auth: JWT.
+  - Effet: lit Airtable (filterByFormula), normalise.
+  - 200: `{ status, steps, documents, actions }`.
+
+- `POST /api/webhook/airtable`
+  - Auth: **header secret** (pas de JWT).
+  - Body: `{ customerId, status?, ... }` (selon Automation).
+  - Effet: lookup tokens (Supabase) → **envoi push**.
+  - 200: `{ ok: true }`.
+
+*(Option technique)*  
+- `POST /api/notify/push` (factorisation appel Expo Push).  
+- `POST /api/devices/prune` (purge tokens invalides).
+
+## Flows
+**Login + Device**
+1) App → login Supabase → JWT.  
+2) App → permission notif → **Expo Push token**.  
+3) App → `/api/devices/register` (save token).
+
+**Lecture du suivi**
+1) App → `/api/process/:customerId` (JWT).  
+2) API → Airtable → map → JSON.
+
+**Mise à jour statut → push**
+1) Airtable Automation → `/api/webhook/airtable` (secret).  
+2) API → Supabase.devices (tokens).  
+3) API → Expo Push → device.
+
+## Environment Variables
+**App (Expo)**
+- `EXPO_PUBLIC_SUPABASE_URL`
+- `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+
+**API (Vercel)**
+- `AIRTABLE_TOKEN`
+- `AIRTABLE_BASE_ID`
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE`
+- `WEBHOOK_SECRET`
+
+## Security Rules
+- JWT obligatoire sur endpoints **clients**.
+- `WEBHOOK_SECRET` vérifié côté webhook (header).
+- **Airtable token** et **service_role** jamais exposés à l’app.
+- Vérifier `userId` = JWT subject sur `/devices/register`.
+- CORS strict (origines connues).
+
+## Error Handling
+- `/devices/register`: idempotent (upsert), logs.
+- `/process/:customerId`: si vide → `{ status: null }` (UX propre).
+- Webhook: pas de token → 200 (no-op) + log; tokens invalides → marquer purge.
+
+## Observability (MVP)
+- Logs Vercel: succès/échecs (Airtable/Push).
+- `x-correlation-id` propagé (optionnel).
+- Métriques simple: nb notifs envoyées, taux d’échec.
+
+## Scalability Notes
+- Serverless = horizontal par défaut.
+- Expo Push suffisant (20–50 users ++).
+- Si Airtable sature: cache (KV/Redis) + miroir lecture (Supabase table).
+- Ajouts futurs: e-mails (Resend), préférences notif, rôles, écriture contrôlée.
+
+## Repository Layout (suggested)
+portail-client/
+apps/
+mobile/ # Expo app (Web/iOS/Android)
+api/
+devices/register.ts
+process/[customerId].ts
+webhook/airtable.ts
+notify/push.ts # optionnel
+.env.example
+README.md
+
+## Acceptance Criteria (MVP)
+- Login Supabase → JWT valide.
+- Enregistrement token push en base.
+- Lecture d’un processus par `customerId`.
+- Automation Airtable → webhook → push reçue.
+- Aucune clé secrète dans l’app.
+- Déploiement Vercel OK, build Expo EAS OK.
+
+## Extensions (post-MVP)
+- E-mails (Resend).
+- Préférences notif (mute/types d’événements).
+- Écriture Airtable (endpoint sécurisé + audit).
+- Rôles (support/admin) + vues dédiées.
+- Sentry + métriques poussées.

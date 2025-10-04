@@ -1,0 +1,9 @@
+AIRTABLE_BASE_ID:BappxKEWlbOpqs1OXB
+
+# Supabase Configuration (configured)
+SUPABASE_URL:https://ghllapcttidjzjewcxsx.supabase.co
+SUPABASE_ANON_KEY:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdobGxhcGN0dGlkanpqZXdjeHN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1NjY3NTYsImV4cCI6MjA3NTE0Mjc1Nn0.pGCZfB81aWDNauOwFCg-06CL8ad-zp_SqM1U9WHEP_k
+
+# API Configuration (to be configured later)
+API_URL:https://your-api-url.vercel.app/api
+dWQlcakm3TaA6yli

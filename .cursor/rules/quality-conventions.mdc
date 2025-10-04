@@ -1,0 +1,56 @@
+---
+alwaysApply: true
+---
+# Rule: Qualité & Conventions — Portail Client
+
+## Objectifs
+- Lisibilité, cohérence, dette maîtrisée.
+- DX fluide (moins de friction pour coder/déboguer).
+- Base saine pour la montée en charge.
+
+## Langage & Style
+- TypeScript partout (app Expo + API Vercel).
+- ESLint + Prettier obligatoires (CI en bloqueur).
+- Nommage: camelCase (variables/fonctions), PascalCase (composants/types).
+- Dossiers: kebab-case (`process-list`, `devices-register`).
+
+## Structure projet
+- Monorepo minimal:
+  - `apps/mobile` (Expo React Native + Web)
+  - `api/*` (Vercel Functions)
+  - `rules/*` (ces fichiers .mdc)
+  - `.env.example`, `README.md`
+
+## React / Expo
+- Composants UI = fonctionnels, hooks only.
+- État global: context léger (Auth) + hooks par domaine.
+- Aucune clé secrète dans le code client.
+- Appels réseau via un petit client `apiClient` (intercepteurs, auth).
+
+## API (Vercel)
+- Une fonction = une responsabilité (petits handlers).
+- Valider systématiquement l’entrée (zod ou guards simples).
+- Réponses JSON typées (types partagés si possible).
+
+## Git & Commits
+- Branches par feature: `feat/<scope>`, `fix/<scope>`, `chore/<scope>`.
+- Conventional commits: `feat:`, `fix:`, `refactor:`, `docs:`, `chore:`, `test:`.
+- PR petite + description claire + checklist (lint/tests OK).
+
+## Tests (MVP raisonnable)
+- Unitaire: helpers pur TS + mapping de réponses Airtable.
+- Intégration API: happy path + erreurs (401/403/404/500).
+- E2E manuel MVP: login → lecture process → automation → push reçue.
+
+## Observabilité (MVP)
+- Logs structurés JSON côté API (niveau `info` par défaut).
+- `x-correlation-id` optionnel sur requêtes entrantes, propagé en sortie.
+
+## Performance & Accessibilité
+- Listes virtualisées si besoin (plus tard).
+- A11y: libellés clairs, contraste suffisant, tailles tap-friendly.
+
+## Définition de Fini (DoD)
+- Lint OK, build OK, review OK.
+- Scénarios MVP manuels repassés.
+- Documentation succincte (README section “Comment tester ?”).
