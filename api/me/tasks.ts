@@ -36,6 +36,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const email = (req.query.email as string | undefined)?.trim().toLowerCase();
   const limitRaw = Number(req.query.limit ?? 50);
   const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(100, limitRaw)) : 50;
+  const statusesRaw = (req.query.statuses as string | undefined)?.trim();
+  // If statusesRaw is undefined or "all" (case-insensitive), do not filter by status.
+  const statuses = statusesRaw && statusesRaw.toLowerCase() !== 'all'
+    ? statusesRaw.split(',').map(s => s.trim()).filter(Boolean)
+    : [];
 
   const token = process.env.AIRTABLE_TOKEN;
   const baseId = process.env.AIRTABLE_BASE_ID;
@@ -55,9 +60,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
     const contactId = contact.id;
 
-    // 2) List tasks for this contact with status in-progress
-    const statusOr = IN_PROGRESS_STATUSES.map(s => `{${FIELD_TASK_STATUS}}='${s}'`).join(',');
-    const formulaTasks = `AND(FIND('${contactId}',ARRAYJOIN({${FIELD_TASK_CLIENT}})),OR(${statusOr}))`;
+    // 2) List tasks for this contact with optional statuses filter
+    const byContact = `FIND('${contactId}',ARRAYJOIN({${FIELD_TASK_CLIENT}}))`;
+    let formulaTasks = byContact;
+    if (statuses.length > 0) {
+      const orParts = statuses.map(s => `{${FIELD_TASK_STATUS}}='${s.replace(/'/g, "\\'")}'`).join(',');
+      formulaTasks = `AND(${byContact},OR(${orParts}))`;
+    }
     const urlTasks = buildUrl(baseId, TABLE_TASKS_ID, {
       filterByFormula: formulaTasks,
       pageSize: String(Math.min(50, limit)) // Airtable max 100; we cap at 50 by default
@@ -66,7 +75,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const tasks = tasksResp.records;
 
     if (!tasks || tasks.length === 0) {
-      console.log(JSON.stringify({ event:'me_tasks', email, count:0, timestamp:new Date().toISOString() }));
+      console.log(JSON.stringify({ event:'me_tasks', email, count:0, filtered: statuses.length>0, statuses, timestamp:new Date().toISOString() }));
       return res.status(200).json({ items: [], count: 0 });
     }
 
@@ -103,7 +112,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       };
     });
 
-    console.log(JSON.stringify({ event:'me_tasks', email, count: items.length, timestamp:new Date().toISOString() }));
+    console.log(JSON.stringify({ event:'me_tasks', email, count: items.length, filtered: statuses.length>0, statuses, timestamp:new Date().toISOString() }));
     res.setHeader('Cache-Control', 'private, max-age=0');
     return res.status(200).json({ items, count: items.length });
   } catch (e:any) {
