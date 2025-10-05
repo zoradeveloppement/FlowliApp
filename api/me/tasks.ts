@@ -70,26 +70,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(404).json({ error: 'Contact not found' });
     }
     const contactId = contact.id;
+    const contactName = String(contact.fields?.['Nom'] ?? contact.fields?.['Name'] ?? '').trim();
 
-    // 2A) Path A: tasks linked by {Client} contains contactId
-    const byClient = `FIND('${contactId}',ARRAYJOIN({${FIELD_TASK_CLIENT}}))`;
-    let formulaA = byClient;
+    // 2A) Path A: tasks linked by {Client}
+    const byClientId = `FIND('${contactId}',ARRAYJOIN({${FIELD_TASK_CLIENT}}))`;
+    let formulaA = byClientId;
     if (statuses.length > 0) {
       const orParts = statuses.map(s => `{${FIELD_TASK_STATUS}}='${s.replace(/'/g, "\\'")}'`).join(',');
-      formulaA = `AND(${byClient},OR(${orParts}))`;
+      formulaA = `AND(${byClientId},OR(${orParts}))`;
     }
-    const urlTasksA = buildUrl(baseId, TABLE_TASKS_ID, { filterByFormula: formulaA, pageSize: String(Math.min(100, limit)) });
-    const tasksAResp = await airtableGet(urlTasksA, token, 'tasksA', debug);
-    const tasksA = tasksAResp.records;
+    const urlTasksAById = buildUrl(baseId, TABLE_TASKS_ID, { filterByFormula: formulaA, pageSize: String(Math.min(100, limit)) });
+    const tasksAByIdResp = await airtableGet(urlTasksAById, token, 'tasksA_byId', debug);
+    const tasksAById = tasksAByIdResp.records;
 
-    // 2B) Path B: projects linked by {Nom Client} contains contactId → then tasks where {Projets} in projectIds
+    let tasksA: AirtableRecord[] = tasksAById;
+    if (tasksAById.length === 0 && statuses.length === 0 && contactName) {
+      // Fallback when {Client} is a lookup that stores names
+      const escapedName = contactName.replace(/'/g, "\\'");
+      const byClientName = `FIND('${escapedName}',ARRAYJOIN({${FIELD_TASK_CLIENT}}))`;
+      formulaA = byClientName; // override for debug reporting
+      const urlTasksAByName = buildUrl(baseId, TABLE_TASKS_ID, { filterByFormula: byClientName, pageSize: String(Math.min(100, limit)) });
+      const tasksAByNameResp = await airtableGet(urlTasksAByName, token, 'tasksA_byName', debug);
+      tasksA = tasksAByNameResp.records;
+    }
+
+    // 2B) Path B: projects linked by {Nom Client} contains contactId → then tasks where {Projets} in projectIds (by recordId)
+    const formulaBProjects = `FIND('${contactId}',ARRAYJOIN({${FIELD_PROJECT_CONTACT}}))`;
     const urlProjectsB = buildUrl(baseId, TABLE_PROJECTS_ID, {
-      filterByFormula: `FIND('${contactId}',ARRAYJOIN({${FIELD_PROJECT_CONTACT}}))`,
+      filterByFormula: formulaBProjects,
       pageSize: '100'
     });
     const projectsResp = await airtableGet(urlProjectsB, token, 'projectsB', debug);
     const projectIds = projectsResp.records.map(r => r.id);
     let tasksB: AirtableRecord[] = [];
+    let formulaBTasks = '';
     if (projectIds.length > 0) {
       // Batch OR on projects (Airtable limits; we keep it to 50 for safety)
       const ids = projectIds.slice(0, 50);
@@ -100,9 +114,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const orStatus = statuses.map(s => `{${FIELD_TASK_STATUS}}='${s.replace(/'/g, "\\'")}'`).join(',');
         formulaB = `AND(${byProjects},OR(${orStatus}))`;
       }
+      formulaBTasks = formulaB;
       const urlTasksB = buildUrl(baseId, TABLE_TASKS_ID, { filterByFormula: formulaB, pageSize: '100' });
       const tasksBResp = await airtableGet(urlTasksB, token, 'tasksB', debug);
       tasksB = tasksBResp.records;
+    } else {
+      // TODO: If both paths empty and no statuses and contactName available, consider a name-based fallback for {Nom Client}
     }
 
     // 3) Union + dedup by record id
@@ -110,11 +127,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     for (const r of tasksA) byId.set(r.id, r);
     for (const r of tasksB) byId.set(r.id, r);
     const tasks = Array.from(byId.values());
-
-    if (tasks.length === 0) {
-      console.log(JSON.stringify({ event:'me_tasks', email, count:0, filtered: statuses.length>0, timestamp:new Date().toISOString() }));
-      return res.status(200).json({ items: [], count: 0 });
-    }
 
     // 4) Enrich with project names (primary project if multiple)
     const projIdSet = new Set<string>();
@@ -143,18 +155,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           id: r.id,
           title: String(f[FIELD_TASK_TITLE] ?? ''),
           status: String(f[FIELD_TASK_STATUS] ?? ''),
-          progress: (typeof f[FIELD_TASK_PROGRESS] === 'number') ? f[FIELD_TASK_PROGRESS] : null, // 0..1 per your schema
-          dueDate: f[FIELD_TASK_DUE] ?? null, // ISO string or null
+          progress: (typeof f[FIELD_TASK_PROGRESS] === 'number') ? f[FIELD_TASK_PROGRESS] : null,
+          dueDate: f[FIELD_TASK_DUE] ?? null,
           projectId: primaryProjectId,
           projectName: primaryProjectId ? (projectNames.get(primaryProjectId) ?? null) : null
         };
       });
 
-    console.log(JSON.stringify({ event:'me_tasks', email, count: items.length, filtered: statuses.length>0, statuses, timestamp:new Date().toISOString() }));
+    const counts = { A: (tasksA?.length ?? 0), B: (tasksB?.length ?? 0), union: items.length };
+
+    // Compact log for quick scanning
+    console.log(JSON.stringify({ event:'me_tasks', email, count: items.length, filtered: statuses.length>0, statuses, A: counts.A, B: counts.B, timestamp:new Date().toISOString() }));
+
     res.setHeader('Cache-Control', 'private, max-age=0');
+    if (debug) {
+      return res.status(200).json({
+        items,
+        count: items.length,
+        debug: {
+          contactId,
+          contactName,
+          formulas: { A: formulaA, B_projects: formulaBProjects, B_tasks: formulaBTasks },
+          counts
+        }
+      });
+    }
     return res.status(200).json({ items, count: items.length });
   } catch (e:any) {
-    console.error(JSON.stringify({ event:'me_tasks_error', message: e?.message, timestamp:new Date().toISOString() }));
+    console.error(JSON.stringify({ event:'me_tasks_error', message: e?.message, timestamp: new Date().toISOString() }));
     return res.status(500).json({ error: 'Server error' });
   }
 }
