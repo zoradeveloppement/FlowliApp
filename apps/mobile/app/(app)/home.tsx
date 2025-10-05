@@ -1,19 +1,110 @@
-import { useEffect, useState } from 'react';
-import { View, Text, Alert, Platform } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { View, Text, Alert, Platform, SectionList, RefreshControl, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
 import { supabase } from '@/src/lib/supabase';
 import { registerForPushToken } from '@/src/utils/push';
 import { registerDevice } from '@/src/lib/api';
 
+ type TaskItem = {
+  id: string;
+  title: string;
+  status: string;
+  progress: number | null;
+  dueDate: string | null;
+  projectId: string | null;
+  projectName: string | null;
+ };
+
+function fmtRel(iso: string | null): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '—';
+  const now = new Date();
+  const diffMs = d.getTime() - now.getTime();
+  const abs = Math.abs(diffMs);
+  const min = 60 * 1000;
+  const hr = 60 * min;
+  const day = 24 * hr;
+  let value: number;
+  let unit: Intl.RelativeTimeFormatUnit = 'day';
+  if (abs < hr) {
+    value = Math.round(diffMs / min);
+    unit = 'minute';
+  } else if (abs < day) {
+    value = Math.round(diffMs / hr);
+    unit = 'hour';
+  } else {
+    value = Math.round(diffMs / day);
+    unit = 'day';
+  }
+  try {
+    const rtf = new Intl.RelativeTimeFormat('fr', { numeric: 'auto' });
+    return rtf.format(value, unit);
+  } catch {
+    const s = Math.abs(value);
+    const label = unit === 'day' ? (s > 1 ? 'jours' : 'jour') : unit === 'hour' ? (s > 1 ? 'heures' : 'heure') : (s > 1 ? 'minutes' : 'minute');
+    return value < 0 ? `il y a ${s} ${label}` : `dans ${s} ${label}`;
+  }
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const bg = status === 'Terminé' ? '#16a34a33' : status === 'En retard' ? '#dc262633' : '#2563eb33';
+  const color = status === 'Terminé' ? '#166534' : status === 'En retard' ? '#991b1b' : '#1e40af';
+  return (
+    <View style={{ backgroundColor: bg, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>
+      <Text style={{ color, fontSize: 12 }}>{status}</Text>
+    </View>
+  );
+}
+
 export default function Home() {
-  const [status, setStatus] = useState<string | null>(null);
+  const router = useRouter();
+  const [sessionChecked, setSessionChecked] = useState(false);
+  const [email, setEmail] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [items, setItems] = useState<TaskItem[]>([]);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) throw new Error('Session expirée');
+      
+      const api = process.env.EXPO_PUBLIC_API_URL;
+      if (!api) throw new Error('EXPO_PUBLIC_API_URL manquant');
+      const url = `${api}/me/tasks`;
+      const resp = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const json = await resp.json();
+      setItems(Array.isArray(json.items) ? json.items : []);
+    } catch (e: any) {
+      Alert.alert('Erreur', e?.message ?? 'Échec du chargement');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try { await load(); } finally { setRefreshing(false); }
+  }, [load]);
 
   useEffect(() => {
     (async () => {
       const { data } = await supabase.auth.getSession();
       const session = data.session;
-      if (!session) return;
+      if (!session) {
+        setSessionChecked(true);
+        router.replace('/(auth)/login');
+        return;
+      }
+      setEmail(session.user.email ?? null);
 
-      const isTester = true; // for MVP, mark current account as tester
+      const isTester = true;
       const token = await registerForPushToken();
       if (token) {
         try {
@@ -22,23 +113,96 @@ export default function Home() {
             userId: session.user.id,
             token,
             platform: Platform.OS as 'ios' | 'android' | 'web',
-            isTester
+            isTester,
           });
         } catch (e: any) {
           Alert.alert('Erreur enregistrement device', e?.message ?? 'unknown');
         }
       }
-
-      // Placeholder: later we will fetch the process from the API
-      setStatus(null);
+      setSessionChecked(true);
     })();
-  }, []);
+  }, [router]);
+
+  useEffect(() => { if (sessionChecked) load(); }, [sessionChecked, load]);
+
+  const sections = useMemo(() => {
+    const inProgressStatuses = new Set(['A faire', 'En cours', 'En retard']);
+    const inProgress: TaskItem[] = [];
+    const done: TaskItem[] = [];
+    for (const t of items) {
+      if (inProgressStatuses.has(t.status)) inProgress.push(t); else if (t.status === 'Terminé') done.push(t); else inProgress.push(t);
+    }
+    const parseDate = (s: string | null) => (s ? new Date(s) : null);
+    inProgress.sort((a, b) => {
+      const da = parseDate(a.dueDate); const db = parseDate(b.dueDate);
+      if (da && db) return da.getTime() - db.getTime();
+      if (da && !db) return -1; if (!da && db) return 1; return 0;
+    });
+    done.sort((a, b) => {
+      const da = parseDate(a.dueDate); const db = parseDate(b.dueDate);
+      if (da && db) return db.getTime() - da.getTime();
+      if (da && !db) return -1; if (!da && db) return 1; return 0;
+    });
+    return [
+      { title: 'En cours', data: inProgress },
+      { title: 'Terminées', data: done },
+    ];
+  }, [items]);
+
+  const [showDone, setShowDone] = useState(false);
+
+  const renderItem = ({ item }: { item: TaskItem }) => {
+    const pct = item.progress == null ? null : Math.round((item.progress <= 1 ? item.progress * 100 : item.progress));
+    return (
+      <View style={{ paddingVertical: 10, borderBottomColor: '#e5e7eb', borderBottomWidth: 1 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text style={{ fontSize: 16, fontWeight: '600', flex: 1 }}>{item.title || '(Sans titre)'}</Text>
+          <StatusBadge status={item.status} />
+        </View>
+        <Text style={{ color: '#6b7280', marginTop: 2 }}>{item.projectName || '—'}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6, gap: 12 }}>
+          <Text style={{ color: '#374151' }}>{pct == null ? '—' : `${pct}%`}</Text>
+          <Text style={{ color: '#6b7280' }}>{fmtRel(item.dueDate)}</Text>
+        </View>
+      </View>
+    );
+  };
+
+  if (!sessionChecked) return null;
 
   return (
-    <View style={{ padding:16, gap: 8 }}>
-      <Text style={{ fontSize:18, fontWeight:'600' }}>Bienvenue 👋</Text>
-      <Text>Ton device sera enregistré pour les notifications.</Text>
-      <Text>Statut du process: {status ?? '—'}</Text>
+    <View style={{ flex: 1, padding: 16 }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+        <Text style={{ fontSize: 18, fontWeight: '700' }}>Mes tâches</Text>
+        <View style={{ flexDirection: 'row', gap: 12 }}>
+          <TouchableOpacity onPress={load} style={{ paddingHorizontal: 12, paddingVertical: 6, backgroundColor: '#111827', borderRadius: 6 }}>
+            <Text style={{ color: 'white' }}>Recharger</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <SectionList
+        sections={sections.map(s => s.title === 'Terminées' ? { ...s, data: showDone ? s.data : [] } : s)}
+        keyExtractor={(item) => item.id}
+        renderItem={renderItem}
+        renderSectionHeader={({ section: { title, data } }) => (
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 }}>
+            <Text style={{ fontSize: 16, fontWeight: '600' }}>{title} ({data.length})</Text>
+            {title === 'Terminées' && (
+              <TouchableOpacity onPress={() => setShowDone(s => !s)}>
+                <Text style={{ color: '#2563eb' }}>{showDone ? 'Masquer' : 'Afficher'}</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        ListEmptyComponent={
+          !loading ? (
+            <Text style={{ color: '#6b7280' }}>Aucune tâche.</Text>
+          ) : null
+        }
+        contentContainerStyle={{ paddingBottom: 32 }}
+      />
     </View>
   );
 }

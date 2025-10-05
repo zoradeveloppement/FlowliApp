@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { createClient as createSb } from '@supabase/supabase-js';
 
 type AirtableRecord = { id: string; fields: Record<string, any> };
 type AirtableList = { records: AirtableRecord[]; offset?: string };
@@ -39,7 +40,33 @@ async function airtableGet(url: string, token: string, debugTag?: string, debug?
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method Not Allowed' });
 
-  const email = (req.query.email as string | undefined)?.trim().toLowerCase();
+  // Debug flag
+  const debug  = String(req.headers['x-debug'] || '').toLowerCase() === '1';
+
+  // Auth: prefer Supabase JWT email; fallback to query only in debug or legacy (no auth header)
+  const authHeader = String(req.headers['authorization'] || '');
+  let email: string | undefined;
+  if (authHeader.startsWith('Bearer ')) {
+    const token = authHeader.slice(7).trim();
+    if (token) {
+      try {
+        const sb = createSb(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!, { auth: { persistSession: false } });
+        const { data: userResp } = await sb.auth.getUser(token);
+        const jwtEmail = userResp?.user?.email?.toLowerCase();
+        if (jwtEmail) email = jwtEmail;
+      } catch {
+        // ignore auth errors; will consider legacy/debug fallback
+      }
+    }
+  }
+  if (!email) {
+    const q = (req.query.email as string | undefined)?.trim().toLowerCase();
+    if (q && (!authHeader || debug)) {
+      email = q;
+    }
+  }
+  if (!email) return res.status(401).json({ error: 'Unauthorized' });
+
   const limitRaw = Number(req.query.limit ?? 50);
   const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(100, limitRaw)) : 50;
 
@@ -51,13 +78,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const token  = process.env.AIRTABLE_TOKEN;
   const baseId = process.env.AIRTABLE_BASE_ID;
-  const debug  = String(req.headers['x-debug'] || '').toLowerCase() === '1';
 
   if (!token || !baseId) {
     console.error(JSON.stringify({ event:'me_tasks_env_missing', baseLen:(baseId||'').length, tokenLen:(token||'').length, timestamp: new Date().toISOString() }));
     return res.status(500).json({ error: 'Server error' });
   }
-  if (!email) return res.status(400).json({ error: 'Missing email' });
 
   try {
     // 1) Find contact by email (case-insensitive)
@@ -66,7 +91,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const contactResp = await airtableGet(urlContact, token, 'contacts', debug);
     const contact = contactResp.records[0];
     if (!contact) {
-      console.log(JSON.stringify({ event:'me_tasks_no_contact', email, timestamp:new Date().toISOString() }));
+      console.log(JSON.stringify({ event:'me_tasks_no_contact', email, auth: authHeader.startsWith('Bearer ') ? 'jwt' : 'query', timestamp:new Date().toISOString() }));
       return res.status(404).json({ error: 'Contact not found' });
     }
     const contactId = contact.id;
@@ -165,7 +190,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const counts = { A: (tasksA?.length ?? 0), B: (tasksB?.length ?? 0), union: items.length };
 
     // Compact log for quick scanning
-    console.log(JSON.stringify({ event:'me_tasks', email, count: items.length, filtered: statuses.length>0, statuses, A: counts.A, B: counts.B, timestamp:new Date().toISOString() }));
+    console.log(JSON.stringify({ event:'me_tasks', email, auth: authHeader.startsWith('Bearer ') ? 'jwt' : 'query', count: items.length, filtered: statuses.length>0, statuses, A: counts.A, B: counts.B, timestamp:new Date().toISOString() }));
 
     res.setHeader('Cache-Control', 'private, max-age=0');
     if (debug) {
@@ -186,3 +211,4 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ error: 'Server error' });
   }
 }
+
