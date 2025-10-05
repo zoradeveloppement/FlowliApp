@@ -102,79 +102,121 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const contactId = contact.id;
     const contactName = String(contact.fields?.['Nom'] ?? contact.fields?.['Name'] ?? '').trim();
 
-    // 2A) Path A: tasks linked by {Client}
+    // Shared pieces for filtering
+    const byProjectId = projectId ? `FIND('${projectId.replace(/'/g, "\\'")}',ARRAYJOIN({${FIELD_TASK_PROJECTS}}))` : '';
     const byClientId = `FIND('${contactId}',ARRAYJOIN({${FIELD_TASK_CLIENT}}))`;
-    let formulaA = byClientId;
-    if (statuses.length > 0) {
-      const orParts = statuses.map(s => `{${FIELD_TASK_STATUS}}='${s.replace(/'/g, "\\'")}'`).join(',');
-      formulaA = `AND(${byClientId},OR(${orParts}))`;
-    }
+    const escapedName = (contactName || '').replace(/'/g, "\\'");
+    const byClientName = escapedName ? `FIND('${escapedName}',ARRAYJOIN({${FIELD_TASK_CLIENT}}))` : '';
+
+    // Status and search clauses
+    const statusClause = statuses.length > 0 ? `OR(${statuses.map(s => `{${FIELD_TASK_STATUS}}='${s.replace(/'/g, "\\'")}'`).join(',')})` : '';
+    const searchClause = search ? `FIND('${search.replace(/'/g, "\\'")}',LOWER({${FIELD_TASK_TITLE}}))` : '';
+
+    let tasksA: AirtableRecord[] = [];
+    let formulaA1 = '';
+    let formulaA2 = '';
+
     if (projectId) {
-      const byProject = `FIND('${projectId.replace(/'/g, "\\'")}',ARRAYJOIN({${FIELD_TASK_PROJECTS}}))`;
-      formulaA = `AND(${formulaA},${byProject})`;
-    }
-    if (search) {
-      const byTitle = `FIND('${search.replace(/'/g, "\\'")}',LOWER({${FIELD_TASK_TITLE}}))`;
-      formulaA = `AND(${formulaA},${byTitle})`;
-    }
-    const urlTasksAById = buildUrl(baseId, TABLE_TASKS_ID, { filterByFormula: formulaA, pageSize: String(Math.min(100, limit)) });
-    const tasksAByIdResp = await airtableGet(urlTasksAById, token, 'tasksA_byId', debug);
-    const tasksAById = tasksAByIdResp.records;
+      // PATH A: Enhanced projectId filtering with A1 + A2
+      // A1: byClientId AND byProjectId
+      formulaA1 = `AND(${byClientId},${byProjectId})`;
+      if (statusClause) formulaA1 = `AND(${formulaA1},${statusClause})`;
+      if (searchClause) formulaA1 = `AND(${formulaA1},${searchClause})`;
 
-    let tasksA: AirtableRecord[] = tasksAById;
-    if (tasksAById.length === 0 && statuses.length === 0 && contactName) {
-      // Fallback when {Client} is a lookup that stores names
-      const escapedName = contactName.replace(/'/g, "\\'");
-      const byClientName = `FIND('${escapedName}',ARRAYJOIN({${FIELD_TASK_CLIENT}}))`;
-      let formulaA2 = byClientName;
-      if (projectId) {
-        const byProject = `FIND('${projectId.replace(/'/g, "\\'")}',ARRAYJOIN({${FIELD_TASK_PROJECTS}}))`;
-        formulaA2 = `AND(${formulaA2},${byProject})`;
-      }
-      if (search) {
-        const byTitle = `FIND('${search.replace(/'/g, "\\'")}',LOWER({${FIELD_TASK_TITLE}}))`;
-        formulaA2 = `AND(${formulaA2},${byTitle})`;
-      }
-      formulaA = formulaA2; // override for debug reporting
-      const urlTasksAByName = buildUrl(baseId, TABLE_TASKS_ID, { filterByFormula: formulaA2, pageSize: String(Math.min(100, limit)) });
-      const tasksAByNameResp = await airtableGet(urlTasksAByName, token, 'tasksA_byName', debug);
-      tasksA = tasksAByNameResp.records;
-    }
+      const urlTasksA1 = buildUrl(baseId, TABLE_TASKS_ID, { filterByFormula: formulaA1, pageSize: String(Math.min(100, limit)) });
+      const tasksA1Resp = await airtableGet(urlTasksA1, token, 'tasksA1', debug);
+      const tasksA1 = tasksA1Resp.records;
 
-    // 2B) Path B: projects linked by {Nom Client} contains contactId → then tasks where {Projets} in projectIds (by recordId)
-    const formulaBProjects = `FIND('${contactId}',ARRAYJOIN({${FIELD_PROJECT_CONTACT}}))`;
-    const urlProjectsB = buildUrl(baseId, TABLE_PROJECTS_ID, {
-      filterByFormula: formulaBProjects,
-      pageSize: '100'
-    });
-    const projectsResp = await airtableGet(urlProjectsB, token, 'projectsB', debug);
-    const projectIds = projectsResp.records.map(r => r.id);
-    let tasksB: AirtableRecord[] = [];
-    let formulaBTasks = '';
-    if (projectIds.length > 0) {
-      // Batch OR on projects (Airtable limits; we keep it to 50 for safety)
-      const ids = projectIds.slice(0, 50);
-      const orProj = ids.map(id => `FIND('${id}',ARRAYJOIN({${FIELD_TASK_PROJECTS}}))`).join(',');
-      const byProjects = ids.length === 1 ? `FIND('${ids[0]}',ARRAYJOIN({${FIELD_TASK_PROJECTS}}))` : `OR(${orProj})`;
-      let formulaB = byProjects;
-      if (statuses.length > 0) {
-        const orStatus = statuses.map(s => `{${FIELD_TASK_STATUS}}='${s.replace(/'/g, "\\'")}'`).join(',');
-        formulaB = `AND(${byProjects},OR(${orStatus}))`;
+      // A2: byClientName AND byProjectId (fallback)
+      if (byClientName) {
+        formulaA2 = `AND(${byClientName},${byProjectId})`;
+        if (statusClause) formulaA2 = `AND(${formulaA2},${statusClause})`;
+        if (searchClause) formulaA2 = `AND(${formulaA2},${searchClause})`;
+
+        const urlTasksA2 = buildUrl(baseId, TABLE_TASKS_ID, { filterByFormula: formulaA2, pageSize: String(Math.min(100, limit)) });
+        const tasksA2Resp = await airtableGet(urlTasksA2, token, 'tasksA2', debug);
+        const tasksA2 = tasksA2Resp.records;
+
+        // Union A1 + A2
+        const byIdA = new Map<string, AirtableRecord>();
+        for (const r of tasksA1) byIdA.set(r.id, r);
+        for (const r of tasksA2) byIdA.set(r.id, r);
+        tasksA = Array.from(byIdA.values());
+      } else {
+        tasksA = tasksA1;
       }
-      if (projectId) {
-        const byProject = `FIND('${projectId.replace(/'/g, "\\'")}',ARRAYJOIN({${FIELD_TASK_PROJECTS}}))`;
-        formulaB = `AND(${formulaB},${byProject})`;
-      }
-      if (search) {
-        const byTitle = `FIND('${search.replace(/'/g, "\\'")}',LOWER({${FIELD_TASK_TITLE}}))`;
-        formulaB = `AND(${formulaB},${byTitle})`;
-      }
-      formulaBTasks = formulaB;
-      const urlTasksB = buildUrl(baseId, TABLE_TASKS_ID, { filterByFormula: formulaB, pageSize: '100' });
-      const tasksBResp = await airtableGet(urlTasksB, token, 'tasksB', debug);
-      tasksB = tasksBResp.records;
     } else {
-      // TODO: If both paths empty and no statuses and contactName available, consider a name-based fallback for {Nom Client}
+      // Original logic when no projectId
+      let formulaA = byClientId;
+      if (statusClause) formulaA = `AND(${byClientId},${statusClause})`;
+      if (searchClause) formulaA = `AND(${formulaA},${searchClause})`;
+
+      const urlTasksAById = buildUrl(baseId, TABLE_TASKS_ID, { filterByFormula: formulaA, pageSize: String(Math.min(100, limit)) });
+      const tasksAByIdResp = await airtableGet(urlTasksAById, token, 'tasksA_byId', debug);
+      const tasksAById = tasksAByIdResp.records;
+
+      tasksA = tasksAById;
+      if (tasksAById.length === 0 && statuses.length === 0 && contactName) {
+        // Fallback when {Client} is a lookup that stores names
+        let formulaA2 = byClientName;
+        if (searchClause) formulaA2 = `AND(${byClientName},${searchClause})`;
+
+        const urlTasksAByName = buildUrl(baseId, TABLE_TASKS_ID, { filterByFormula: formulaA2, pageSize: String(Math.min(100, limit)) });
+        const tasksAByNameResp = await airtableGet(urlTasksAByName, token, 'tasksA_byName', debug);
+        tasksA = tasksAByNameResp.records;
+      }
+    }
+
+    // 2B) Path B: Enhanced logic based on projectId presence
+    let tasksB: AirtableRecord[] = [];
+    let formulaBp = '';
+    let formulaBProjects = '';
+
+    if (projectId) {
+      // PATH B: Direct projectId filtering with post-filter by contact
+      formulaBp = byProjectId;
+      if (statusClause) formulaBp = `AND(${byProjectId},${statusClause})`;
+      if (searchClause) formulaBp = `AND(${formulaBp},${searchClause})`;
+
+      const urlTasksBp = buildUrl(baseId, TABLE_TASKS_ID, { filterByFormula: formulaBp, pageSize: '100' });
+      const tasksBpResp = await airtableGet(urlTasksBp, token, 'tasksBp', debug);
+      const tasksBp = tasksBpResp.records;
+
+      // Post-filter by contact: keep if Client contains contactId OR contactName
+      tasksB = tasksBp.filter(task => {
+        const clientField = task.fields?.[FIELD_TASK_CLIENT];
+        if (Array.isArray(clientField)) {
+          // Client is linked records (IDs)
+          return clientField.includes(contactId);
+        } else if (typeof clientField === 'string') {
+          // Client is lookup field (names)
+          return clientField.includes(contactName) || clientField.includes(contactId);
+        }
+        return false;
+      });
+    } else {
+      // Original logic: projects linked by {Nom Client} → tasks by projectIds
+      formulaBProjects = `FIND('${contactId}',ARRAYJOIN({${FIELD_PROJECT_CONTACT}}))`;
+      const urlProjectsB = buildUrl(baseId, TABLE_PROJECTS_ID, {
+        filterByFormula: formulaBProjects,
+        pageSize: '100'
+      });
+      const projectsResp = await airtableGet(urlProjectsB, token, 'projectsB', debug);
+      const projectIds = projectsResp.records.map(r => r.id);
+
+      if (projectIds.length > 0) {
+        // Batch OR on projects (Airtable limits; we keep it to 50 for safety)
+        const ids = projectIds.slice(0, 50);
+        const orProj = ids.map(id => `FIND('${id}',ARRAYJOIN({${FIELD_TASK_PROJECTS}}))`).join(',');
+        const byProjects = ids.length === 1 ? `FIND('${ids[0]}',ARRAYJOIN({${FIELD_TASK_PROJECTS}}))` : `OR(${orProj})`;
+        let formulaB = byProjects;
+        if (statusClause) formulaB = `AND(${byProjects},${statusClause})`;
+        if (searchClause) formulaB = `AND(${formulaB},${searchClause})`;
+
+        const urlTasksB = buildUrl(baseId, TABLE_TASKS_ID, { filterByFormula: formulaB, pageSize: '100' });
+        const tasksBResp = await airtableGet(urlTasksB, token, 'tasksB', debug);
+        tasksB = tasksBResp.records;
+      }
     }
 
     // 3) Union + dedup by record id
@@ -217,7 +259,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         };
       });
 
-    const counts = { A: (tasksA?.length ?? 0), B: (tasksB?.length ?? 0), union: items.length };
+    const counts = { A1: 0, A2: 0, Bp: 0, A: (tasksA?.length ?? 0), B: (tasksB?.length ?? 0), union: items.length };
 
     // Compact log for quick scanning
     console.log(JSON.stringify({ event:'me_tasks', email, auth: authHeader.startsWith('Bearer ') ? 'jwt' : 'query', count: items.length, filtered: statuses.length>0 || !!projectId || !!search, statuses, projectId, search, timestamp:new Date().toISOString() }));
@@ -230,7 +272,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         debug: {
           contactId,
           contactName,
-          formulas: { A: formulaA, B_projects: formulaBProjects, B_tasks: formulaBTasks },
+          formulas: { A1: formulaA1, A2: formulaA2, Bp: formulaBp, B_projects: formulaBProjects },
           counts
         }
       });
