@@ -76,6 +76,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     ? statusesRaw.split(',').map(s => s.trim()).filter(Boolean)
     : [];
 
+  // Optional filters: projectId and search
+  const projectId = (req.query.projectId as string | undefined)?.trim();
+  const searchRaw = (req.query.search as string | undefined)?.trim();
+  const search = searchRaw ? searchRaw.toLowerCase() : '';
+
   const token  = process.env.AIRTABLE_TOKEN;
   const baseId = process.env.AIRTABLE_BASE_ID;
 
@@ -104,6 +109,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const orParts = statuses.map(s => `{${FIELD_TASK_STATUS}}='${s.replace(/'/g, "\\'")}'`).join(',');
       formulaA = `AND(${byClientId},OR(${orParts}))`;
     }
+    if (projectId) {
+      const byProject = `FIND('${projectId.replace(/'/g, "\\'")}',ARRAYJOIN({${FIELD_TASK_PROJECTS}}))`;
+      formulaA = `AND(${formulaA},${byProject})`;
+    }
+    if (search) {
+      const byTitle = `FIND('${search.replace(/'/g, "\\'")}',LOWER({${FIELD_TASK_TITLE}}))`;
+      formulaA = `AND(${formulaA},${byTitle})`;
+    }
     const urlTasksAById = buildUrl(baseId, TABLE_TASKS_ID, { filterByFormula: formulaA, pageSize: String(Math.min(100, limit)) });
     const tasksAByIdResp = await airtableGet(urlTasksAById, token, 'tasksA_byId', debug);
     const tasksAById = tasksAByIdResp.records;
@@ -113,8 +126,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // Fallback when {Client} is a lookup that stores names
       const escapedName = contactName.replace(/'/g, "\\'");
       const byClientName = `FIND('${escapedName}',ARRAYJOIN({${FIELD_TASK_CLIENT}}))`;
-      formulaA = byClientName; // override for debug reporting
-      const urlTasksAByName = buildUrl(baseId, TABLE_TASKS_ID, { filterByFormula: byClientName, pageSize: String(Math.min(100, limit)) });
+      let formulaA2 = byClientName;
+      if (projectId) {
+        const byProject = `FIND('${projectId.replace(/'/g, "\\'")}',ARRAYJOIN({${FIELD_TASK_PROJECTS}}))`;
+        formulaA2 = `AND(${formulaA2},${byProject})`;
+      }
+      if (search) {
+        const byTitle = `FIND('${search.replace(/'/g, "\\'")}',LOWER({${FIELD_TASK_TITLE}}))`;
+        formulaA2 = `AND(${formulaA2},${byTitle})`;
+      }
+      formulaA = formulaA2; // override for debug reporting
+      const urlTasksAByName = buildUrl(baseId, TABLE_TASKS_ID, { filterByFormula: formulaA2, pageSize: String(Math.min(100, limit)) });
       const tasksAByNameResp = await airtableGet(urlTasksAByName, token, 'tasksA_byName', debug);
       tasksA = tasksAByNameResp.records;
     }
@@ -138,6 +160,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (statuses.length > 0) {
         const orStatus = statuses.map(s => `{${FIELD_TASK_STATUS}}='${s.replace(/'/g, "\\'")}'`).join(',');
         formulaB = `AND(${byProjects},OR(${orStatus}))`;
+      }
+      if (projectId) {
+        const byProject = `FIND('${projectId.replace(/'/g, "\\'")}',ARRAYJOIN({${FIELD_TASK_PROJECTS}}))`;
+        formulaB = `AND(${formulaB},${byProject})`;
+      }
+      if (search) {
+        const byTitle = `FIND('${search.replace(/'/g, "\\'")}',LOWER({${FIELD_TASK_TITLE}}))`;
+        formulaB = `AND(${formulaB},${byTitle})`;
       }
       formulaBTasks = formulaB;
       const urlTasksB = buildUrl(baseId, TABLE_TASKS_ID, { filterByFormula: formulaB, pageSize: '100' });
@@ -190,7 +220,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const counts = { A: (tasksA?.length ?? 0), B: (tasksB?.length ?? 0), union: items.length };
 
     // Compact log for quick scanning
-    console.log(JSON.stringify({ event:'me_tasks', email, auth: authHeader.startsWith('Bearer ') ? 'jwt' : 'query', count: items.length, filtered: statuses.length>0, statuses, A: counts.A, B: counts.B, timestamp:new Date().toISOString() }));
+    console.log(JSON.stringify({ event:'me_tasks', email, auth: authHeader.startsWith('Bearer ') ? 'jwt' : 'query', count: items.length, filtered: statuses.length>0 || !!projectId || !!search, statuses, projectId, search, timestamp:new Date().toISOString() }));
 
     res.setHeader('Cache-Control', 'private, max-age=0');
     if (debug) {
