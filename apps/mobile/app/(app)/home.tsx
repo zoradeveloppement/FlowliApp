@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, Alert, Platform, SectionList, RefreshControl, TouchableOpacity, TextInput, Switch } from 'react-native';
+import { View, Text, Alert, Platform, SectionList, RefreshControl, TouchableOpacity, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/src/lib/supabase';
 import { registerForPushToken } from '@/src/utils/push';
@@ -195,67 +195,60 @@ export default function Home() {
         </View>
       </View>
 
-      {/* Filter Controls */}
+      {/* Filters */}
       <View style={{ marginBottom: 16, gap: 12 }}>
-        {/* Count and Active Filters */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={{ fontSize: 14, color: '#6b7280' }}>
-            {items.length} tâche{items.length !== 1 ? 's' : ''}
-            {activeFilters.length > 0 && ` • ${activeFilters.join(', ')}`}
-          </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <TouchableOpacity 
+            onPress={() => setShowDone(!showDone)}
+            style={{ 
+              paddingHorizontal: 12, 
+              paddingVertical: 6, 
+              backgroundColor: showDone ? '#2563eb' : '#f3f4f6', 
+              borderRadius: 6 
+            }}
+          >
+            <Text style={{ color: showDone ? 'white' : '#374151' }}>Afficher terminées</Text>
+          </TouchableOpacity>
         </View>
 
-        {/* Filter Controls */}
-        <View style={{ gap: 12 }}>
-          {/* Show Done Toggle */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Text style={{ fontSize: 16, fontWeight: '500' }}>Afficher terminées</Text>
-            <Switch
-              value={showDone}
-              onValueChange={setShowDone}
-              trackColor={{ false: '#e5e7eb', true: '#3b82f6' }}
-              thumbColor={showDone ? '#ffffff' : '#f3f4f6'}
-            />
-          </View>
+        <TextInput
+          placeholder="Rechercher dans les tâches..."
+          value={search}
+          onChangeText={setSearch}
+          style={{
+            borderWidth: 1,
+            borderColor: '#d1d5db',
+            borderRadius: 6,
+            paddingHorizontal: 12,
+            paddingVertical: 8,
+            fontSize: 16,
+          }}
+        />
 
-          {/* Search Input */}
-          <View>
-            <Text style={{ fontSize: 14, fontWeight: '500', marginBottom: 4 }}>Recherche</Text>
-            <TextInput
-              style={{
-                borderWidth: 1,
-                borderColor: '#d1d5db',
-                borderRadius: 8,
-                paddingHorizontal: 12,
-                paddingVertical: 8,
-                fontSize: 16,
-                backgroundColor: '#ffffff'
-              }}
-              placeholder="Rechercher dans les tâches..."
-              value={search}
-              onChangeText={setSearch}
-            />
-          </View>
+        <TextInput
+          placeholder="ID du projet (optionnel)"
+          value={projectId}
+          onChangeText={setProjectId}
+          style={{
+            borderWidth: 1,
+            borderColor: '#d1d5db',
+            borderRadius: 6,
+            paddingHorizontal: 12,
+            paddingVertical: 8,
+            fontSize: 16,
+          }}
+        />
 
-          {/* Project ID Input */}
-          <View>
-            <Text style={{ fontSize: 14, fontWeight: '500', marginBottom: 4 }}>ID Projet (optionnel)</Text>
-            <TextInput
-              style={{
-                borderWidth: 1,
-                borderColor: '#d1d5db',
-                borderRadius: 8,
-                paddingHorizontal: 12,
-                paddingVertical: 8,
-                fontSize: 16,
-                backgroundColor: '#ffffff'
-              }}
-              placeholder="Filtrer par ID de projet..."
-              value={projectId}
-              onChangeText={setProjectId}
-            />
+        {activeFilters.length > 0 && (
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+            <Text style={{ color: '#6b7280', fontSize: 14 }}>Filtres actifs:</Text>
+            {activeFilters.map((filter, i) => (
+              <View key={i} style={{ backgroundColor: '#e5e7eb', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4 }}>
+                <Text style={{ color: '#374151', fontSize: 12 }}>{filter}</Text>
+              </View>
+            ))}
           </View>
-        </View>
+        )}
       </View>
 
       <SectionList
