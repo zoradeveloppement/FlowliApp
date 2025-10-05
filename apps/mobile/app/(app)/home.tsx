@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, Alert, Platform, SectionList, RefreshControl, TouchableOpacity } from 'react-native';
+import { View, Text, Alert, Platform, SectionList, RefreshControl, TouchableOpacity, TextInput, Switch } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/src/lib/supabase';
 import { registerForPushToken } from '@/src/utils/push';
@@ -65,18 +65,36 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [items, setItems] = useState<TaskItem[]>([]);
+  
+  // Filter states
+  const [showDone, setShowDone] = useState(false);
+  const [search, setSearch] = useState('');
+  const [projectId, setProjectId] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const json = await apiJson('/me/tasks');
+      const openStatuses = 'A faire,En cours,En retard';
+      const qs = new URLSearchParams();
+      if (!showDone) qs.set('statuses', openStatuses);
+      if (debouncedSearch) qs.set('search', debouncedSearch);
+      if (projectId) qs.set('projectId', projectId);
+      
+      const json = await apiJson(`/me/tasks?${qs.toString()}`);
       setItems(Array.isArray(json.items) ? json.items : []);
     } catch (e: any) {
       Alert.alert('Erreur', e?.message ?? 'Échec du chargement');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [showDone, debouncedSearch, projectId]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -139,8 +157,6 @@ export default function Home() {
     ];
   }, [items]);
 
-  const [showDone, setShowDone] = useState(false);
-
   const renderItem = ({ item }: { item: TaskItem }) => {
     const pct = item.progress == null ? null : Math.round((item.progress <= 1 ? item.progress * 100 : item.progress));
     return (
@@ -158,6 +174,14 @@ export default function Home() {
     );
   };
 
+  const activeFilters = useMemo(() => {
+    const filters = [];
+    if (!showDone) filters.push('Ouvertes seulement');
+    if (debouncedSearch) filters.push(`Recherche: "${debouncedSearch}"`);
+    if (projectId) filters.push(`Projet: ${projectId}`);
+    return filters;
+  }, [showDone, debouncedSearch, projectId]);
+
   if (!sessionChecked) return null;
 
   return (
@@ -168,6 +192,69 @@ export default function Home() {
           <TouchableOpacity onPress={load} style={{ paddingHorizontal: 12, paddingVertical: 6, backgroundColor: '#111827', borderRadius: 6 }}>
             <Text style={{ color: 'white' }}>Recharger</Text>
           </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Filter Controls */}
+      <View style={{ marginBottom: 16, gap: 12 }}>
+        {/* Count and Active Filters */}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text style={{ fontSize: 14, color: '#6b7280' }}>
+            {items.length} tâche{items.length !== 1 ? 's' : ''}
+            {activeFilters.length > 0 && ` • ${activeFilters.join(', ')}`}
+          </Text>
+        </View>
+
+        {/* Filter Controls */}
+        <View style={{ gap: 12 }}>
+          {/* Show Done Toggle */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Text style={{ fontSize: 16, fontWeight: '500' }}>Afficher terminées</Text>
+            <Switch
+              value={showDone}
+              onValueChange={setShowDone}
+              trackColor={{ false: '#e5e7eb', true: '#3b82f6' }}
+              thumbColor={showDone ? '#ffffff' : '#f3f4f6'}
+            />
+          </View>
+
+          {/* Search Input */}
+          <View>
+            <Text style={{ fontSize: 14, fontWeight: '500', marginBottom: 4 }}>Recherche</Text>
+            <TextInput
+              style={{
+                borderWidth: 1,
+                borderColor: '#d1d5db',
+                borderRadius: 8,
+                paddingHorizontal: 12,
+                paddingVertical: 8,
+                fontSize: 16,
+                backgroundColor: '#ffffff'
+              }}
+              placeholder="Rechercher dans les tâches..."
+              value={search}
+              onChangeText={setSearch}
+            />
+          </View>
+
+          {/* Project ID Input */}
+          <View>
+            <Text style={{ fontSize: 14, fontWeight: '500', marginBottom: 4 }}>ID Projet (optionnel)</Text>
+            <TextInput
+              style={{
+                borderWidth: 1,
+                borderColor: '#d1d5db',
+                borderRadius: 8,
+                paddingHorizontal: 12,
+                paddingVertical: 8,
+                fontSize: 16,
+                backgroundColor: '#ffffff'
+              }}
+              placeholder="Filtrer par ID de projet..."
+              value={projectId}
+              onChangeText={setProjectId}
+            />
+          </View>
         </View>
       </View>
 
