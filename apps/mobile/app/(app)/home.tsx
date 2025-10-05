@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { supabase } from '@/src/lib/supabase';
 import { registerForPushToken } from '@/src/utils/push';
 import { registerDevice } from '@/src/lib/api';
+import { apiJson } from '@/src/lib/http';
 
  type TaskItem = {
   id: string;
@@ -68,18 +69,7 @@ export default function Home() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await supabase.auth.getSession();
-      const token = data.session?.access_token;
-      if (!token) throw new Error('Session expirée');
-      
-      const api = process.env.EXPO_PUBLIC_API_URL;
-      if (!api) throw new Error('EXPO_PUBLIC_API_URL manquant');
-      const url = `${api}/me/tasks`;
-      const resp = await fetch(url, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const json = await resp.json();
+      const json = await apiJson('/me/tasks');
       setItems(Array.isArray(json.items) ? json.items : []);
     } catch (e: any) {
       Alert.alert('Erreur', e?.message ?? 'Échec du chargement');
