@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+// Types natifs Vercel (runtime nodejs22.x)
 import { createClient as createSb } from '@supabase/supabase-js';
 
 type AirtableRecord = { id: string; fields: Record<string, any> };
@@ -106,7 +106,7 @@ async function fetchTasksForContact(
   return Array.from(byId.values());
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: any, res: any) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method Not Allowed' });
 
   // Debug flag

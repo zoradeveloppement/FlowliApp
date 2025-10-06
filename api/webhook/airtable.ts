@@ -1,9 +1,9 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+// Types natifs Vercel (runtime nodejs22.x)
 import { createClient } from '@supabase/supabase-js';
 
 type AnyRec = Record<string, any>;
 
-function safeBody(req: VercelRequest): AnyRec {
+function safeBody(req: any): AnyRec {
   const b = req.body as any;
   return typeof b === 'object' && b !== null ? b : {};
 }
@@ -26,7 +26,7 @@ function chunk<T>(arr: T[], size: number): T[][] {
   return out;
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: any, res: any) {
   if (req.method === 'GET') {
     return res.status(200).json({ message: 'Airtable webhook ready' });
   }
