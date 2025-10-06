@@ -7,11 +7,12 @@ export default function Login() {
 
   const sendMagicLink = async () => {
     if (!email) return Alert.alert('Email requis');
-    const WEB_BASE = process.env.EXPO_PUBLIC_WEB_BASE_URL || "http://localhost:8081";
+    const webBaseUrl = process.env.EXPO_PUBLIC_WEB_BASE_URL!;
+    const emailRedirectTo = `${webBaseUrl}/auth/callback`;
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: WEB_BASE
+        emailRedirectTo
       }
     });
     if (error) Alert.alert('Erreur', error.message);
