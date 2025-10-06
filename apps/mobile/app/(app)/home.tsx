@@ -78,6 +78,11 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, [search]);
 
+  const logout = async () => {
+    await supabase.auth.signOut();
+    router.replace('/(auth)/login');
+  };
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -189,6 +194,9 @@ export default function Home() {
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <Text style={{ fontSize: 18, fontWeight: '700' }}>Mes tâches</Text>
         <View style={{ flexDirection: 'row', gap: 12 }}>
+          <TouchableOpacity onPress={logout} style={{ padding: 8 }}>
+            <Text style={{ fontWeight: '600' }}>Logout</Text>
+          </TouchableOpacity>
           <TouchableOpacity onPress={load} style={{ paddingHorizontal: 12, paddingVertical: 6, backgroundColor: '#111827', borderRadius: 6 }}>
             <Text style={{ color: 'white' }}>Recharger</Text>
           </TouchableOpacity>
