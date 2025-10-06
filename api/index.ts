@@ -1,4 +1,4 @@
-export const config = { runtime: 'nodejs22.x' };
+export const config = { runtime: 'nodejs' };
 
 export default function handler(_req: any, res: any) {
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
