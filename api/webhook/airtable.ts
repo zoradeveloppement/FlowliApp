@@ -1,3 +1,5 @@
+export const config = { runtime: 'nodejs22.x' };
+
 // Types natifs Vercel (runtime nodejs22.x)
 import { createClient } from '@supabase/supabase-js';
 

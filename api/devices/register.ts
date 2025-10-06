@@ -1,3 +1,5 @@
+export const config = { runtime: 'nodejs22.x' };
+
 // Types natifs Vercel (runtime nodejs22.x)
 
 export default async function handler(req: any, res: any) {
