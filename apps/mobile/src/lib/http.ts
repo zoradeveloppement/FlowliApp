@@ -1,6 +1,8 @@
 import { supabase } from '@/src/lib/supabase';
 
-const API = process.env.EXPO_PUBLIC_API_URL!;
+// Sécuriser l'URL de base
+const rawBase = process.env.EXPO_PUBLIC_API_URL!;
+const base = rawBase.replace(/\/+$/, ''); // strip trailing slashes
 
 // Cache du token pour éviter les appels répétés à getSession()
 let cachedToken: string | null = null;
@@ -10,6 +12,57 @@ supabase.auth.onAuthStateChange((_event, session) => {
   cachedToken = session?.access_token || null;
   console.log('Auth state changed:', _event, session ? 'Session active' : 'No session');
 });
+
+export async function http(path: string, init: RequestInit = {}) {
+  const cleanPath = path.replace(/^\/+/, ''); // strip leading slashes
+  const url = `${base}/${cleanPath}`;
+  
+  // Utiliser le token en cache ou récupérer la session
+  let token = cachedToken;
+  if (!token) {
+    const { data } = await supabase.auth.getSession();
+    token = data.session?.access_token || null;
+    cachedToken = token; // Mettre en cache
+  }
+  
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(init.headers || {}),
+  };
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  const res = await fetch(url, {
+    ...init,
+    headers,
+  });
+  
+  // Log minimal pour debug (désactivable en prod)
+  if (__DEV__) console.log(`[HTTP] ${res.status} ${url}`);
+  
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`HTTP_${res.status} on ${url}: ${text?.slice(0,200)}`);
+  }
+  
+  return res.json().catch(() => ({}));
+}
+
+// Helpers pour les méthodes HTTP
+export const get = (p: string, headers: any = {}) =>
+  http(p, { method: 'GET', headers });
+
+export const post = (p: string, body: any, headers: any = {}) =>
+  http(p, { method: 'POST', body: JSON.stringify(body), headers });
+
+// Auth header (Supabase JWT) — dans un wrapper
+export async function authHeaders() {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 export async function apiGet(path: string, opts?: { headers?: Record<string, string> }) {
   // Utiliser le token en cache ou récupérer la session
@@ -25,7 +78,7 @@ export async function apiGet(path: string, opts?: { headers?: Record<string, str
     headers['Authorization'] = `Bearer ${token}`;
   }
   
-  const res = await fetch(`${API}${path}`, { headers });
+  const res = await fetch(`${base}/${path.replace(/^\/+/, '')}`, { headers });
   return res;
 }
 

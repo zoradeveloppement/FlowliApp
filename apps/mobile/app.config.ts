@@ -12,7 +12,7 @@ export default ({ config }: { config: ExpoConfig }): ExpoConfig => ({
     ...(config?.extra || {}),
     EXPO_PUBLIC_SUPABASE_URL: process.env.EXPO_PUBLIC_SUPABASE_URL,
     EXPO_PUBLIC_SUPABASE_ANON_KEY: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
-    EXPO_PUBLIC_API_URL: process.env.EXPO_PUBLIC_API_URL, // e.g. https://<project>.vercel.app/api
+    EXPO_PUBLIC_API_URL: process.env.EXPO_PUBLIC_API_URL || 'https://flowli-app.vercel.app/api',
     EXPO_PUBLIC_WEB_BASE_URL: process.env.EXPO_PUBLIC_WEB_BASE_URL || "http://localhost:8081",
     eas: { projectId: PROJECT_ID },
   }

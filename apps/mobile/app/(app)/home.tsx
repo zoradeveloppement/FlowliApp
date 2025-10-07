@@ -3,7 +3,7 @@ import { View, Text, Alert, Platform, SectionList, RefreshControl, TouchableOpac
 import { useRouter } from 'expo-router';
 import { supabase } from '@/src/lib/supabase';
 import { registerForPushToken } from '@/src/utils/push';
-import { registerDevice } from '@/src/lib/api';
+import { registerDevice, getTasks } from '@/src/lib/api';
 import { apiJson } from '@/src/lib/http';
 
  type TaskItem = {
@@ -71,6 +71,9 @@ export default function Home() {
   const [search, setSearch] = useState('');
   const [projectId, setProjectId] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  
+  // Debug states
+  const [lastTasksStatus, setLastTasksStatus] = useState<string>('Non testé');
 
   // Debounce search input
   useEffect(() => {
@@ -94,8 +97,10 @@ export default function Home() {
       
       const json = await apiJson(`/me/tasks?${qs.toString()}`);
       setItems(Array.isArray(json.items) ? json.items : []);
+      setLastTasksStatus(`✅ ${json.items?.length || 0} tâches chargées`);
     } catch (e: any) {
       Alert.alert('Erreur', e?.message ?? 'Échec du chargement');
+      setLastTasksStatus(`❌ Erreur: ${e?.message || 'Inconnue'}`);
     } finally {
       setLoading(false);
     }
@@ -191,6 +196,14 @@ export default function Home() {
 
   return (
     <View style={{ flex: 1, padding: 16 }}>
+      {/* Debug UI temporaire */}
+      <View style={{ backgroundColor: '#f3f4f6', padding: 12, borderRadius: 8, marginBottom: 16 }}>
+        <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8 }}>🔧 Debug Info</Text>
+        <Text style={{ fontSize: 12, color: '#6b7280' }}>API URL: {process.env.EXPO_PUBLIC_API_URL}</Text>
+        <Text style={{ fontSize: 12, color: '#6b7280' }}>Email: {email || 'Non connecté'}</Text>
+        <Text style={{ fontSize: 12, color: '#6b7280' }}>Dernier fetch tasks: {lastTasksStatus}</Text>
+      </View>
+
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <Text style={{ fontSize: 18, fontWeight: '700' }}>Mes tâches</Text>
         <View style={{ flexDirection: 'row', gap: 12 }}>
