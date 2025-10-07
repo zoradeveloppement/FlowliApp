@@ -1,7 +1,8 @@
-export const config = { runtime: 'nodejs' };
-
-// Types natifs Vercel (runtime nodejs22.x)
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { applyCors, handlePreflight } from '../_cors';
 import { createClient } from '@supabase/supabase-js';
+
+export const config = { runtime: 'nodejs' };
 
 type AnyRec = Record<string, any>;
 
@@ -28,7 +29,11 @@ function chunk<T>(arr: T[], size: number): T[][] {
   return out;
 }
 
-export default async function handler(req: any, res: any) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  const pf = handlePreflight(req, res);
+  if (pf !== undefined) return; // OPTIONS déjà répondu
+  applyCors(req, res);
+  
   if (req.method === 'GET') {
     return res.status(200).json({ message: 'Airtable webhook ready' });
   }

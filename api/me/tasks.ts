@@ -1,7 +1,8 @@
-export const config = { runtime: 'nodejs' };
-
-// Types natifs Vercel (runtime nodejs22.x)
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { applyCors, handlePreflight } from '../_cors';
 import { createClient as createSb } from '@supabase/supabase-js';
+
+export const config = { runtime: 'nodejs' };
 
 type AirtableRecord = { id: string; fields: Record<string, any> };
 type AirtableList = { records: AirtableRecord[]; offset?: string };
@@ -108,7 +109,11 @@ async function fetchTasksForContact(
   return Array.from(byId.values());
 }
 
-export default async function handler(req: any, res: any) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  const pf = handlePreflight(req, res);
+  if (pf !== undefined) return; // OPTIONS déjà répondu
+  applyCors(req, res);
+  
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method Not Allowed' });
 
   // Debug flag

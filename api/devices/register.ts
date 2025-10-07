@@ -1,8 +1,13 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { applyCors, handlePreflight } from '../_cors';
+
 export const config = { runtime: 'nodejs' };
 
-// Types natifs Vercel (runtime nodejs22.x)
-
-export default async function handler(req: any, res: any) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  const pf = handlePreflight(req, res);
+  if (pf !== undefined) return; // OPTIONS déjà répondu
+  applyCors(req, res);
+  
   if (req.method !== 'POST') return res.status(405).end();
 
   // Require JWT (we don't decode here; API is behind Supabase session on the app)
