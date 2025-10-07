@@ -50,6 +50,19 @@ export async function http(path: string, init: RequestInit = {}) {
   return res.json().catch(() => ({}));
 }
 
+// Client HTTP sécurisé avec logging en dev
+export async function httpJson(url: string, init?: RequestInit) {
+  const res = await fetch(url, init);
+  const text = await res.text();
+  if (__DEV__) console.log('[HTTP RAW]', res.status, url, text.slice(0, 400));
+  if (!res.ok) throw new Error(`HTTP_${res.status}: ${text}`);
+  try {
+    return JSON.parse(text);
+  } catch {
+    return {}; // jamais throw sur parse
+  }
+}
+
 // Helpers pour les méthodes HTTP
 export const get = (p: string, headers: any = {}) =>
   http(p, { method: 'GET', headers });

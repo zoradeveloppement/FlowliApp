@@ -3,8 +3,8 @@ import { View, Text, Alert, Platform, SectionList, RefreshControl, TouchableOpac
 import { useRouter } from 'expo-router';
 import { supabase } from '@/src/lib/supabase';
 import { registerForPushToken } from '@/src/utils/push';
-import { registerDevice, getTasks } from '@/src/lib/api';
-import { apiJson } from '@/src/lib/http';
+import { registerDevice } from '@/src/lib/api';
+import { fetchTasks } from '@/src/api/tasks';
 
  type TaskItem = {
   id: string;
@@ -73,7 +73,8 @@ export default function Home() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   
   // Debug states
-  const [lastTasksStatus, setLastTasksStatus] = useState<string>('Non testé');
+  const [debugInfo, setDebugInfo] = useState<{apiUrl:string; email:string; count:number}>();
+  const [error, setError] = useState<string | null>(null);
 
   // Debounce search input
   useEffect(() => {
@@ -88,19 +89,24 @@ export default function Home() {
 
   const load = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
-      const openStatuses = 'A faire,En cours,En retard';
-      const qs = new URLSearchParams();
-      if (!showDone) qs.set('statuses', openStatuses);
-      if (debouncedSearch) qs.set('search', debouncedSearch);
-      if (projectId) qs.set('projectId', projectId);
+      const session = (await supabase.auth.getSession()).data.session;
+      const email = session?.user?.email ?? '';
       
-      const json = await apiJson(`/me/tasks?${qs.toString()}`);
-      setItems(Array.isArray(json.items) ? json.items : []);
-      setLastTasksStatus(`✅ ${json.items?.length || 0} tâches chargées`);
+      const params: any = {};
+      // si "Ouvertes seulement" actif, limiter aux statuts ouverts
+      if (!showDone) params.statuses = 'A faire,En cours,En retard';
+      // autres filtres: search, projectId...
+      if (debouncedSearch) params.search = debouncedSearch;
+      if (projectId) params.projectId = projectId;
+      
+      const { items, count } = await fetchTasks(params);
+      setItems(items);
+      setDebugInfo({ apiUrl: process.env.EXPO_PUBLIC_API_URL!, email, count });
     } catch (e: any) {
+      setError(e.message ?? String(e));
       Alert.alert('Erreur', e?.message ?? 'Échec du chargement');
-      setLastTasksStatus(`❌ Erreur: ${e?.message || 'Inconnue'}`);
     } finally {
       setLoading(false);
     }
@@ -197,12 +203,17 @@ export default function Home() {
   return (
     <View style={{ flex: 1, padding: 16 }}>
       {/* Debug UI temporaire */}
-      <View style={{ backgroundColor: '#f3f4f6', padding: 12, borderRadius: 8, marginBottom: 16 }}>
-        <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8 }}>🔧 Debug Info</Text>
-        <Text style={{ fontSize: 12, color: '#6b7280' }}>API URL: {process.env.EXPO_PUBLIC_API_URL}</Text>
-        <Text style={{ fontSize: 12, color: '#6b7280' }}>Email: {email || 'Non connecté'}</Text>
-        <Text style={{ fontSize: 12, color: '#6b7280' }}>Dernier fetch tasks: {lastTasksStatus}</Text>
-      </View>
+      {__DEV__ && (
+        <View style={{ backgroundColor: '#f3f4f6', padding: 12, borderRadius: 8, marginBottom: 16 }}>
+          <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8 }}>🔧 Debug Info</Text>
+          <Text style={{ fontSize: 12, color: '#6b7280' }}>API URL: {process.env.EXPO_PUBLIC_API_URL}</Text>
+          <Text style={{ fontSize: 12, color: '#6b7280' }}>Email: {debugInfo?.email ?? '—'}</Text>
+          {error
+            ? <Text style={{ fontSize: 12, color: '#dc2626' }}>Dernier fetch tasks: ❌ {error}</Text>
+            : <Text style={{ fontSize: 12, color: '#16a34a' }}>Dernier fetch tasks: ✅ {debugInfo?.count ?? 0} tâches chargées</Text>
+          }
+        </View>
+      )}
 
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <Text style={{ fontSize: 18, fontWeight: '700' }}>Mes tâches</Text>
