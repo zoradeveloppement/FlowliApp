@@ -67,6 +67,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [items, setItems] = useState<TaskItem[]>([]);
+  const [logoutLoading, setLogoutLoading] = useState(false);
   
   // Filter states
   const [showDone, setShowDone] = useState(false);
@@ -77,6 +78,8 @@ export default function Home() {
   // Debug states
   const [debugInfo, setDebugInfo] = useState<{apiUrl:string; email:string; count:number; hasAuth:boolean}>();
   const [error, setError] = useState<string | null>(null);
+  const [pushToken, setPushToken] = useState<string | null>(null);
+  const [pushRegisterLoading, setPushRegisterLoading] = useState(false);
 
   // Debounce search input
   useEffect(() => {
@@ -85,8 +88,71 @@ export default function Home() {
   }, [search]);
 
   const logout = async () => {
-    await supabase.auth.signOut();
-    router.replace('/(auth)/login');
+    setLogoutLoading(true);
+    try {
+      await supabase.auth.signOut();
+      router.replace('/(auth)/login');
+    } catch (error: any) {
+      console.error('Erreur lors de la déconnexion:', error);
+      Alert.alert('Erreur', 'Impossible de se déconnecter. Veuillez réessayer.');
+    } finally {
+      setLogoutLoading(false);
+    }
+  };
+
+  const reRegisterDevice = async () => {
+    setPushRegisterLoading(true);
+    try {
+      console.log('[DEBUG PUSH] 🔄 Re-enregistrement du device...');
+      
+      // Récupérer la session actuelle
+      const { data } = await supabase.auth.getSession();
+      const session = data.session;
+      
+      if (!session) {
+        throw new Error('Aucune session active');
+      }
+      
+      // Obtenir un nouveau token push
+      const newToken = await registerForPushToken();
+      setPushToken(newToken);
+      
+      if (!newToken) {
+        throw new Error('Impossible d\'obtenir le token push');
+      }
+      
+      console.log('[DEBUG PUSH] 🔑 Nouveau token (8 chars):', newToken.slice(0, 8));
+      console.log('[DEBUG PUSH] 📧 Email session:', session.user.email);
+      console.log('[DEBUG PUSH] 🌐 URL API:', process.env.EXPO_PUBLIC_API_URL);
+      
+      // Enregistrer le device
+      const result = await registerDevice({
+        jwt: session.access_token,
+        userId: session.user.id,
+        token: newToken,
+        platform: Platform.OS as 'ios' | 'android' | 'web',
+        isTester: true,
+      });
+      
+      console.log('[DEBUG PUSH] ✅ Device re-enregistré avec succès');
+      console.log('[DEBUG PUSH] 📊 Status: 200 OK');
+      console.log('[DEBUG PUSH] 🔗 URL:', `${process.env.EXPO_PUBLIC_API_URL}/api/devices/register`);
+      
+    } catch (error: any) {
+      console.log('[DEBUG PUSH] ❌ Erreur re-enregistrement:', error?.message);
+      console.log('[DEBUG PUSH] 📊 Status:', error?.status || 'Unknown');
+      console.log('[DEBUG PUSH] 🔗 URL:', error?.url || 'Unknown');
+      Alert.alert('Erreur', `Échec du re-enregistrement: ${error?.message || 'Unknown error'}`);
+    } finally {
+      setPushRegisterLoading(false);
+    }
+  };
+
+  const resetFilters = () => {
+    setSearch('');
+    setProjectId('');
+    setShowDone(true); // Activer "Inclure terminées"
+    console.log('[FILTERS] 🔄 Filtres réinitialisés');
   };
 
   const load = useCallback(async () => {
@@ -167,9 +233,14 @@ export default function Home() {
 
       const isTester = true;
       const token = await registerForPushToken();
+      setPushToken(token);
+      
       if (token) {
         try {
           console.log('[HOME] 📱 Enregistrement du device push...');
+          console.log('[HOME] 🔑 Token push (8 chars):', token.slice(0, 8));
+          console.log('[HOME] 🌐 URL API:', process.env.EXPO_PUBLIC_API_URL);
+          
           await registerDevice({
             jwt: session.access_token,
             userId: session.user.id,
@@ -177,9 +248,11 @@ export default function Home() {
             platform: Platform.OS as 'ios' | 'android' | 'web',
             isTester,
           });
-          console.log('[HOME] ✅ Device enregistré');
+          console.log('[HOME] ✅ Device enregistré (200 OK)');
         } catch (e: any) {
           console.log('[HOME] ❌ Erreur enregistrement device:', e?.message);
+          console.log('[HOME] 📊 Status:', e?.status || 'Unknown');
+          console.log('[HOME] 🔗 URL:', e?.url || 'Unknown');
           Alert.alert('Erreur enregistrement device', e?.message ?? 'unknown');
         }
       }
@@ -337,11 +410,62 @@ export default function Home() {
         </View>
       )}
 
+      {/* Debug Push Panel */}
+      {__DEV__ && (
+        <View style={{ backgroundColor: '#fef3c7', padding: 12, borderRadius: 8, marginBottom: 16, borderWidth: 1, borderColor: '#f59e0b' }}>
+          <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8, color: '#92400e' }}>🔔 Debug Push Notifications</Text>
+          
+          <View style={{ marginBottom: 8 }}>
+            <Text style={{ fontSize: 12, color: '#92400e', fontWeight: '500' }}>API URL:</Text>
+            <Text style={{ fontSize: 11, color: '#a16207', fontFamily: 'monospace' }}>{process.env.EXPO_PUBLIC_API_URL}</Text>
+          </View>
+          
+          <View style={{ marginBottom: 8 }}>
+            <Text style={{ fontSize: 12, color: '#92400e', fontWeight: '500' }}>Email session:</Text>
+            <Text style={{ fontSize: 11, color: '#a16207' }}>{email || '—'}</Text>
+          </View>
+          
+          <View style={{ marginBottom: 12 }}>
+            <Text style={{ fontSize: 12, color: '#92400e', fontWeight: '500' }}>Expo Push Token:</Text>
+            <Text style={{ fontSize: 11, color: '#a16207', fontFamily: 'monospace' }}>
+              {pushToken ? `${pushToken.slice(0, 8)}...` : 'Non disponible'}
+            </Text>
+          </View>
+          
+          <TouchableOpacity
+            onPress={reRegisterDevice}
+            disabled={pushRegisterLoading}
+            style={{
+              backgroundColor: pushRegisterLoading ? '#9ca3af' : '#f59e0b',
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+              borderRadius: 6,
+              opacity: pushRegisterLoading ? 0.6 : 1
+            }}
+          >
+            <Text style={{ color: 'white', fontSize: 12, fontWeight: '500', textAlign: 'center' }}>
+              {pushRegisterLoading ? 'Re-enregistrement...' : 'Re-enregistrer device'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <Text style={{ fontSize: 18, fontWeight: '700' }}>Mes tâches</Text>
         <View style={{ flexDirection: 'row', gap: 12 }}>
-          <TouchableOpacity onPress={logout} style={{ padding: 8 }}>
-            <Text style={{ fontWeight: '600' }}>Logout</Text>
+          <TouchableOpacity 
+            onPress={logout} 
+            disabled={logoutLoading}
+            style={{ 
+              padding: 8,
+              opacity: logoutLoading ? 0.6 : 1,
+              backgroundColor: logoutLoading ? '#f3f4f6' : 'transparent',
+              borderRadius: 4
+            }}
+          >
+            <Text style={{ fontWeight: '600', color: logoutLoading ? '#6b7280' : '#dc2626' }}>
+              {logoutLoading ? 'Déconnexion...' : 'Déconnexion'}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={load} style={{ paddingHorizontal: 12, paddingVertical: 6, backgroundColor: '#111827', borderRadius: 6 }}>
             <Text style={{ color: 'white' }}>Recharger</Text>
@@ -349,49 +473,74 @@ export default function Home() {
         </View>
       </View>
 
-      {/* Filters */}
-      <View style={{ marginBottom: 16, gap: 12 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <TouchableOpacity 
+      {/* Barre de filtres */}
+      <View style={{ backgroundColor: '#f8fafc', padding: 16, borderRadius: 8, marginBottom: 16, borderWidth: 1, borderColor: '#e2e8f0' }}>
+        <Text style={{ fontSize: 16, fontWeight: '600', marginBottom: 12, color: '#1f2937' }}>Filtres</Text>
+        
+        {/* Toggle Inclure terminées */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+          <TouchableOpacity
             onPress={() => setShowDone(!showDone)}
             style={{ 
+              flexDirection: 'row',
+              alignItems: 'center',
               paddingHorizontal: 12, 
-              paddingVertical: 6, 
+              paddingVertical: 8, 
               backgroundColor: showDone ? '#2563eb' : '#f3f4f6', 
-              borderRadius: 6 
+              borderRadius: 6,
+              marginRight: 12
             }}
           >
-            <Text style={{ color: showDone ? 'white' : '#374151' }}>Afficher terminées</Text>
+            <Text style={{ color: showDone ? 'white' : '#374151', fontWeight: '500' }}>
+              {showDone ? '✅ Inclure terminées' : '❌ Inclure terminées'}
+            </Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            onPress={resetFilters}
+            style={{
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+              backgroundColor: '#6b7280',
+              borderRadius: 6
+            }}
+          >
+            <Text style={{ color: 'white', fontWeight: '500' }}>Réinitialiser</Text>
           </TouchableOpacity>
         </View>
 
-        <TextInput
-          placeholder="Rechercher dans les tâches..."
-          value={search}
-          onChangeText={setSearch}
-          style={{
-            borderWidth: 1,
-            borderColor: '#d1d5db',
-            borderRadius: 6,
-            paddingHorizontal: 12,
-            paddingVertical: 8,
-            fontSize: 16,
-          }}
-        />
+        {/* Inputs de recherche */}
+        <View style={{ gap: 12 }}>
+          <TextInput
+            placeholder="Rechercher dans les tâches..."
+            value={search}
+            onChangeText={setSearch}
+            style={{
+              borderWidth: 1,
+              borderColor: '#d1d5db',
+              borderRadius: 6,
+              paddingHorizontal: 12,
+              paddingVertical: 10,
+              fontSize: 16,
+              backgroundColor: 'white'
+            }}
+          />
 
-        <TextInput
-          placeholder="ID du projet (optionnel)"
-          value={projectId}
-          onChangeText={setProjectId}
-          style={{
-            borderWidth: 1,
-            borderColor: '#d1d5db',
-            borderRadius: 6,
-            paddingHorizontal: 12,
-            paddingVertical: 8,
-            fontSize: 16,
-          }}
-        />
+          <TextInput
+            placeholder="ID du projet (optionnel)"
+            value={projectId}
+            onChangeText={setProjectId}
+            style={{
+              borderWidth: 1,
+              borderColor: '#d1d5db',
+              borderRadius: 6,
+              paddingHorizontal: 12,
+              paddingVertical: 10,
+              fontSize: 16,
+              backgroundColor: 'white'
+            }}
+          />
+        </View>
 
         {activeFilters.length > 0 && (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
