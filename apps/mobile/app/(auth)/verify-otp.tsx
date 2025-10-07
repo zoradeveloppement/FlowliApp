@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, Clipboard } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { supabase } from '@/src/lib/supabase';
 
@@ -12,6 +12,7 @@ export default function VerifyOTP() {
   const [attempts, setAttempts] = useState(0);
   const [resendTimer, setResendTimer] = useState(0);
   const [isBlocked, setIsBlocked] = useState(false);
+  const [expiryTimer, setExpiryTimer] = useState(300); // 5 minutes en secondes
   const inputRef = useRef<TextInput>(null);
 
   // Timer pour le bouton renvoyer
@@ -25,12 +26,40 @@ export default function VerifyOTP() {
     return () => clearInterval(interval);
   }, [resendTimer]);
 
+  // Timer d'expiration (5 minutes)
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (expiryTimer > 0) {
+      interval = setInterval(() => {
+        setExpiryTimer((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [expiryTimer]);
+
   // Redirection si pas d'email
   useEffect(() => {
     if (!email) {
       router.replace('/(auth)/login');
     }
   }, [email, router]);
+
+  // Vérification du presse-papiers au chargement
+  useEffect(() => {
+    const checkClipboard = async () => {
+      try {
+        const clipboardContent = await Clipboard.getString();
+        // Vérifier si le contenu est un code à 6 chiffres
+        if (/^\d{6}$/.test(clipboardContent)) {
+          setCode(clipboardContent);
+        }
+      } catch (error) {
+        // Ignorer les erreurs de presse-papiers
+      }
+    };
+    
+    checkClipboard();
+  }, []);
 
   // Fonction pour masquer l'email
   const maskEmail = (email: string) => {
@@ -113,6 +142,7 @@ export default function VerifyOTP() {
         setAttempts(0); // Reset les tentatives
         setIsBlocked(false); // Débloquer
         setResendTimer(60); // Timer de 60s
+        setExpiryTimer(300); // Reset timer d'expiration (5 min)
         inputRef.current?.focus(); // Refocus sur l'input
       }
     } catch (err: any) {
@@ -124,6 +154,17 @@ export default function VerifyOTP() {
 
   const handleBackToLogin = () => {
     router.replace('/(auth)/login');
+  };
+
+  const handleChangeEmail = () => {
+    router.replace('/(auth)/login');
+  };
+
+  // Formatage du temps d'expiration
+  const formatExpiryTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
   if (!email) {
@@ -144,9 +185,21 @@ export default function VerifyOTP() {
         <Text style={{ fontSize: 16, color: '#6b7280', marginBottom: 8 }}>
           Entrez le code à 6 chiffres envoyé à :
         </Text>
-        <Text style={{ fontSize: 16, fontWeight: '600', color: '#1f2937' }}>
-          {maskEmail(email)}
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+          <Text style={{ fontSize: 16, fontWeight: '600', color: '#1f2937' }}>
+            {maskEmail(email)}
+          </Text>
+          <TouchableOpacity onPress={handleChangeEmail}>
+            <Text style={{ color: '#2563eb', fontSize: 14, fontWeight: '500' }}>
+              Changer d'email
+            </Text>
+          </TouchableOpacity>
+        </View>
+        {expiryTimer > 0 && (
+          <Text style={{ fontSize: 14, color: '#ef4444', textAlign: 'center' }}>
+            Expire dans {formatExpiryTime(expiryTimer)}
+          </Text>
+        )}
       </View>
 
       <View style={{ marginBottom: 24 }}>
