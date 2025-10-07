@@ -34,6 +34,11 @@ export default function AuthCallback() {
         }
 
         setStatus('success');
+        
+        // Forcer l'hydratation de la session avant la navigation
+        // Évite que Home se monte avant que le token soit disponible
+        await supabase.auth.getSession();
+        
         // Redirection vers l'écran principal
         router.replace('/(app)/home');
       } catch (err: any) {

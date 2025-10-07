@@ -5,6 +5,8 @@ import { supabase } from '@/src/lib/supabase';
 import { registerForPushToken } from '@/src/utils/push';
 import { registerDevice } from '@/src/lib/api';
 import { fetchTasks } from '@/src/api/tasks';
+import { authHeaders } from '@/src/lib/auth';
+import { get } from '@/src/lib/http';
 
  type TaskItem = {
   id: string;
@@ -73,7 +75,7 @@ export default function Home() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   
   // Debug states
-  const [debugInfo, setDebugInfo] = useState<{apiUrl:string; email:string; count:number}>();
+  const [debugInfo, setDebugInfo] = useState<{apiUrl:string; email:string; count:number; hasAuth:boolean}>();
   const [error, setError] = useState<string | null>(null);
 
   // Debounce search input
@@ -91,19 +93,29 @@ export default function Home() {
     setLoading(true);
     setError(null);
     try {
-      const session = (await supabase.auth.getSession()).data.session;
-      const email = session?.user?.email ?? '';
-      
-      const params: any = {};
-      // si "Ouvertes seulement" actif, limiter aux statuts ouverts
+      // Attendre que la session soit prête (utile sur Web)
+      let { data } = await supabase.auth.getSession();
+      if (!data.session) {
+        await new Promise(r => setTimeout(r, 250));
+        ({ data } = await supabase.auth.getSession());
+      }
+      const email = data.session?.user?.email ?? '';
+
+      const params: Record<string, string> = {};
       if (!showDone) params.statuses = 'A faire,En cours,En retard';
-      // autres filtres: search, projectId...
       if (debouncedSearch) params.search = debouncedSearch;
       if (projectId) params.projectId = projectId;
-      
-      const { items, count } = await fetchTasks(params);
+
+      const qs = new URLSearchParams(params).toString();
+      const headers = await authHeaders(); // <-- ajoute Authorization
+      const resp = await get(`me/tasks${qs ? `?${qs}` : ''}`, headers);
+
+      // Support objet {items,count} ou tableau:
+      const items = Array.isArray(resp) ? resp : resp.items ?? [];
+      const count = Array.isArray(resp) ? resp.length : (resp.count ?? items.length);
+
       setItems(items);
-      setDebugInfo({ apiUrl: process.env.EXPO_PUBLIC_API_URL!, email, count });
+      setDebugInfo({ apiUrl: process.env.EXPO_PUBLIC_API_URL!, email, count, hasAuth: !!headers.Authorization });
     } catch (e: any) {
       setError(e.message ?? String(e));
       Alert.alert('Erreur', e?.message ?? 'Échec du chargement');
@@ -208,6 +220,7 @@ export default function Home() {
           <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8 }}>🔧 Debug Info</Text>
           <Text style={{ fontSize: 12, color: '#6b7280' }}>API URL: {process.env.EXPO_PUBLIC_API_URL}</Text>
           <Text style={{ fontSize: 12, color: '#6b7280' }}>Email: {debugInfo?.email ?? '—'}</Text>
+          <Text style={{ fontSize: 12, color: '#6b7280' }}>JWT envoyé: {debugInfo?.hasAuth ? '✅ oui' : '❌ non'}</Text>
           {error
             ? <Text style={{ fontSize: 12, color: '#dc2626' }}>Dernier fetch tasks: ❌ {error}</Text>
             : <Text style={{ fontSize: 12, color: '#16a34a' }}>Dernier fetch tasks: ✅ {debugInfo?.count ?? 0} tâches chargées</Text>

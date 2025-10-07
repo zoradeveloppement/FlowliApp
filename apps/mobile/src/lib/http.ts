@@ -13,118 +13,29 @@ supabase.auth.onAuthStateChange((_event, session) => {
   console.log('Auth state changed:', _event, session ? 'Session active' : 'No session');
 });
 
-export async function http(path: string, init: RequestInit = {}) {
-  const cleanPath = path.replace(/^\/+/, ''); // strip leading slashes
-  const url = `${base}/${cleanPath}`;
-  
-  // Utiliser le token en cache ou récupérer la session
-  let token = cachedToken;
-  if (!token) {
-    const { data } = await supabase.auth.getSession();
-    token = data.session?.access_token || null;
-    cachedToken = token; // Mettre en cache
-  }
-  
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(init.headers || {}),
-  };
-  
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-  
+export async function httpJson(path: string, init: RequestInit = {}) {
+  const base = process.env.EXPO_PUBLIC_API_URL!.replace(/\/+$/, '');
+  const clean = path.replace(/^\/+/, '');
+  const url = `${base}/${clean}`;
+
   const res = await fetch(url, {
-    ...init,
-    headers,
+    method: init.method || 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(init.headers || {}),
+    },
+    body: init.body,
   });
-  
-  // Log minimal pour debug (désactivable en prod)
-  if (__DEV__) console.log(`[HTTP] ${res.status} ${url}`);
-  
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`HTTP_${res.status} on ${url}: ${text?.slice(0,200)}`);
-  }
-  
-  return res.json().catch(() => ({}));
-}
 
-// Client HTTP sécurisé avec logging en dev
-export async function httpJson(url: string, init?: RequestInit) {
-  const res = await fetch(url, init);
-  const text = await res.text();
-  if (__DEV__) console.log('[HTTP RAW]', res.status, url, text.slice(0, 400));
+  const text = await res.text().catch(() => '');
+  if (__DEV__) console.log('[HTTP RAW]', res.status, url, text.slice(0, 300));
+
   if (!res.ok) throw new Error(`HTTP_${res.status}: ${text}`);
-  try {
-    return JSON.parse(text);
-  } catch {
-    return {}; // jamais throw sur parse
-  }
+  try { return JSON.parse(text); } catch { return {}; }
 }
 
-// Helpers pour les méthodes HTTP
 export const get = (p: string, headers: any = {}) =>
-  http(p, { method: 'GET', headers });
+  httpJson(p, { method: 'GET', headers });
 
 export const post = (p: string, body: any, headers: any = {}) =>
-  http(p, { method: 'POST', body: JSON.stringify(body), headers });
-
-// Auth header (Supabase JWT) — dans un wrapper
-export async function authHeaders() {
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
-export async function apiGet(path: string, opts?: { headers?: Record<string, string> }) {
-  // Utiliser le token en cache ou récupérer la session
-  let token = cachedToken;
-  if (!token) {
-    const { data } = await supabase.auth.getSession();
-    token = data.session?.access_token || null;
-    cachedToken = token; // Mettre en cache
-  }
-  
-  const headers: Record<string, string> = { ...(opts?.headers || {}) };
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-  
-  const res = await fetch(`${base}/${path.replace(/^\/+/, '')}`, { headers });
-  return res;
-}
-
-export async function apiJson(path: string, opts?: { headers?: Record<string,string> }) {
-  const res = await apiGet(path, opts);
-  const text = await res.text().catch(() => '');
-  if (!res.ok) {
-    // Gestion spéciale des erreurs d'authentification
-    if (res.status === 401) {
-      // Token expiré ou invalide - forcer la mise à jour
-      cachedToken = null;
-      console.warn('Token expired or invalid, clearing cache');
-    }
-    // Surface l'erreur côté UI et logs
-    throw new Error(`HTTP_${res.status}${text ? `: ${text}` : ''}`);
-  }
-  try {
-    return text ? JSON.parse(text) : {};
-  } catch {
-    throw new Error(`HTTP_${res.status}: invalid JSON`);
-  }
-}
-
-// Fonction utilitaire pour forcer la mise à jour du token
-export function refreshAuthToken() {
-  cachedToken = null;
-  return supabase.auth.getSession().then(({ data }) => {
-    cachedToken = data.session?.access_token || null;
-    return cachedToken;
-  });
-}
-
-// Fonction pour vérifier si l'utilisateur est authentifié
-export function isAuthenticated(): boolean {
-  return cachedToken !== null;
-}
+  httpJson(p, { method: 'POST', headers, body: JSON.stringify(body) });
