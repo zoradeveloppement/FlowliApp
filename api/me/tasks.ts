@@ -1,8 +1,14 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { applyCors, handlePreflight } from '../_cors';
-import { createClient as createSb } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 
 export const config = { runtime: 'nodejs' };
+
+// Supabase Admin client for JWT verification
+const supaAdmin = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE!  // Admin
+);
 
 type AirtableRecord = { id: string; fields: Record<string, any> };
 type AirtableList = { records: AirtableRecord[]; offset?: string };
@@ -67,10 +73,11 @@ async function fetchTasksForContact(
   const tasksAById = tasksAByIdResp.records;
 
   let tasksA: AirtableRecord[] = tasksAById;
-  if (tasksAById.length === 0 && statuses.length === 0 && contactName) {
+  if (tasksAById.length === 0 && contactName) {
     // Fallback when {Client} is a lookup that stores names
     let formulaA2 = byClientName;
-    if (searchClause) formulaA2 = `AND(${byClientName},${searchClause})`;
+    if (statusClause) formulaA2 = `AND(${byClientName},${statusClause})`;
+    if (searchClause) formulaA2 = `AND(${formulaA2},${searchClause})`;
 
     const urlTasksAByName = buildUrl(baseId, TABLE_TASKS_ID, { filterByFormula: formulaA2, pageSize: '100' });
     const tasksAByNameResp = await airtableGet(urlTasksAByName, token, 'tasksA_byName', debug);
@@ -116,32 +123,46 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method Not Allowed' });
 
-  // Debug flag
-  const debug  = String(req.headers['x-debug'] || '').toLowerCase() === '1';
+  // 1) Mode debug (override par query) — inchangé
+  const isDebug = req.headers['x-debug'] === '1' || req.headers['x-debug'] === 'true';
+  let email = (req.query.email as string | undefined) || undefined;
 
-  // Auth: prefer Supabase JWT email; fallback to query only in debug or legacy (no auth header)
-  const authHeader = String(req.headers['authorization'] || '');
-  let email: string | undefined;
-  if (authHeader.startsWith('Bearer ')) {
-    const token = authHeader.slice(7).trim();
-    if (token) {
-      try {
-        const sb = createSb(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!, { auth: { persistSession: false } });
-        const { data: userResp } = await sb.auth.getUser(token);
-        const jwtEmail = userResp?.user?.email?.toLowerCase();
-        if (jwtEmail) email = jwtEmail;
-      } catch {
-        // ignore auth errors; will consider legacy/debug fallback
-      }
-    }
-  }
+  // 2) Sinon, extraire l'email du JWT
   if (!email) {
-    const q = (req.query.email as string | undefined)?.trim().toLowerCase();
-    if (q && (!authHeader || debug)) {
-      email = q;
+    const auth = req.headers.authorization || '';
+    const [, token] = auth.split(' ');
+    let jwtEmail: string | undefined;
+    let jwtSub: string | undefined;
+    try {
+      // getUser récupère l'utilisateur associé au token d'accès
+      const { data, error } = await supaAdmin.auth.getUser(token ?? '');
+      if (!error && data?.user) {
+        jwtEmail = data.user.email ?? undefined;
+        jwtSub = data.user.id;
+      }
+    } catch {}
+
+    // 3) Normaliser l'email
+    email = jwtEmail?.trim().toLowerCase();
+
+    // 4) Audit log (ne JAMAIS logguer le token)
+    console.log(JSON.stringify({
+      event: 'me_tasks_auth_debug',
+      hasAuthHeader: Boolean(req.headers.authorization),
+      emailFromJwt: jwtEmail ?? null,
+      subFromJwt: jwtSub ?? null,
+      emailFinal: email ?? null,
+      debugOverride: isDebug
+    }));
+
+    // 5) Si on avait un Authorization mais pas d'email → 401
+    if ((req.headers.authorization && !email) && !isDebug) {
+      return res.status(401).json({ error: 'Unauthorized: email not resolved from token' });
     }
   }
-  if (!email) return res.status(401).json({ error: 'Unauthorized' });
+
+  // 6) Si toujours pas d'email (pas de JWT et pas de debug) → 401
+  if (!email) return res.status(401).json({ error: 'Unauthorized: missing email' });
 
   const limitRaw = Number(req.query.limit ?? 50);
   const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(100, limitRaw)) : 50;
@@ -169,10 +190,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // 1) Find contact by email (case-insensitive)
     const formulaContact = `LOWER({${FIELD_CONTACT_EMAIL}})='${email.replace(/'/g, "\\'")}'`;
     const urlContact = buildUrl(baseId, TABLE_CONTACTS_ID, { filterByFormula: formulaContact, maxRecords: '1' });
-    const contactResp = await airtableGet(urlContact, token, 'contacts', debug);
+    const contactResp = await airtableGet(urlContact, token, 'contacts', isDebug);
     const contact = contactResp.records[0];
     if (!contact) {
-      console.log(JSON.stringify({ event:'me_tasks_no_contact', email, auth: authHeader.startsWith('Bearer ') ? 'jwt' : 'query', timestamp:new Date().toISOString() }));
+      console.log(JSON.stringify({ event:'me_tasks_no_contact', email, auth: req.headers.authorization ? 'jwt' : 'query', timestamp:new Date().toISOString() }));
       return res.status(404).json({ error: 'Contact not found' });
     }
     const contactId = contact.id;
@@ -188,6 +209,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Status and search clauses
     const statusClause = statuses.length > 0 ? `OR(${statuses.map(s => `{${FIELD_TASK_STATUS}}='${s.replace(/'/g, "\\'")}'`).join(',')})` : '';
     const searchClause = search ? `FIND('${search.replace(/'/g, "\\'")}',LOWER({${FIELD_TASK_TITLE}}))` : '';
+    
+    // Debug logs pour le filtrage des statuts
+    console.log(JSON.stringify({
+      event: 'me_tasks_status_debug',
+      statuses: statuses,
+      statusClause: statusClause,
+      fieldName: FIELD_TASK_STATUS
+    }));
 
     let tasksA: AirtableRecord[] = [];
     let tasksB: AirtableRecord[] = [];
@@ -206,7 +235,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (searchClause) formulaA1 = `AND(${formulaA1},${searchClause})`;
 
       const urlTasksA1 = buildUrl(baseId, TABLE_TASKS_ID, { filterByFormula: formulaA1, pageSize: String(Math.min(100, limit)) });
-      const tasksA1Resp = await airtableGet(urlTasksA1, token, 'tasksA1', debug);
+      const tasksA1Resp = await airtableGet(urlTasksA1, token, 'tasksA1', isDebug);
       const tasksA1 = tasksA1Resp.records;
 
       // A2: byClientName AND byProjectId (fallback)
@@ -216,7 +245,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (searchClause) formulaA2 = `AND(${formulaA2},${searchClause})`;
 
         const urlTasksA2 = buildUrl(baseId, TABLE_TASKS_ID, { filterByFormula: formulaA2, pageSize: String(Math.min(100, limit)) });
-        const tasksA2Resp = await airtableGet(urlTasksA2, token, 'tasksA2', debug);
+        const tasksA2Resp = await airtableGet(urlTasksA2, token, 'tasksA2', isDebug);
         const tasksA2 = tasksA2Resp.records;
 
         // Union A1 + A2
@@ -242,7 +271,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (searchClause) formulaA1eq = `AND(${formulaA1eq},${searchClause})`;
 
         const urlTasksA1eq = buildUrl(baseId, TABLE_TASKS_ID, { filterByFormula: formulaA1eq, pageSize: String(Math.min(100, limit)) });
-        const tasksA1eqResp = await airtableGet(urlTasksA1eq, token, 'tasksA1eq', debug);
+        const tasksA1eqResp = await airtableGet(urlTasksA1eq, token, 'tasksA1eq', isDebug);
         const tasksA1eq = tasksA1eqResp.records;
 
         // A2eq: byClientName AND byProjectEq (when contactName exists)
@@ -252,7 +281,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           if (searchClause) formulaA2eq = `AND(${formulaA2eq},${searchClause})`;
 
           const urlTasksA2eq = buildUrl(baseId, TABLE_TASKS_ID, { filterByFormula: formulaA2eq, pageSize: String(Math.min(100, limit)) });
-          const tasksA2eqResp = await airtableGet(urlTasksA2eq, token, 'tasksA2eq', debug);
+          const tasksA2eqResp = await airtableGet(urlTasksA2eq, token, 'tasksA2eq', isDebug);
           const tasksA2eq = tasksA2eqResp.records;
 
           // Union A1eq + A2eq
@@ -268,7 +297,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         usedJsPostFilter = true;
         
         // Use the exact same logic as the working no-projectId path
-        const tasksNoProject = await fetchTasksForContact(baseId, token, contactId, contactName || undefined, statuses, search, debug);
+        const tasksNoProject = await fetchTasksForContact(baseId, token, contactId, contactName || undefined, statuses, search, isDebug);
 
         // JS post-filter by projectId (strict on IDs)
         const filtered = tasksNoProject.filter(r => {
@@ -289,7 +318,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       tasksB = []; // Clear tasksB since we're using unionP
     } else {
       // Use helper function for no-projectId case
-      const allTasks = await fetchTasksForContact(baseId, token, contactId, contactName || undefined, statuses, search, debug);
+      const allTasks = await fetchTasksForContact(baseId, token, contactId, contactName || undefined, statuses, search, isDebug);
       tasksA = allTasks;
     }
 
@@ -304,7 +333,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (searchClause) formulaBp = `AND(${formulaBp},${searchClause})`;
 
       const urlTasksBp = buildUrl(baseId, TABLE_TASKS_ID, { filterByFormula: formulaBp, pageSize: '100' });
-      const tasksBpResp = await airtableGet(urlTasksBp, token, 'tasksBp', debug);
+      const tasksBpResp = await airtableGet(urlTasksBp, token, 'tasksBp', isDebug);
       const tasksBp = tasksBpResp.records;
 
       // Post-filter by contact: keep if Client contains contactId OR contactName
@@ -339,7 +368,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const orParts = projIds.slice(0, 50).map(id => `RECORD_ID()='${id}'`).join(',');
       const formulaProj = projIds.length === 1 ? `RECORD_ID()='${projIds[0]}'` : `OR(${orParts})`;
       const urlProjNames = buildUrl(baseId, TABLE_PROJECTS_ID, { filterByFormula: formulaProj, pageSize: '50' });
-      const projResp = await airtableGet(urlProjNames, token, 'projectsNames', debug);
+      const projResp = await airtableGet(urlProjNames, token, 'projectsNames', isDebug);
       projectNames = new Map(projResp.records.map(r => [r.id, String(r.fields?.[FIELD_PROJECT_NAME] ?? '')]));
     }
 
@@ -367,10 +396,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     counts.union = items.length;
 
     // Compact log for quick scanning
-    console.log(JSON.stringify({ event:'me_tasks', email, auth: authHeader.startsWith('Bearer ') ? 'jwt' : 'query', count: items.length, filtered: statuses.length>0 || !!projectId || !!search, statuses, projectId, search, timestamp:new Date().toISOString() }));
+    console.log(JSON.stringify({ event:'me_tasks', email, auth: req.headers.authorization ? 'jwt' : 'query', count: items.length, filtered: statuses.length>0 || !!projectId || !!search, statuses, projectId, search, timestamp:new Date().toISOString() }));
 
     res.setHeader('Cache-Control', 'private, max-age=0');
-    if (debug) {
+    if (isDebug) {
       return res.status(200).json({
         items,
         count: items.length,

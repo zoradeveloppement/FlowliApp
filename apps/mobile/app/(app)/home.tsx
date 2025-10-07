@@ -90,33 +90,48 @@ export default function Home() {
   };
 
   const load = useCallback(async () => {
+    console.log('[HOME] 🔄 Début du chargement des tâches...');
     setLoading(true);
     setError(null);
     try {
       // Attendre que la session soit prête (utile sur Web)
       let { data } = await supabase.auth.getSession();
       if (!data.session) {
+        console.log('[HOME] ⏳ Session non disponible, attente...');
         await new Promise(r => setTimeout(r, 250));
         ({ data } = await supabase.auth.getSession());
       }
       const email = data.session?.user?.email ?? '';
+      console.log('[HOME] 📧 Email de session:', email);
 
       const params: Record<string, string> = {};
       if (!showDone) params.statuses = 'A faire,En cours,En retard';
       if (debouncedSearch) params.search = debouncedSearch;
       if (projectId) params.projectId = projectId;
 
-      const qs = new URLSearchParams(params).toString();
+      // Construire l'URL manuellement pour éviter les problèmes d'encoding
+      const queryParts: string[] = [];
+      if (params.statuses) queryParts.push(`statuses=${encodeURIComponent(params.statuses)}`);
+      if (params.search) queryParts.push(`search=${encodeURIComponent(params.search)}`);
+      if (params.projectId) queryParts.push(`projectId=${encodeURIComponent(params.projectId)}`);
+      const qs = queryParts.join('&');
       const headers = await authHeaders(); // <-- ajoute Authorization
-      const resp = await get(`me/tasks${qs ? `?${qs}` : ''}`, headers);
+      console.log('[HOME] 🔑 Headers auth:', { hasAuth: !!headers.Authorization, tokenPreview: headers.Authorization?.slice(0, 20) + '...' });
+      
+      const url = `me/tasks${qs ? `?${qs}` : ''}`;
+      console.log('[HOME] 🌐 Appel API:', url);
+      const resp = await get(url, headers);
 
       // Support objet {items,count} ou tableau:
       const items = Array.isArray(resp) ? resp : resp.items ?? [];
       const count = Array.isArray(resp) ? resp.length : (resp.count ?? items.length);
+      
+      console.log('[HOME] ✅ Tâches chargées:', { count, itemsLength: items.length });
 
       setItems(items);
       setDebugInfo({ apiUrl: process.env.EXPO_PUBLIC_API_URL!, email, count, hasAuth: !!headers.Authorization });
     } catch (e: any) {
+      console.log('[HOME] ❌ Erreur lors du chargement:', e?.message);
       setError(e.message ?? String(e));
       Alert.alert('Erreur', e?.message ?? 'Échec du chargement');
     } finally {
@@ -131,19 +146,30 @@ export default function Home() {
 
   useEffect(() => {
     (async () => {
+      console.log('[HOME] 🔍 Vérification de la session...');
       const { data } = await supabase.auth.getSession();
       const session = data.session;
+      
       if (!session) {
+        console.log('[HOME] ❌ Aucune session trouvée, redirection vers login');
         setSessionChecked(true);
         router.replace('/(auth)/login');
         return;
       }
+      
+      console.log('[HOME] ✅ Session trouvée:', {
+        email: session.user.email,
+        userId: session.user.id,
+        hasToken: !!session.access_token
+      });
+      
       setEmail(session.user.email ?? null);
 
       const isTester = true;
       const token = await registerForPushToken();
       if (token) {
         try {
+          console.log('[HOME] 📱 Enregistrement du device push...');
           await registerDevice({
             jwt: session.access_token,
             userId: session.user.id,
@@ -151,15 +177,25 @@ export default function Home() {
             platform: Platform.OS as 'ios' | 'android' | 'web',
             isTester,
           });
+          console.log('[HOME] ✅ Device enregistré');
         } catch (e: any) {
+          console.log('[HOME] ❌ Erreur enregistrement device:', e?.message);
           Alert.alert('Erreur enregistrement device', e?.message ?? 'unknown');
         }
       }
+      
+      console.log('[HOME] 🚀 Session vérifiée, chargement des tâches...');
       setSessionChecked(true);
     })();
   }, [router]);
 
-  useEffect(() => { if (sessionChecked) load(); }, [sessionChecked, load]);
+  useEffect(() => { 
+    console.log('[HOME] 🎯 useEffect sessionChecked:', sessionChecked);
+    if (sessionChecked) {
+      console.log('[HOME] 🚀 Déclenchement du chargement automatique');
+      load(); 
+    }
+  }, [sessionChecked, load]);
 
   const sections = useMemo(() => {
     const inProgressStatuses = new Set(['A faire', 'En cours', 'En retard']);
@@ -221,10 +257,83 @@ export default function Home() {
           <Text style={{ fontSize: 12, color: '#6b7280' }}>API URL: {process.env.EXPO_PUBLIC_API_URL}</Text>
           <Text style={{ fontSize: 12, color: '#6b7280' }}>Email: {debugInfo?.email ?? '—'}</Text>
           <Text style={{ fontSize: 12, color: '#6b7280' }}>JWT envoyé: {debugInfo?.hasAuth ? '✅ oui' : '❌ non'}</Text>
+          <Text style={{ fontSize: 12, color: '#6b7280' }}>Session vérifiée: {sessionChecked ? '✅ oui' : '❌ non'}</Text>
+          <Text style={{ fontSize: 12, color: '#6b7280' }}>Chargement: {loading ? '⏳ en cours' : '✅ terminé'}</Text>
           {error
             ? <Text style={{ fontSize: 12, color: '#dc2626' }}>Dernier fetch tasks: ❌ {error}</Text>
             : <Text style={{ fontSize: 12, color: '#16a34a' }}>Dernier fetch tasks: ✅ {debugInfo?.count ?? 0} tâches chargées</Text>
           }
+          
+          <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+            <TouchableOpacity 
+              onPress={() => {
+                console.log('[DEBUG] 🔄 Test de chargement manuel...');
+                load();
+              }}
+              style={{ backgroundColor: '#2563eb', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 }}
+            >
+              <Text style={{ color: 'white', fontSize: 12 }}>Test Load</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              onPress={async () => {
+                console.log('[DEBUG] 🔍 Test de session...');
+                const { data } = await supabase.auth.getSession();
+                console.log('[DEBUG] Session:', data.session ? '✅ présente' : '❌ absente');
+                if (data.session) {
+                  console.log('[DEBUG] Email:', data.session.user.email);
+                  console.log('[DEBUG] Token:', data.session.access_token?.slice(0, 20) + '...');
+                }
+              }}
+              style={{ backgroundColor: '#16a34a', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 }}
+            >
+              <Text style={{ color: 'white', fontSize: 12 }}>Test Session</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              onPress={async () => {
+                console.log('[DEBUG] 🧪 Test avec X-Debug...');
+                try {
+                  const base = process.env.EXPO_PUBLIC_API_URL!.replace(/\/+$/,'');
+                  const headers = { ...(await authHeaders()), 'X-Debug': '1' };
+                  const url = `${base}/me/tasks?email=louis.lemay02@gmail.com&statuses=A faire,En cours,En retard`;
+                  console.log('[DEBUG] URL:', url);
+                  const resp = await fetch(url, { headers });
+                  const data = await resp.json();
+                  console.log('[DEBUG] Réponse X-Debug:', data);
+                } catch (error) {
+                  console.log('[DEBUG] Erreur X-Debug:', error);
+                }
+              }}
+              style={{ backgroundColor: '#f59e0b', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 }}
+            >
+              <Text style={{ color: 'white', fontSize: 12 }}>Test X-Debug</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              onPress={async () => {
+                console.log('[DEBUG] 🔍 Test sans filtres de statut...');
+                try {
+                  const base = process.env.EXPO_PUBLIC_API_URL!.replace(/\/+$/,'');
+                  const headers = { ...(await authHeaders()), 'X-Debug': '1' };
+                  const url = `${base}/me/tasks?email=louis.lemay02@gmail.com`;
+                  console.log('[DEBUG] URL sans filtres:', url);
+                  const resp = await fetch(url, { headers });
+                  const data = await resp.json();
+                  console.log('[DEBUG] Réponse sans filtres:', data);
+                  if (data.items && data.items.length > 0) {
+                    console.log('[DEBUG] Statut de la tâche:', data.items[0].status);
+                    console.log('[DEBUG] Titre de la tâche:', data.items[0].title);
+                  }
+                } catch (error) {
+                  console.log('[DEBUG] Erreur sans filtres:', error);
+                }
+              }}
+              style={{ backgroundColor: '#8b5cf6', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 }}
+            >
+              <Text style={{ color: 'white', fontSize: 12 }}>Test Sans Filtres</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 
