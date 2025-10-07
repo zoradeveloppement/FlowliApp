@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
+import Constants from 'expo-constants';
 
 // Android channel for foreground notifications
 Notifications.setNotificationChannelAsync?.('default', {
@@ -24,7 +25,17 @@ export async function registerForPushToken(): Promise<string | null> {
   }
   if (finalStatus !== 'granted') return null;
 
-  // 4) Expo push token (mobile)
-  const token = (await Notifications.getExpoPushTokenAsync()).data;
+  // 4) Récupérer le projectId
+  const projectId =
+    process.env.EXPO_PUBLIC_EAS_PROJECT_ID ||
+    (Constants?.expoConfig as any)?.extra?.eas?.projectId;
+
+  if (!projectId) {
+    console.warn('No EAS projectId; skipping push token registration.');
+    return null;
+  }
+
+  // 5) Expo push token (mobile) avec projectId explicite
+  const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
   return token;
 }
