@@ -24,14 +24,10 @@ export default function Login() {
       if (error) {
         Alert.alert('Erreur', error.message);
       } else {
-        Alert.alert(
-          'Code envoyé',
-          'Un code à 6 chiffres a été envoyé à votre email. Voulez-vous le saisir maintenant ?',
-          [
-            { text: 'Plus tard', style: 'cancel' },
-            { text: 'Saisir le code', onPress: () => router.push(`/(auth)/verify-otp?email=${encodeURIComponent(email)}`) }
-          ]
-        );
+        // Navigation automatique vers l'écran OTP
+        router.push({ pathname: '/(auth)/verify-otp', params: { email } });
+        // Toast informatif (simulé avec Alert pour l'instant)
+        Alert.alert('Code envoyé', `Code envoyé à ${email}`);
       }
     } finally {
       setLoading(false);
