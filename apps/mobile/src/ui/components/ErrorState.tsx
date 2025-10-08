@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text } from 'react-native';
-import { Card, Button } from './';
+import { Card } from './Card';
+import { Button } from './Button';
 import { BaseComponentProps } from '../types';
 
 interface ErrorStateProps extends BaseComponentProps {

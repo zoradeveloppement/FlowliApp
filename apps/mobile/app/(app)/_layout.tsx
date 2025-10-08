@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import { useEffect } from 'react';
 import * as Notifications from 'expo-notifications';
-import { Platform } from 'react-native';
+import { Platform, Text } from 'react-native';
 
 export default function AppLayout() {
   // Configuration du channel Android par défaut
@@ -25,28 +25,28 @@ export default function AppLayout() {
         name="home" 
         options={{
           title: 'Accueil',
-          tabBarIcon: () => '🏠',
+          tabBarIcon: () => <Text>🏠</Text>,
         }}
       />
       <Tabs.Screen 
         name="dossier" 
         options={{
           title: 'Mon dossier',
-          tabBarIcon: () => '📁',
+          tabBarIcon: () => <Text>📁</Text>,
         }}
       />
       <Tabs.Screen 
         name="factures" 
         options={{
           title: 'Factures',
-          tabBarIcon: () => '💰',
+          tabBarIcon: () => <Text>💰</Text>,
         }}
       />
       <Tabs.Screen 
         name="contact" 
         options={{
           title: 'Contact',
-          tabBarIcon: () => '📞',
+          tabBarIcon: () => <Text>📞</Text>,
         }}
       />
     </Tabs>

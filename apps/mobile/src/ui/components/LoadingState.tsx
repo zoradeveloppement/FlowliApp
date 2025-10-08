@@ -1,6 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
-import { Skeleton } from './';
+import { Skeleton } from './Skeleton';
 import { BaseComponentProps } from '../types';
 
 interface LoadingStateProps extends BaseComponentProps {

@@ -7,7 +7,7 @@ const isAllowedDevOrigin = (origin?: string) => {
   try {
     const u = new URL(origin);
     const host = u.hostname;
-    // Expo dev tunnels & localhost
+    // Expo dev tunnels & localhost - plus permissif
     return (
       host.endsWith('.exp.direct') ||
       host.endsWith('.expo.dev') ||
@@ -15,7 +15,10 @@ const isAllowedDevOrigin = (origin?: string) => {
       host === 'localhost' ||
       host.startsWith('192.168.') ||
       host.startsWith('10.') ||
-      host.startsWith('172.')
+      host.startsWith('172.') ||
+      // Ajout pour les tunnels Expo dynamiques
+      host.includes('exp.direct') ||
+      host.includes('expo.dev')
     );
   } catch {
     return false;
@@ -25,6 +28,12 @@ const isAllowedDevOrigin = (origin?: string) => {
 export function applyCors(req: VercelRequest, res: VercelResponse) {
   const origin = (req.headers.origin as string) || '';
   const allowOrigin = isAllowedDevOrigin(origin) ? origin : PROD_ORIGIN;
+  
+  // Debug CORS en dev
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`[CORS] Origin: ${origin}, Allowed: ${isAllowedDevOrigin(origin)}, Setting: ${allowOrigin}`);
+  }
+  
   res.setHeader('Access-Control-Allow-Origin', allowOrigin);
   res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
