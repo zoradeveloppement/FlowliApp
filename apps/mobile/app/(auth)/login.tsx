@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, KeyboardAvoidingView, Platform, ScrollView, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { Screen } from '../../src/ui/layout';
@@ -22,95 +22,109 @@ export default function Login() {
     try {
       const webBaseUrl = process.env.EXPO_PUBLIC_WEB_BASE_URL!;
       const emailRedirectTo = `${webBaseUrl}/auth/callback`;
+
       const { error } = await supabase.auth.signInWithOtp({
         email,
-        options: {
-          emailRedirectTo
-        }
+        options: { emailRedirectTo }
       });
+
       if (error) {
         setError(error.message);
       } else {
         setSuccess('Code envoyé avec succès');
         setTimeout(() => {
           router.push({ pathname: '/(auth)/verify-otp', params: { email } });
-        }, 500);
+        }, 450);
       }
     } finally {
       setLoading(false);
     }
   };
 
+  const isDisabled = loading || !email;
+
   return (
     <Screen className="bg-white">
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      <StatusBar barStyle="dark-content" />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         className="flex-1"
       >
-        <View className="flex-1 justify-center px-6">
-          {/* Logo / Branding */}
-          <View className="items-center mb-12">
-            <View className="w-16 h-16 rounded-full bg-violet-600 items-center justify-center mb-4">
-              <Text className="text-white text-3xl font-bold">F</Text>
-            </View>
-            <Text className="text-sm text-gray-500 font-medium">
-              FLOWLI
-            </Text>
-          </View>
-
-          {/* Titre principal */}
-          <View className="mb-10">
-            <Text className="text-4xl font-bold text-gray-900 mb-3 text-center">
-              Bienvenue
-            </Text>
-            <Text className="text-base text-gray-500 text-center leading-relaxed px-4">
-              Connectez-vous pour suivre vos projets en temps réel
-            </Text>
-          </View>
-          
-          {/* Input email */}
-          <View className="mb-6">
-            <Input
-              placeholder="Votre adresse email"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              error={error ?? undefined}
-              className="rounded-2xl text-base"
-            />
-          </View>
-          
-          {/* Bouton principal */}
-          <Button
-            title={loading ? "Envoi..." : "Continuer"}
-            variant="primary"
-            onPress={sendMagicLink}
-            disabled={loading || !email}
-            className="rounded-full py-4 mb-8"
-          />
-          
-          {/* Trust badge minimaliste */}
-          <View className="items-center">
-            <View className="flex-row items-center bg-gray-50 rounded-full px-4 py-2.5">
-              <View className="w-4 h-4 rounded-full bg-emerald-500 items-center justify-center mr-2">
-                <Text className="text-white text-xs font-bold">✓</Text>
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ flexGrow: 1 }}
+          className="flex-1"
+        >
+          {/* Container centré */}
+          <View className="flex-1 items-stretch justify-center px-6 py-8">
+            {/* Branding compact */}
+            <View className="items-center mb-8">
+              <View className="w-14 h-14 rounded-full bg-violet-600 items-center justify-center mb-3">
+                <Text className="text-white text-2xl font-bold">F</Text>
               </View>
-              <Text className="text-gray-600 text-xs font-medium">
-                Connexion sécurisée
+              <Text className="text-xs tracking-widest text-gray-500 font-semibold">FLOWLI</Text>
+            </View>
+
+            {/* Titre + sous-titre (tailles raisonnables mobiles) */}
+            <View className="mb-8">
+              <Text className="text-2xl font-bold text-gray-900 text-center">Connexion sécurisée</Text>
+              <Text className="text-sm text-gray-500 text-center mt-2">
+                Connectez-vous en un instant avec votre email.
+              </Text>
+            </View>
+
+            {/* Zone formulaire */}
+            <View className="mb-4">
+              <Input
+                placeholder="email@exemple.com"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                error={error ?? undefined}
+                className="rounded-2xl text-base"
+              />
+              <Text className="text-[12px] text-gray-500 mt-2">
+                Utilisez l’email associé à votre compte.
+              </Text>
+            </View>
+
+            {/* CTA */}
+            <Button
+              title={loading ? 'Envoi…' : 'Recevoir mon code'}
+              variant="primary"
+              onPress={sendMagicLink}
+              disabled={isDisabled}
+              className="rounded-full py-3.5"
+            />
+
+            {/* Badge de confiance */}
+            <View className="items-center mt-6">
+              <View className="flex-row items-center bg-gray-50 rounded-full px-3.5 py-2">
+                <View className="w-4 h-4 rounded-full bg-emerald-500 items-center justify-center mr-2">
+                  <Text className="text-white text-[10px] font-bold">✓</Text>
+                </View>
+                <Text className="text-gray-600 text-[12px] font-medium">Connexion chiffrée</Text>
+              </View>
+            </View>
+
+            {/* Footer aide minimal */}
+            <View className="items-center mt-8">
+              <Text className="text-[12px] text-gray-400 text-center">
+                Un email avec un code à usage unique vous sera envoyé.
               </Text>
             </View>
           </View>
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
-      
+
+      {/* Snackbars */}
       <Snackbar
         type="error"
         message={error || ''}
         visible={!!error}
         onHide={() => setError(null)}
       />
-      
       <Snackbar
         type="success"
         message={success || ''}
