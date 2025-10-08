@@ -1,0 +1,323 @@
+---
+alwaysApply: true
+---
+# Charte Graphique & Consignes UI/UX - Style Flowli
+
+## 🎨 Palette de Couleurs
+
+### Couleurs Principales
+- **Violet Principal** : `#7C3AED` (violet-600)
+- **Violet Hover** : `#8B5CF6` (violet-500)
+- **Violet Accent** : `#A78BFA` (violet-400)
+
+### Couleurs Secondaires
+- **Blanc** : `#FFFFFF`
+- **Gris Clair** : `#F9FAFB` (gray-50)
+- **Gris Texte** : `#6B7280` (gray-500)
+- **Noir Texte** : `#111827` (gray-900)
+
+### Couleurs d'État
+- **Vert (Check)** : `#10B981` (emerald-500)
+- **Badge Violet** : `rgba(124, 58, 237, 0.1)` avec texte violet
+
+---
+
+## 📝 Typographie
+
+### Famille de Police
+- **Police principale** : Sans-serif moderne (Inter, System UI, ou équivalent)
+- **Poids utilisés** : 
+  - Regular (400) pour le corps de texte
+  - Medium (500) pour les boutons et éléments importants
+  - Bold (700) pour les titres principaux
+
+### Hiérarchie Typographique
+```
+Titre Principal (H1)
+- Taille : 56-72px (3.5-4.5rem)
+- Poids : 700 (Bold)
+- Line-height : 1.1
+- Couleur : Noir (#111827)
+
+Sous-titre (H2)
+- Taille : 20-24px (1.25-1.5rem)
+- Poids : 400-500
+- Couleur : Gris (#6B7280)
+
+Texte Corps
+- Taille : 16px (1rem)
+- Poids : 400
+- Line-height : 1.5
+- Couleur : Gris foncé
+
+Labels / Badges
+- Taille : 14-15px (0.875-0.9375rem)
+- Poids : 500
+- Espacement des lettres : normal
+```
+
+---
+
+## 🎯 Composants UI
+
+### 1. Boutons
+
+#### Bouton Principal (CTA)
+```
+Style :
+- Background : Violet (#7C3AED)
+- Texte : Blanc
+- Padding : 12px 24px (py-3 px-5)
+- Border-radius : 9999px (rounded-full)
+- Shadow : 0 12px 30px -6px rgba(124, 58, 237, 0.55)
+- Ring : 1px solid rgba(violet, 0.6)
+
+Hover :
+- Background : Violet clair (#8B5CF6)
+- Transform : translateY(-2px)
+- Transition : all 200ms
+
+Focus :
+- Ring : 2px solid white/80
+```
+
+#### Bouton Secondaire
+```
+Style :
+- Background : Blanc
+- Texte : Noir
+- Padding : 12px 24px
+- Border-radius : 12px (rounded-xl)
+- Border : 1px solid #E5E7EB
+
+Hover :
+- Background : #F9FAFB
+- Border : 1px solid #D1D5DB
+```
+
+### 2. Navigation
+
+```
+Style :
+- Background : Blanc avec léger blur
+- Shadow : subtile (0 1px 3px rgba(0,0,0,0.1))
+- Padding : 16px 32px
+- Border-radius : 9999px (rounded-full)
+
+Liens :
+- Couleur : Gris (#6B7280)
+- Hover : Noir (#111827)
+- Font-weight : 500
+- Transition douce (150ms)
+```
+
+### 3. Badges / Pills
+
+```
+Style :
+- Background : rgba(124, 58, 237, 0.1)
+- Texte : Violet (#7C3AED)
+- Padding : 8px 16px
+- Border-radius : 9999px (rounded-full)
+- Font-size : 14px
+- Font-weight : 500
+
+Avec Icône :
+- Gap : 8px entre icône et texte
+- Icône : même couleur que le texte
+```
+
+### 4. Cards / Sections
+
+```
+Style :
+- Background : Blanc
+- Border-radius : 16-24px (rounded-2xl)
+- Padding : 24-32px
+- Shadow : subtile ou medium
+- Border : optionnel, 1px solid #F3F4F6
+
+Features Pills :
+- Display : inline-flex
+- Align-items : center
+- Gap : 8px
+- Padding : 12px 20px
+- Background : #F9FAFB
+- Border-radius : 9999px
+```
+
+---
+
+## 🎭 Icônes
+
+### Style d'Icônes
+- **Type** : Lucide React (ou similaire)
+- **Stroke-width** : 2px
+- **Taille** : 20-24px (h-5 w-5 ou h-6 w-6)
+- **Couleur** : Hérite du contexte (currentColor)
+
+### Usage Courant
+- Check : ✓ (pour validation)
+- Calendar : 📅 (pour rendez-vous)
+- Clock : ⏱️ (pour "Intuitive")
+- Shield : 🛡️ (pour "Brandé")
+- WhatsApp : dans bouton flottant vert
+
+---
+
+## 📐 Espacement & Layout
+
+### Système d'Espacement
+```
+Petit : 8px
+Moyen : 16px
+Large : 24px
+XL : 32px
+XXL : 48px
+Section : 64-96px
+```
+
+### Grille & Container
+```
+Max-width : 1280px (container)
+Padding horizontal : 24px (mobile) / 48px (desktop)
+Gap entre éléments : 24-32px
+```
+
+### Breakpoints
+```
+Mobile : < 640px
+Tablet : 640px - 1024px
+Desktop : > 1024px
+```
+
+---
+
+## ✨ Animations & Interactions
+
+### Transitions Standard
+```css
+transition: all 200ms ease-in-out;
+```
+
+### Hover States
+- Boutons : `translateY(-2px)` + changement de couleur
+- Cards : légère shadow augmentée
+- Liens : changement de couleur + underline optionnel
+
+### Micro-interactions
+- Scale légère sur les boutons actifs
+- Fade-in pour les éléments qui apparaissent
+- Smooth scroll pour la navigation
+
+---
+
+## 🎨 Principes de Design
+
+### 1. Minimalisme Moderne
+- Beaucoup d'espace blanc
+- Éléments bien espacés
+- Design épuré et clair
+
+### 2. Rounded Design
+- Border-radius généreux (16-24px pour cards)
+- Boutons en pill shape (rounded-full)
+- Adoucissement général des angles
+
+### 3. Ombres Subtiles
+- Utiliser les ombres avec parcimonie
+- Préférer les ombres douces et colorées (violet pour CTA)
+- Shadow progressive au hover
+
+### 4. Hiérarchie Claire
+- Titre très large et impactant
+- Contraste fort entre éléments principaux et secondaires
+- Utilisation stratégique de la couleur (violet pour highlights)
+
+### 5. Trust & Credibilité
+- Section logos clients en noir et blanc
+- Badge de confiance visible ("+50 entreprises")
+- Design professionnel et épuré
+
+---
+
+## 🚀 Composants Spécifiques Flowli
+
+### Hero Section
+```
+- Titre : très large, noir, bold
+- Mise en avant : mots clés en violet
+- Sous-titre : gris, taille moyenne
+- CTA proéminents : violet + blanc
+- Pills de features en dessous
+```
+
+### Bouton Flottant (Fixed)
+```
+Position : bottom-6 right-6
+Background : Violet (#7C3AED)
+Shadow : forte avec teinte violette
+Contient : Icône + Texte
+Hover : lift effect + violet clair
+Hidden sur mobile (hidden sm:inline-flex)
+```
+
+### Trust Badge
+```
+Style : pill avec icône check
+Couleur : violet sur fond violet clair
+Position : sous le header
+Animation : subtile au chargement
+```
+
+---
+
+## 📱 Responsive Design
+
+### Mobile First
+- Stack vertical des éléments
+- Padding réduit
+- Titres ajustés (plus petits)
+- Boutons full-width optionnels
+
+### Desktop
+- Layout horizontal pour navigation
+- Espacement généreux
+- Titres très larges
+- Multi-colonnes pour features
+
+---
+
+## ♿ Accessibilité
+
+### Contraste
+- Ratio minimum 4.5:1 pour le texte
+- Ratio 3:1 pour les éléments UI
+
+### Focus States
+- Ring visible au clavier
+- Couleur distincte (blanc/violet)
+- Ne jamais supprimer l'outline
+
+### Aria Labels
+- Toujours sur les boutons d'action
+- Sur les icônes seules
+- Navigation claire
+
+---
+
+## 🎯 Do's and Don'ts
+
+### ✅ À FAIRE
+- Utiliser des border-radius généreux
+- Espacer généreusement les éléments
+- Privilégier les ombres subtiles
+- Violet uniquement pour les CTA et highlights
+- Design épuré et minimaliste
+
+### ❌ À ÉVITER
+- Angles droits stricts
+- Trop de couleurs
+- Design chargé ou cluttered
+- Ombres dures ou trop marquées
+- Violet en overload (garder l'impact)

@@ -3,6 +3,8 @@ import { View, Text, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/src/lib/supabase';
 import { Platform } from 'react-native';
+import { Screen } from '../../src/ui/layout';
+import { Card } from '../../src/ui/components';
 
 export default function AuthCallback() {
   const router = useRouter();
@@ -53,34 +55,44 @@ export default function AuthCallback() {
 
   if (status === 'loading') {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-        <ActivityIndicator size="large" />
-        <Text style={{ marginTop: 16, fontSize: 16 }}>Connexion en cours...</Text>
-      </View>
+      <Screen>
+        <View className="flex-1 justify-center items-center">
+          <Card className="items-center py-8">
+            <ActivityIndicator size="large" color="#6C63FF" />
+            <Text className="text-body text-textMuted mt-4">Connexion en cours...</Text>
+          </Card>
+        </View>
+      </Screen>
     );
   }
 
   if (status === 'error') {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-        <Text style={{ fontSize: 18, fontWeight: '600', color: '#dc2626', marginBottom: 8 }}>
-          Erreur de connexion
-        </Text>
-        <Text style={{ textAlign: 'center', color: '#6b7280' }}>
-          {error || 'Une erreur est survenue lors de la connexion.'}
-        </Text>
-      </View>
+      <Screen>
+        <View className="flex-1 justify-center items-center">
+          <Card className="items-center py-8">
+            <Text className="text-4xl mb-4">❌</Text>
+            <Text className="text-h2 text-danger mb-2">Erreur de connexion</Text>
+            <Text className="text-body text-textMuted text-center">
+              {error || 'Une erreur est survenue lors de la connexion.'}
+            </Text>
+          </Card>
+        </View>
+      </Screen>
     );
   }
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-      <Text style={{ fontSize: 18, fontWeight: '600', color: '#16a34a' }}>
-        Connexion réussie !
-      </Text>
-      <Text style={{ marginTop: 8, color: '#6b7280' }}>
-        Redirection en cours...
-      </Text>
-    </View>
+    <Screen>
+      <View className="flex-1 justify-center items-center">
+        <Card className="items-center py-8">
+          <Text className="text-4xl mb-4">✅</Text>
+          <Text className="text-h2 text-success mb-2">Connexion réussie !</Text>
+          <Text className="text-body text-textMuted">
+            Redirection en cours...
+          </Text>
+        </Card>
+      </View>
+    </Screen>
   );
 }

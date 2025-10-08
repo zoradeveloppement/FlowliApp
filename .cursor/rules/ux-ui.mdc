@@ -1,0 +1,176 @@
+---
+alwaysApply: true
+---
+# 🪄 FlowliApp - UX/UI Charter
+
+## 🎯 OBJECTIF & IDENTITÉ
+### Mission
+Permettre au client de **suivre simplement et efficacement l’avancement de son projet**, ses tâches et ses factures, avec une image **moderne, professionnelle et rassurante**.
+
+### Valeurs perçues
+- Clarté → aller à l’essentiel, sans surcharge visuelle  
+- Fiabilité → interface cohérente, feedback clair  
+- Modernité → design fluide, responsive  
+- Professionnalisme → identité violet/blanc, ton neutre  
+
+---
+
+## 🌈 IDENTITÉ VISUELLE
+### Couleurs principales
+```text
+PRIMAIRE:        #6C63FF  (Violet Flowli)
+SECONDAIRE:      #B3B0FF  (Violet clair)
+FOND CLAIR:      #FFFFFF
+FOND GRIS CLAIR: #F7F8FA
+TEXTE PRINCIPAL: #1A1A1A
+TEXTE SECONDAIRE:#6E6E6E
+SUCCÈS:          #4CAF50
+ALERTE:          #FF9800
+ERREUR:          #F44336
+Règles d’usage
+Contraste AA minimum entre texte et fond
+
+Violet utilisé pour éléments interactifs et accents
+
+Fond blanc dominant pour la clarté
+
+🧱 TYPOGRAPHIE
+Élément	Police	Taille	Poids	Couleur
+H1	Poppins / Inter	24–28px	600	#1A1A1A
+H2	Poppins / Inter	20px	500	#1A1A1A
+Texte principal	Inter	16px	400	#1A1A1A
+Texte secondaire	Inter	14px	400	#6E6E6E
+Labels / boutons	Inter	15–16px	500	#FFFFFF / #1A1A1A
+
+💡 Espacement vertical 1.5x line-height — max. 2 tailles de texte par écran.
+
+🧩 COMPOSANTS UI
+Boutons
+Primaire : fond violet #6C63FF, texte blanc, radius 12px
+→ Hover : ombre douce / Active : opacité 0.9
+
+Secondaire : bordure violette, texte violet
+→ Hover : fond violet clair
+
+Désactivé : fond gris clair, texte gris moyen
+
+Champs de saisie
+Bordure gris clair #E0E0E0, radius 8px
+
+Focus → bordure violette + légère ombre
+
+Label au-dessus, placeholder gris clair
+
+Message d’erreur rouge #F44336
+
+Cartes / blocs
+Fond blanc, bordure #EAEAEA
+
+Ombre subtile 0 2px 6px rgba(0,0,0,0.05)
+
+Radius 16px, padding 16–20px
+
+Progression projet
+Barre horizontale violet dégradé → #6C63FF → #B3B0FF
+
+Étapes rondes (remplies si validées)
+
+Animation ease-in-out 0.3s
+
+Badges de statut
+Statut	Couleur	Exemple
+✅ Terminé	Vert #4CAF50	Fait
+🔄 En cours	Violet #6C63FF	En cours
+⏳ À venir	Gris #BDBDBD	À venir
+⚠️ Action requise	Orange #FF9800	Action requise
+
+📱 LAYOUT & NAVIGATION
+Structure
+Mobile (Expo / React Native)
+
+nginx
+Copier le code
+Bottom tabs:
+Accueil | Mon dossier | Factures | Contact
+Web
+
+css
+Copier le code
+Sidebar gauche + contenu centré
+Top bar: logo Flowli + profil utilisateur
+Marges & grilles
+yaml
+Copier le code
+Padding horizontal: 16px (mobile) / 24px (desktop)
+Espacement vertical: 24px
+Contenu max width: 800px
+⚙️ FEEDBACKS & INTERACTIONS
+Type	Composant	Style
+Chargement	Spinner violet ou skeleton gris	Animation fluide
+Succès	Toast vert clair "Action réussie ✅"	
+Erreur	Snackbar rouge "Échec de l’opération"	
+Info	Snackbar violet clair	
+Transitions	200–300ms easing Material	
+
+🔔 NOTIFICATIONS
+Push mobile (Expo) → titre violet + message court
+
+📢 “Nouvelle action requise sur votre projet Flowli”
+
+Email (web) → fond blanc, header violet, CTA “Voir mon dossier”
+
+In-app → pastille orange sur l’onglet concerné + badge "nouveau"
+
+🧭 PARCOURS & STRUCTURE
+Routes principales
+bash
+Copier le code
+/login
+/verify-otp
+/(app)/
+  ├── home/        → Vue synthétique (projet + progression)
+  ├── dossier/     → Liste et détail des tâches
+  ├── factures/    → Liste + téléchargement
+  ├── contact/     → Contact / support
+Navigation
+Mobile : bottom tabs
+
+Web : top bar + sidebar
+
+Logo Flowli cliquable → retour à l’accueil
+
+🧠 PRINCIPES UX
+3 clics maximum pour atteindre toute information utile
+
+Un seul focus visuel par écran
+
+Informations clés visibles sans scroll
+
+Icônes explicites (📄, 💬, ⚠️…)
+
+Feedback immédiat sur toute action
+
+Cohérence totale web ↔ mobile
+
+Ton professionnel, neutre, bienveillant
+
+🔮 ÉVOLUTIONS FUTURES
+Préparer la charte pour :
+
+Mode sombre (violet foncé dégradé)
+
+Upload document (drag & drop)
+
+Timeline historique
+
+Multi-projets (sélecteur)
+
+Accessibilité (contraste AA, texte ajustable)
+
+✅ SYNTHÈSE RAPIDE DESIGN
+Élément	Style résumé
+Couleurs	Violet + Blanc (accent léger)
+Typo	Inter / Poppins
+Layout	Matérial minimaliste
+Feedback	Toasts, transitions douces
+UX focus	Clarté, fluidité, hiérarchie simple

@@ -1,50 +1,226 @@
-# Welcome to your Expo app 👋
+# 🪄 FlowliApp - Portail Client
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+> Application de suivi de projet client avec design system moderne et accessibilité complète.
 
-## Get started
+## 🎯 Vue d'ensemble
 
-1. Install dependencies
+FlowliApp permet aux clients de suivre l'avancement de leurs projets, gérer leurs tâches et consulter leurs factures. L'application est développée avec React Native + Expo pour une compatibilité web et mobile.
 
-   ```bash
-   npm install
-   ```
+## ✨ Fonctionnalités
 
-2. Start the app
+### 🔐 Authentification
+- Connexion par email avec code OTP
+- Gestion des sessions sécurisées
+- Interface responsive et accessible
 
-   ```bash
-   npx expo start
-   ```
+### 📊 Suivi de projet
+- Vue d'ensemble de la progression
+- Barres de progression avec dégradé violet
+- Statistiques en temps réel
 
-In the output, you'll find options to open the app in a
+### 📋 Gestion des tâches
+- Liste des tâches avec filtres avancés
+- Statuts visuels (terminé, en cours, à venir, action requise)
+- Recherche et filtrage par projet
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### 💰 Factures
+- Consultation des factures
+- Téléchargement des PDF
+- Statuts de paiement
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+### 📞 Contact
+- Informations de contact
+- Formulaire de contact
+- Support technique
 
-## Get a fresh project
+### 🔔 Notifications
+- Badges de notification sur les onglets
+- Notifications push (mobile)
+- Notifications in-app
 
-When you're ready, run:
+## 🏗️ Architecture
 
-```bash
-npm run reset-project
+### Stack technique
+- **Frontend** : React Native + Expo
+- **Styling** : NativeWind (Tailwind CSS)
+- **Navigation** : Expo Router
+- **État** : Zustand
+- **Auth** : Supabase Auth
+- **Backend** : Vercel Functions
+- **Base de données** : Supabase + Airtable
+
+### Structure du projet
+```
+apps/mobile/
+├── app/                    # Expo Router
+│   ├── (auth)/            # Authentification
+│   ├── (app)/             # Application principale
+│   └── _layout.tsx        # Layout racine
+├── src/
+│   ├── ui/                # Design System
+│   │   ├── components/    # Composants réutilisables
+│   │   ├── layout/        # Layouts
+│   │   ├── theme/         # Thème et tokens
+│   │   ├── hooks/         # Hooks personnalisés
+│   │   ├── store/         # État global
+│   │   └── utils/         # Utilitaires
+│   ├── features/          # Fonctionnalités métier
+│   └── lib/               # Bibliothèques externes
+└── assets/                # Ressources
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## 🚀 Démarrage rapide
 
-## Learn more
+### Prérequis
+- Node.js 18+
+- npm ou yarn
+- Expo CLI
+- Compte Expo
 
-To learn more about developing your project with Expo, look at the following resources:
+### Installation
+```bash
+# Cloner le projet
+git clone <repository-url>
+cd FlowliApp/apps/mobile
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+# Installer les dépendances
+npm install
 
-## Join the community
+# Démarrer le serveur de développement
+npm run start
+```
 
-Join our community of developers creating universal apps.
+### Variables d'environnement
+Créer un fichier `.env` :
+```bash
+EXPO_PUBLIC_SUPABASE_URL=your_supabase_url
+EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## 🎨 Design System
+
+### Couleurs
+- **Primaire** : #6C63FF (Violet Flowli)
+- **Secondaire** : #B3B0FF (Violet clair)
+- **Succès** : #4CAF50
+- **Alerte** : #FF9800
+- **Erreur** : #F44336
+
+### Composants
+- **Button** : Variants et tailles
+- **Input** : Champs avec validation
+- **Card** : Conteneurs avec ombre
+- **Badge** : Statuts avec icônes
+- **Progress** : Barres de progression
+- **Snackbar** : Notifications toast
+
+### Utilisation
+```tsx
+import { Button, Card, Badge } from '@/src/ui/components';
+
+<Card>
+  <Button variant="primary" title="Cliquer" />
+  <Badge status="en cours" />
+</Card>
+```
+
+## 📱 Responsivité
+
+### Breakpoints
+- **Mobile** : < 768px (Bottom tabs)
+- **Tablet** : 768px - 1024px (Layout hybride)
+- **Desktop** : > 1024px (Sidebar)
+
+### Navigation
+- **Mobile** : Bottom tabs avec badges
+- **Web** : Sidebar avec navigation
+
+## ♿ Accessibilité
+
+### Standards
+- **WCAG 2.1 AA** : Contraste minimum 4.5:1
+- **Tailles tactiles** : Minimum 44px
+- **Navigation clavier** : Support complet
+- **Lecteur d'écran** : Labels et rôles appropriés
+
+### Utilisation
+```tsx
+import { useAccessibility } from '@/src/ui/hooks';
+
+const { createButtonProps } = useAccessibility();
+
+<Button
+  {...createButtonProps({
+    label: 'Bouton accessible',
+    hint: 'Description du bouton',
+  })}
+/>
+```
+
+## 🧪 Tests
+
+### Composants
+```bash
+# Tests unitaires
+npm run test
+
+# Tests d'accessibilité
+npm run test:a11y
+```
+
+### QA
+Voir [QA_CHECKLIST.md](./QA_CHECKLIST.md) pour la checklist complète.
+
+## 📚 Documentation
+
+- [Design System](./DESIGN_SYSTEM.md) - Guide du design system
+- [Guide de développement](./DEVELOPMENT_GUIDE.md) - Guide pour les développeurs
+- [Checklist QA](./QA_CHECKLIST.md) - Checklist de qualité
+
+## 🚀 Déploiement
+
+### Development
+```bash
+npm run start
+```
+
+### Production
+```bash
+# Build
+npm run build
+
+# EAS Build
+eas build --platform all
+
+# Deploy
+eas submit
+```
+
+## 🤝 Contribution
+
+1. Fork le projet
+2. Créer une branche feature
+3. Commit vos changements
+4. Push vers la branche
+5. Ouvrir une Pull Request
+
+### Conventions
+- **Commits** : Conventional commits
+- **Code** : ESLint + Prettier
+- **Tests** : Tests unitaires
+- **Documentation** : Mise à jour des docs
+
+## 📄 Licence
+
+Ce projet est sous licence MIT. Voir le fichier [LICENSE](./LICENSE) pour plus de détails.
+
+## 🆘 Support
+
+Pour toute question ou problème :
+- **Issues** : [GitHub Issues](https://github.com/your-repo/issues)
+- **Documentation** : [Wiki](https://github.com/your-repo/wiki)
+- **Contact** : support@flowli.com
+
+---
+
+**Développé avec ❤️ par l'équipe Flowli**

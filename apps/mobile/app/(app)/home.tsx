@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, Alert, Platform, SectionList, RefreshControl, TouchableOpacity, TextInput } from 'react-native';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, SectionList, RefreshControl, Platform, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Screen, AppLayout } from '../../src/ui/layout';
+import { Card, Progress, Badge, Button } from '../../src/ui/components';
 import { supabase } from '@/src/lib/supabase';
 import { registerForPushToken } from '@/src/utils/push';
 import { registerDevice } from '@/src/lib/api';
@@ -65,6 +67,7 @@ export default function Home() {
   const [sessionChecked, setSessionChecked] = useState(false);
   const [email, setEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showDebug, setShowDebug] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [items, setItems] = useState<TaskItem[]>([]);
   const [logoutLoading, setLogoutLoading] = useState(false);
@@ -127,7 +130,6 @@ export default function Home() {
       
       // Enregistrer le device
       const result = await registerDevice({
-        jwt: session.access_token,
         userId: session.user.id,
         token: newToken,
         platform: Platform.OS as 'ios' | 'android' | 'web',
@@ -242,7 +244,6 @@ export default function Home() {
           console.log('[HOME] 🌐 URL API:', process.env.EXPO_PUBLIC_API_URL);
           
           await registerDevice({
-            jwt: session.access_token,
             userId: session.user.id,
             token,
             platform: Platform.OS as 'ios' | 'android' | 'web',
@@ -325,17 +326,37 @@ export default function Home() {
     <View style={{ flex: 1, padding: 16 }}>
       {/* Debug UI temporaire */}
       {__DEV__ && (
-        <View style={{ backgroundColor: '#f3f4f6', padding: 12, borderRadius: 8, marginBottom: 16 }}>
-          <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8 }}>🔧 Debug Info</Text>
-          <Text style={{ fontSize: 12, color: '#6b7280' }}>API URL: {process.env.EXPO_PUBLIC_API_URL}</Text>
-          <Text style={{ fontSize: 12, color: '#6b7280' }}>Email: {debugInfo?.email ?? '—'}</Text>
-          <Text style={{ fontSize: 12, color: '#6b7280' }}>JWT envoyé: {debugInfo?.hasAuth ? '✅ oui' : '❌ non'}</Text>
-          <Text style={{ fontSize: 12, color: '#6b7280' }}>Session vérifiée: {sessionChecked ? '✅ oui' : '❌ non'}</Text>
-          <Text style={{ fontSize: 12, color: '#6b7280' }}>Chargement: {loading ? '⏳ en cours' : '✅ terminé'}</Text>
-          {error
-            ? <Text style={{ fontSize: 12, color: '#dc2626' }}>Dernier fetch tasks: ❌ {error}</Text>
-            : <Text style={{ fontSize: 12, color: '#16a34a' }}>Dernier fetch tasks: ✅ {debugInfo?.count ?? 0} tâches chargées</Text>
-          }
+        <View>
+          {/* Bouton de contrôle pour afficher/masquer le debug */}
+          <TouchableOpacity 
+          onPress={() => setShowDebug(!showDebug)}
+          style={{ 
+            backgroundColor: showDebug ? '#dc2626' : '#6b7280', 
+            paddingHorizontal: 12, 
+            paddingVertical: 8, 
+            borderRadius: 6, 
+            marginBottom: 16,
+            alignSelf: 'flex-start'
+          }}
+        >
+          <Text style={{ color: 'white', fontSize: 12, fontWeight: '500' }}>
+            {showDebug ? '🔧 Masquer Debug' : '🔧 Afficher Debug'}
+          </Text>
+        </TouchableOpacity>
+
+        {/* Section debug conditionnelle */}
+        {showDebug && (
+          <View style={{ backgroundColor: '#f3f4f6', padding: 12, borderRadius: 8, marginBottom: 16 }}>
+            <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8 }}>🔧 Debug Info</Text>
+            <Text style={{ fontSize: 12, color: '#6b7280' }}>API URL: {process.env.EXPO_PUBLIC_API_URL}</Text>
+            <Text style={{ fontSize: 12, color: '#6b7280' }}>Email: {debugInfo?.email ?? '—'}</Text>
+            <Text style={{ fontSize: 12, color: '#6b7280' }}>JWT envoyé: {debugInfo?.hasAuth ? '✅ oui' : '❌ non'}</Text>
+            <Text style={{ fontSize: 12, color: '#6b7280' }}>Session vérifiée: {sessionChecked ? '✅ oui' : '❌ non'}</Text>
+            <Text style={{ fontSize: 12, color: '#6b7280' }}>Chargement: {loading ? '⏳ en cours' : '✅ terminé'}</Text>
+            {error
+              ? <Text style={{ fontSize: 12, color: '#dc2626' }}>Dernier fetch tasks: ❌ {error}</Text>
+              : <Text style={{ fontSize: 12, color: '#16a34a' }}>Dernier fetch tasks: ✅ {debugInfo?.count ?? 0} tâches chargées</Text>
+            }
           
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
             <TouchableOpacity 
@@ -368,7 +389,11 @@ export default function Home() {
                 console.log('[DEBUG] 🧪 Test avec X-Debug...');
                 try {
                   const base = process.env.EXPO_PUBLIC_API_URL!.replace(/\/+$/,'');
-                  const headers = { ...(await authHeaders()), 'X-Debug': '1' };
+                  const authHeadersData = await authHeaders();
+                  const headers: Record<string, string> = { 
+                    ...(authHeadersData.Authorization ? { Authorization: authHeadersData.Authorization } : {}),
+                    'X-Debug': '1' 
+                  };
                   const url = `${base}/me/tasks?email=louis.lemay02@gmail.com&statuses=A faire,En cours,En retard`;
                   console.log('[DEBUG] URL:', url);
                   const resp = await fetch(url, { headers });
@@ -388,7 +413,11 @@ export default function Home() {
                 console.log('[DEBUG] 🔍 Test sans filtres de statut...');
                 try {
                   const base = process.env.EXPO_PUBLIC_API_URL!.replace(/\/+$/,'');
-                  const headers = { ...(await authHeaders()), 'X-Debug': '1' };
+                  const authHeadersData = await authHeaders();
+                  const headers: Record<string, string> = { 
+                    ...(authHeadersData.Authorization ? { Authorization: authHeadersData.Authorization } : {}),
+                    'X-Debug': '1' 
+                  };
                   const url = `${base}/me/tasks?email=louis.lemay02@gmail.com`;
                   console.log('[DEBUG] URL sans filtres:', url);
                   const resp = await fetch(url, { headers });
@@ -407,6 +436,8 @@ export default function Home() {
               <Text style={{ color: 'white', fontSize: 12 }}>Test Sans Filtres</Text>
             </TouchableOpacity>
           </View>
+          </View>
+        )}
         </View>
       )}
 

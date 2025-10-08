@@ -1,4 +1,4 @@
-import { Stack } from 'expo-router';
+import { Tabs } from 'expo-router';
 import { useEffect } from 'react';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
@@ -15,8 +15,40 @@ export default function AppLayout() {
   }, []);
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="home" />
-    </Stack>
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: { display: 'none' }, // We'll use our custom BottomTabs
+      }}
+    >
+      <Tabs.Screen 
+        name="home" 
+        options={{
+          title: 'Accueil',
+          tabBarIcon: () => '🏠',
+        }}
+      />
+      <Tabs.Screen 
+        name="dossier" 
+        options={{
+          title: 'Mon dossier',
+          tabBarIcon: () => '📁',
+        }}
+      />
+      <Tabs.Screen 
+        name="factures" 
+        options={{
+          title: 'Factures',
+          tabBarIcon: () => '💰',
+        }}
+      />
+      <Tabs.Screen 
+        name="contact" 
+        options={{
+          title: 'Contact',
+          tabBarIcon: () => '📞',
+        }}
+      />
+    </Tabs>
   );
 }
