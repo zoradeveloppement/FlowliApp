@@ -1,23 +1,24 @@
 import { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, Clipboard } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { supabase } from '@/src/lib/supabase';
 import { Screen } from '../../src/ui/layout';
-import { Input, Button, Card, Snackbar } from '../../src/ui/components';
+import { Button, Snackbar } from '../../src/ui/components';
 
 export default function VerifyOTP() {
   const router = useRouter();
   const { email } = useLocalSearchParams<{ email: string }>();
-  const [code, setCode] = useState('');
+  const [code, setCode] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [attempts, setAttempts] = useState(0);
   const [resendTimer, setResendTimer] = useState(0);
   const [isBlocked, setIsBlocked] = useState(false);
-  const [expiryTimer, setExpiryTimer] = useState(300); // 5 minutes en secondes
+  const [expiryTimer, setExpiryTimer] = useState(300);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const inputRef = useRef<TextInput>(null);
+  
+  const inputRefs = useRef<(TextInput | null)[]>([]);
 
   // Timer pour le bouton renvoyer
   useEffect(() => {
@@ -30,7 +31,7 @@ export default function VerifyOTP() {
     return () => clearInterval(interval);
   }, [resendTimer]);
 
-  // Timer d'expiration (5 minutes)
+  // Timer d'expiration
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (expiryTimer > 0) {
@@ -45,25 +46,11 @@ export default function VerifyOTP() {
   useEffect(() => {
     if (!email) {
       router.replace('/(auth)/login');
+    } else {
+      // Focus premier input
+      setTimeout(() => inputRefs.current[0]?.focus(), 300);
     }
   }, [email, router]);
-
-  // Vérification du presse-papiers au chargement
-  useEffect(() => {
-    const checkClipboard = async () => {
-      try {
-        const clipboardContent = await Clipboard.getString();
-        // Vérifier si le contenu est un code à 6 chiffres
-        if (/^\d{6}$/.test(clipboardContent)) {
-          setCode(clipboardContent);
-        }
-      } catch (error) {
-        // Ignorer les erreurs de presse-papiers
-      }
-    };
-    
-    checkClipboard();
-  }, []);
 
   // Fonction pour masquer l'email
   const maskEmail = (email: string) => {
@@ -71,22 +58,57 @@ export default function VerifyOTP() {
     if (localPart.length <= 2) {
       return `${localPart[0]}***@${domain}`;
     }
-    return `${localPart[0]}***@${domain}`;
+    return `${localPart.substring(0, 2)}***@${domain}`;
+  };
+
+  // Gestion de la saisie d'un chiffre
+  const handleCodeChange = (text: string, index: number) => {
+    if (isBlocked) return;
+    
+    const newCode = [...code];
+    
+    // Si on colle un code complet
+    if (text.length === 6 && index === 0) {
+      const digits = text.split('').slice(0, 6);
+      setCode(digits);
+      inputRefs.current[5]?.focus();
+      return;
+    }
+    
+    // Saisie normale
+    const digit = text.slice(-1);
+    if (/^\d$/.test(digit) || digit === '') {
+      newCode[index] = digit;
+      setCode(newCode);
+      
+      // Auto-focus sur le champ suivant
+      if (digit && index < 5) {
+        inputRefs.current[index + 1]?.focus();
+      }
+    }
+  };
+
+  // Gestion du backspace
+  const handleKeyPress = (e: any, index: number) => {
+    if (e.nativeEvent.key === 'Backspace' && !code[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
   };
 
   // Vérification du code OTP
   const handleVerifyOTP = async () => {
-    if (!code || code.length !== 6) {
-      setError('Veuillez entrer un code à 6 chiffres');
+    const fullCode = code.join('');
+    if (fullCode.length !== 6) {
+      setError('Veuillez entrer le code complet');
       return;
     }
 
     setLoading(true);
     setError(null);
     try {
-      const { data, error } = await supabase.auth.verifyOtp({
+      const { error } = await supabase.auth.verifyOtp({
         email: email!,
-        token: code,
+        token: fullCode,
         type: 'email'
       });
 
@@ -95,22 +117,21 @@ export default function VerifyOTP() {
         setAttempts(newAttempts);
 
         if (newAttempts >= 3) {
-          // Bloquer après 3 tentatives
           setIsBlocked(true);
-          setCode('');
-          inputRef.current?.blur();
+          setCode(['', '', '', '', '', '']);
           setError('Trop de tentatives. Demandez un nouveau code.');
         } else {
-          setError('Code invalide ou expiré. Demandez un nouveau code.');
+          setError('Code invalide. Réessayez.');
+          setCode(['', '', '', '', '', '']);
+          inputRefs.current[0]?.focus();
         }
         return;
       }
 
-      // Succès - redirection vers Home
       setSuccess('Connexion réussie !');
       setTimeout(() => {
         router.replace('/(app)/home');
-      }, 1000);
+      }, 800);
     } catch (err: any) {
       setError(err.message || 'Une erreur est survenue');
     } finally {
@@ -132,13 +153,13 @@ export default function VerifyOTP() {
       if (error) {
         setError(error.message);
       } else {
-        setSuccess('Un nouveau code a été envoyé à votre adresse email');
-        setCode(''); // Reset le code
-        setAttempts(0); // Reset les tentatives
-        setIsBlocked(false); // Débloquer
-        setResendTimer(60); // Timer de 60s
-        setExpiryTimer(300); // Reset timer d'expiration (5 min)
-        inputRef.current?.focus(); // Refocus sur l'input
+        setSuccess('Nouveau code envoyé');
+        setCode(['', '', '', '', '', '']);
+        setAttempts(0);
+        setIsBlocked(false);
+        setResendTimer(60);
+        setExpiryTimer(300);
+        setTimeout(() => inputRefs.current[0]?.focus(), 300);
       }
     } catch (err: any) {
       setError(err.message || 'Impossible de renvoyer le code');
@@ -151,12 +172,8 @@ export default function VerifyOTP() {
     router.replace('/(auth)/login');
   };
 
-  const handleChangeEmail = () => {
-    router.replace('/(auth)/login');
-  };
-
-  // Formatage du temps d'expiration
-  const formatExpiryTime = (seconds: number) => {
+  // Formatage du temps
+  const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
@@ -164,84 +181,117 @@ export default function VerifyOTP() {
 
   if (!email) {
     return (
-      <Screen>
+      <Screen className="bg-white">
         <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" />
-          <Text className="text-body text-textMuted mt-4">Chargement...</Text>
+          <ActivityIndicator size="large" color="#7C3AED" />
         </View>
       </Screen>
     );
   }
 
+  const isCodeComplete = code.every(digit => digit !== '');
+
   return (
-    <Screen>
-      <View className="flex-1 justify-center">
-        <Card className="mb-6">
-          <Text className="text-h1 text-textMain mb-2">Vérification du code</Text>
-          <Text className="text-body text-textMuted mb-4">
-            Entrez le code à 6 chiffres envoyé à :
-          </Text>
-          
-          <View className="flex-row items-center justify-between mb-4">
-            <Text className="text-body text-textMain font-medium">
-              {maskEmail(email)}
+    <Screen className="bg-white">
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        className="flex-1"
+      >
+        <View className="flex-1 px-6 pt-12">
+          {/* Header avec bouton retour */}
+          <TouchableOpacity 
+            onPress={handleBackToLogin}
+            className="mb-8"
+            activeOpacity={0.7}
+          >
+            <View className="flex-row items-center">
+              <Text className="text-2xl mr-2">←</Text>
+              <Text className="text-gray-600 text-base">Retour</Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* Titre */}
+          <View className="mb-10">
+            <Text className="text-4xl font-bold text-gray-900 mb-3">
+              Vérification
             </Text>
-            <TouchableOpacity onPress={handleChangeEmail}>
-              <Text className="text-primary text-secondary font-medium">
-                Changer d'email
-              </Text>
-            </TouchableOpacity>
+            <Text className="text-base text-gray-500 leading-relaxed">
+              Code envoyé à{'\n'}
+              <Text className="font-semibold text-gray-700">{maskEmail(email)}</Text>
+            </Text>
           </View>
-          
-          {expiryTimer > 0 && (
-            <Text className="text-danger text-secondary text-center mb-4">
-              Expire dans {formatExpiryTime(expiryTimer)}
-            </Text>
-          )}
-          
-          <Input
-            label="Code de vérification"
-            placeholder="123456"
-            value={code}
-            onChangeText={setCode}
-            keyboardType="numeric"
-            maxLength={6}
-            error={isBlocked ? 'Trop de tentatives - Demandez un nouveau code' : undefined}
-            className={isBlocked ? 'border-danger bg-red-50' : ''}
-          />
-          
+
+          {/* Inputs code - Style moderne */}
+          <View className="mb-8">
+            <View className="flex-row justify-between mb-4">
+              {code.map((digit, index) => (
+                <TextInput
+                  key={index}
+                  ref={ref => inputRefs.current[index] = ref}
+                  value={digit}
+                  onChangeText={(text) => handleCodeChange(text, index)}
+                  onKeyPress={(e) => handleKeyPress(e, index)}
+                  keyboardType="number-pad"
+                  maxLength={index === 0 ? 6 : 1}
+                  editable={!isBlocked && !loading}
+                  className={`
+                    flex-1 mx-1.5 h-16 rounded-2xl text-center text-2xl font-bold
+                    ${digit ? 'bg-violet-50 border-2 border-violet-600 text-violet-600' : 'bg-gray-50 border-2 border-gray-200 text-gray-900'}
+                    ${isBlocked ? 'opacity-50' : 'opacity-100'}
+                  `}
+                  style={{ textAlignVertical: 'center' }}
+                />
+              ))}
+            </View>
+            
+            {/* Timer d'expiration */}
+            {expiryTimer > 0 && expiryTimer < 60 && (
+              <Text className="text-center text-sm text-orange-600">
+                Expire dans {formatTime(expiryTimer)}
+              </Text>
+            )}
+          </View>
+
+          {/* Bouton principal */}
           <Button
             title={loading ? "Vérification..." : "Valider"}
             variant="primary"
             onPress={handleVerifyOTP}
-            disabled={loading || code.length !== 6 || isBlocked}
-            className="mt-4"
+            disabled={loading || !isCodeComplete || isBlocked}
+            className="rounded-full py-4 mb-6"
           />
-          
-          <Button
-            title={
-              resendLoading 
-                ? "Envoi en cours..." 
+
+          {/* Renvoyer le code */}
+          <TouchableOpacity
+            onPress={handleResendCode}
+            disabled={resendLoading || resendTimer > 0 || isBlocked}
+            activeOpacity={0.7}
+            className="items-center py-3"
+          >
+            <Text className={`text-base ${
+              resendLoading || resendTimer > 0 || isBlocked 
+                ? 'text-gray-400' 
+                : 'text-violet-600 font-medium'
+            }`}>
+              {resendLoading 
+                ? "Envoi..." 
                 : resendTimer > 0 
                   ? `Renvoyer dans ${resendTimer}s` 
                   : 'Renvoyer le code'
-            }
-            variant="secondary"
-            onPress={handleResendCode}
-            disabled={resendLoading || resendTimer > 0 || isBlocked}
-            className="mt-3"
-          />
-          
-          <TouchableOpacity
-            onPress={handleBackToLogin}
-            className="mt-4 items-center"
-          >
-            <Text className="text-primary text-secondary">
-              Retour à la connexion
+              }
             </Text>
           </TouchableOpacity>
-        </Card>
-      </View>
+
+          {/* Info sécurité */}
+          {attempts > 0 && attempts < 3 && (
+            <View className="mt-6 bg-orange-50 rounded-2xl p-4">
+              <Text className="text-sm text-orange-700 text-center">
+                {3 - attempts} tentative{3 - attempts > 1 ? 's' : ''} restante{3 - attempts > 1 ? 's' : ''}
+              </Text>
+            </View>
+          )}
+        </View>
+      </KeyboardAvoidingView>
       
       <Snackbar
         type="error"
