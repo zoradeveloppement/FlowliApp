@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { Screen, AppLayout } from '../../ui/layout';
 import { Card, Badge, Input, Button, Skeleton } from '../../ui/components';
 
@@ -33,10 +33,10 @@ const FilterBar: React.FC<FilterBarProps> = ({
   onReset,
 }) => {
   return (
-    <Card className="mb-4">
-      <Text className="text-h2 text-textMain mb-4">Filtres</Text>
+    <Card className="mb-4" style={styles.filterCard}>
+      <Text className="text-h2 text-textMain mb-4" style={styles.filterTitle}>Filtres</Text>
       
-      <View className="space-y-4">
+      <View className="space-y-4" style={styles.filterContent}>
         <Input
           label="Rechercher"
           placeholder="Nom de la tâche..."
@@ -51,20 +51,28 @@ const FilterBar: React.FC<FilterBarProps> = ({
           onChangeText={onProjectIdChange}
         />
         
-        <View className="flex-row items-center justify-between">
-          <Text className="text-body text-textMain">
+        <View className="flex-row items-center justify-between" style={styles.toggleRow}>
+          <Text className="text-body text-textMain" style={styles.toggleLabel}>
             Inclure les tâches terminées
           </Text>
           <TouchableOpacity
             className={`w-12 h-6 rounded-full ${
               includeCompleted ? 'bg-primary' : 'bg-gray-300'
             }`}
+            style={[
+              styles.toggle,
+              includeCompleted ? styles.toggleActive : styles.toggleInactive
+            ]}
             onPress={() => onIncludeCompletedChange(!includeCompleted)}
           >
             <View
               className={`w-5 h-5 bg-white rounded-full transition-transform ${
                 includeCompleted ? 'translate-x-6' : 'translate-x-0.5'
               }`}
+              style={[
+                styles.toggleThumb,
+                includeCompleted ? styles.toggleThumbActive : styles.toggleThumbInactive
+              ]}
             />
           </TouchableOpacity>
         </View>
@@ -81,17 +89,17 @@ const FilterBar: React.FC<FilterBarProps> = ({
 
 const TaskCard: React.FC<{ task: Task }> = ({ task }) => {
   return (
-    <Card className="mb-3">
-      <View className="flex-row items-start justify-between mb-2">
-        <View className="flex-1 mr-3">
-          <Text className="text-body text-textMain font-medium mb-1">
+    <Card className="mb-3" style={styles.taskCard}>
+      <View className="flex-row items-start justify-between mb-2" style={styles.taskHeader}>
+        <View className="flex-1 mr-3" style={styles.taskContent}>
+          <Text className="text-body text-textMain font-medium mb-1" style={styles.taskTitle}>
             {task.title}
           </Text>
-          <Text className="text-secondary text-textMuted">
+          <Text className="text-secondary text-textMuted" style={styles.taskProject}>
             {task.projectName}
           </Text>
           {task.dueDate && (
-            <Text className="text-secondary text-textMuted mt-1">
+            <Text className="text-secondary text-textMuted mt-1" style={styles.taskDueDate}>
               Échéance: {new Date(task.dueDate).toLocaleDateString('fr-FR')}
             </Text>
           )}
@@ -100,15 +108,15 @@ const TaskCard: React.FC<{ task: Task }> = ({ task }) => {
       </View>
       
       {task.progress > 0 && (
-        <View className="mt-2">
-          <View className="flex-row justify-between items-center mb-1">
-            <Text className="text-secondary text-textMuted">Progression</Text>
-            <Text className="text-secondary text-textMuted">{task.progress}%</Text>
+        <View className="mt-2" style={styles.progressContainer}>
+          <View className="flex-row justify-between items-center mb-1" style={styles.progressHeader}>
+            <Text className="text-secondary text-textMuted" style={styles.progressLabel}>Progression</Text>
+            <Text className="text-secondary text-textMuted" style={styles.progressValue}>{task.progress}%</Text>
           </View>
-          <View className="w-full bg-gray-200 rounded-full h-2">
+          <View className="w-full bg-gray-200 rounded-full h-2" style={styles.progressBar}>
             <View
               className="bg-primary h-2 rounded-full"
-              style={{ width: `${task.progress}%` }}
+              style={[styles.progressFill, { width: `${task.progress}%` }]}
             />
           </View>
         </View>
@@ -315,3 +323,107 @@ export const DossierScreen: React.FC = () => {
     </AppLayout>
   );
 };
+
+// Styles de fallback pour Expo Go (quand NativeWind ne fonctionne pas)
+const styles = StyleSheet.create({
+  filterCard: {
+    marginBottom: 16,
+  },
+  filterTitle: {
+    fontSize: 20,
+    fontWeight: '500',
+    color: '#1A1A1A',
+    marginBottom: 16,
+  },
+  filterContent: {
+    gap: 16,
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  toggleLabel: {
+    fontSize: 16,
+    color: '#1A1A1A',
+  },
+  toggle: {
+    width: 48,
+    height: 24,
+    borderRadius: 12,
+  },
+  toggleActive: {
+    backgroundColor: '#6C63FF',
+  },
+  toggleInactive: {
+    backgroundColor: '#D1D5DB',
+  },
+  toggleThumb: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+  },
+  toggleThumbActive: {
+    transform: [{ translateX: 24 }],
+  },
+  toggleThumbInactive: {
+    transform: [{ translateX: 2 }],
+  },
+  taskCard: {
+    marginBottom: 12,
+  },
+  taskHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  taskContent: {
+    flex: 1,
+    marginRight: 12,
+  },
+  taskTitle: {
+    fontSize: 16,
+    color: '#1A1A1A',
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  taskProject: {
+    fontSize: 14,
+    color: '#6E6E6E',
+  },
+  taskDueDate: {
+    fontSize: 14,
+    color: '#6E6E6E',
+    marginTop: 4,
+  },
+  progressContainer: {
+    marginTop: 8,
+  },
+  progressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  progressLabel: {
+    fontSize: 14,
+    color: '#6E6E6E',
+  },
+  progressValue: {
+    fontSize: 14,
+    color: '#6E6E6E',
+  },
+  progressBar: {
+    width: '100%',
+    backgroundColor: '#E5E7EB',
+    borderRadius: 10,
+    height: 8,
+  },
+  progressFill: {
+    backgroundColor: '#6C63FF',
+    height: 8,
+    borderRadius: 10,
+  },
+});

@@ -1,0 +1,74 @@
+{
+  "styling": {
+    "enabled": true,
+    "fallbackRequired": true,
+    "doubleSystem": true,
+    "colors": {
+      "primary": "#6C63FF",
+      "primaryLight": "#B3B0FF",
+      "bgLight": "#FFFFFF",
+      "bgGray": "#F7F8FA",
+      "textMain": "#1A1A1A",
+      "textMuted": "#6E6E6E",
+      "success": "#4CAF50",
+      "warn": "#FF9800",
+      "danger": "#F44336"
+    },
+    "typography": {
+      "h1": { "fontSize": 24, "fontWeight": "bold" },
+      "h2": { "fontSize": 20, "fontWeight": "600" },
+      "body": { "fontSize": 16, "fontWeight": "400" },
+      "secondary": { "fontSize": 14, "fontWeight": "400" },
+      "button": { "fontSize": 15, "fontWeight": "500" }
+    },
+    "spacing": {
+      "xs": 4,
+      "sm": 8,
+      "md": 16,
+      "lg": 24,
+      "xl": 32,
+      "xxl": 48
+    },
+    "borderRadius": {
+      "sm": 4,
+      "md": 8,
+      "lg": 12,
+      "xl": 16,
+      "full": 9999
+    }
+  },
+  "components": {
+    "pages": {
+      "home": { "status": "completed", "fallback": true },
+      "dossier": { "status": "completed", "fallback": true },
+      "factures": { "status": "completed", "fallback": true },
+      "contact": { "status": "completed", "fallback": true }
+    },
+    "ui": {
+      "Button": { "status": "completed", "fallback": true },
+      "Input": { "status": "completed", "fallback": true },
+      "Card": { "status": "completed", "fallback": true },
+      "TaskDetailModal": { "status": "completed", "fallback": true }
+    },
+    "features": {
+      "DossierScreen": { "status": "completed", "fallback": true },
+      "FacturesScreen": { "status": "completed", "fallback": true },
+      "ContactScreen": { "status": "completed", "fallback": true }
+    }
+  },
+  "rules": {
+    "importStyleSheet": true,
+    "propsStyle": true,
+    "fallbackStyles": true,
+    "explanatoryComment": true,
+    "flowliColors": true,
+    "consistentNaming": true
+  },
+  "testing": {
+    "expoGo": true,
+    "devicePhysical": true,
+    "web": true,
+    "colorConsistency": true,
+    "typographyConsistency": true
+  }
+}

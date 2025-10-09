@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Linking, Alert, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Linking, Alert, Platform, StyleSheet } from 'react-native';
 import { Screen, AppLayout } from '../../ui/layout';
 import { Card, Button, Input } from '../../ui/components';
 
@@ -9,19 +9,19 @@ const ContactCard: React.FC<{
   icon: string;
   onPress: () => void;
 }> = ({ title, subtitle, icon, onPress }) => (
-  <TouchableOpacity onPress={onPress}>
-    <Card className="mb-4">
-      <View className="flex-row items-center">
-        <Text className="text-3xl mr-4">{icon}</Text>
-        <View className="flex-1">
-          <Text className="text-body text-textMain font-medium mb-1">
+  <TouchableOpacity onPress={onPress} style={styles.contactCardTouchable}>
+    <Card className="mb-4" style={styles.contactCard}>
+      <View className="flex-row items-center" style={styles.contactCardContent}>
+        <Text className="text-3xl mr-4" style={styles.contactIcon}>{icon}</Text>
+        <View className="flex-1" style={styles.contactInfo}>
+          <Text className="text-body text-textMain font-medium mb-1" style={styles.contactTitle}>
             {title}
           </Text>
-          <Text className="text-secondary text-textMuted">
+          <Text className="text-secondary text-textMuted" style={styles.contactSubtitle}>
             {subtitle}
           </Text>
         </View>
-        <Text className="text-textMuted">→</Text>
+        <Text className="text-textMuted" style={styles.contactArrow}>→</Text>
       </View>
     </Card>
   </TouchableOpacity>
@@ -208,3 +208,38 @@ export const ContactScreen: React.FC = () => {
     </AppLayout>
   );
 };
+
+// Styles de fallback pour Expo Go (quand NativeWind ne fonctionne pas)
+const styles = StyleSheet.create({
+  contactCardTouchable: {
+    // TouchableOpacity styles
+  },
+  contactCard: {
+    marginBottom: 16,
+  },
+  contactCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  contactIcon: {
+    fontSize: 48,
+    marginRight: 16,
+  },
+  contactInfo: {
+    flex: 1,
+  },
+  contactTitle: {
+    fontSize: 16,
+    color: '#1A1A1A',
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  contactSubtitle: {
+    fontSize: 14,
+    color: '#6E6E6E',
+  },
+  contactArrow: {
+    color: '#6E6E6E',
+    fontSize: 16,
+  },
+});

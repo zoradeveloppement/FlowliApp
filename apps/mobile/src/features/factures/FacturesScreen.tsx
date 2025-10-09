@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert, Platform, StyleSheet } from 'react-native';
 import { Screen, AppLayout } from '../../ui/layout';
 import { Card, Button, Skeleton } from '../../ui/components';
 
@@ -43,27 +43,32 @@ const InvoiceCard: React.FC<{ invoice: Invoice; onDownload: (invoice: Invoice) =
   };
 
   return (
-    <Card className="mb-4">
-      <View className="flex-row items-start justify-between mb-3">
-        <View className="flex-1">
-          <Text className="text-body text-textMain font-medium mb-1">
+    <Card className="mb-4" style={styles.invoiceCard}>
+      <View className="flex-row items-start justify-between mb-3" style={styles.invoiceHeader}>
+        <View className="flex-1" style={styles.invoiceInfo}>
+          <Text className="text-body text-textMain font-medium mb-1" style={styles.invoiceNumber}>
             Facture #{invoice.number}
           </Text>
-          <Text className="text-secondary text-textMuted mb-2">
+          <Text className="text-secondary text-textMuted mb-2" style={styles.invoiceDate}>
             {new Date(invoice.date).toLocaleDateString('fr-FR')}
           </Text>
-          <Text className="text-h2 text-textMain font-semibold">
+          <Text className="text-h2 text-textMain font-semibold" style={styles.invoiceAmount}>
             {invoice.amount.toLocaleString('fr-FR')} €
           </Text>
         </View>
-        <View className="items-end">
-          <Text className={`text-body font-medium ${getStatusColor(invoice.status)}`}>
+        <View className="items-end" style={styles.invoiceStatus}>
+          <Text className={`text-body font-medium ${getStatusColor(invoice.status)}`} style={[
+            styles.statusText,
+            getStatusColor(invoice.status) === 'text-success' && styles.statusSuccess,
+            getStatusColor(invoice.status) === 'text-warn' && styles.statusWarn,
+            getStatusColor(invoice.status) === 'text-danger' && styles.statusDanger,
+          ]}>
             {getStatusText(invoice.status)}
           </Text>
         </View>
       </View>
       
-      <View className="flex-row space-x-3">
+      <View className="flex-row space-x-3" style={styles.invoiceActions}>
         <Button
           title="📄 Voir PDF"
           variant="secondary"
@@ -236,3 +241,55 @@ export const FacturesScreen: React.FC = () => {
     </AppLayout>
   );
 };
+
+// Styles de fallback pour Expo Go (quand NativeWind ne fonctionne pas)
+const styles = StyleSheet.create({
+  invoiceCard: {
+    marginBottom: 16,
+  },
+  invoiceHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  invoiceInfo: {
+    flex: 1,
+  },
+  invoiceNumber: {
+    fontSize: 16,
+    color: '#1A1A1A',
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  invoiceDate: {
+    fontSize: 14,
+    color: '#6E6E6E',
+    marginBottom: 8,
+  },
+  invoiceAmount: {
+    fontSize: 20,
+    color: '#1A1A1A',
+    fontWeight: '600',
+  },
+  invoiceStatus: {
+    alignItems: 'flex-end',
+  },
+  statusText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  statusSuccess: {
+    color: '#4CAF50',
+  },
+  statusWarn: {
+    color: '#FF9800',
+  },
+  statusDanger: {
+    color: '#F44336',
+  },
+  invoiceActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+});

@@ -624,24 +624,31 @@ export default function Home() {
         )}
 
         {/* Header - Style Flowli */}
-        <View className="mb-6">
-          <View className="flex-row justify-between items-center mb-2">
+        <View className="mb-6" style={styles.headerSection}>
+          <View className="flex-row justify-between items-center mb-2" style={styles.headerRow}>
             <View>
-              <Text className="text-3xl font-bold text-textMain mb-1">
-                Mes <Text className="text-primary">tâches</Text>
+              <Text className="text-3xl font-bold text-textMain mb-1" style={styles.headerTitle}>
+                Mes <Text className="text-primary" style={styles.headerTitleAccent}>tâches</Text>
               </Text>
-              <Text className="text-secondary">{items.length} tâche{items.length > 1 ? 's' : ''} au total</Text>
+              <Text className="text-secondary" style={styles.headerSubtitle}>{items.length} tâche{items.length > 1 ? 's' : ''} au total</Text>
             </View>
             
-            <View className="flex-row gap-2">
+            <View className="flex-row gap-2" style={styles.headerActions}>
               <TouchableOpacity 
                 onPress={logout} 
                 disabled={logoutLoading}
                 className={`px-4 py-2 rounded-full bg-white border border-red-200 ${
                   logoutLoading ? 'opacity-60' : ''
                 }`}
+                style={[
+                  styles.logoutButton,
+                  logoutLoading && styles.logoutButtonDisabled
+                ]}
               >
-                <Text className="font-semibold text-red-600 text-sm">
+                <Text className="font-semibold text-red-600 text-sm" style={[
+                  styles.logoutButtonText,
+                  logoutLoading && styles.logoutButtonTextDisabled
+                ]}>
                   {logoutLoading ? '...' : 'Déco'}
                 </Text>
               </TouchableOpacity>
@@ -649,27 +656,35 @@ export default function Home() {
               <TouchableOpacity 
                 onPress={load} 
                 className="px-4 py-2 rounded-full bg-primary shadow-lg shadow-primary/30"
+                style={styles.refreshButton}
               >
-                <Text className="text-white font-semibold text-sm">↻</Text>
+                <Text className="text-white font-semibold text-sm" style={styles.refreshButtonText}>↻</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
 
         {/* Filtres - Style Flowli Card */}
-        <View className="bg-white p-4 rounded-2xl mb-5 border border-gray-100 shadow-sm">
-          <Text className="text-base font-bold mb-3 text-textMain">Filtres</Text>
+        <View className="bg-white p-4 rounded-2xl mb-5 border border-gray-100 shadow-sm" style={styles.filtersCard}>
+          <Text className="text-base font-bold mb-3 text-textMain" style={styles.filtersTitle}>Filtres</Text>
           
-          <View className="flex-row items-center mb-3 gap-2">
+          <View className="flex-row items-center mb-3 gap-2" style={styles.filtersToggleRow}>
             <TouchableOpacity
               onPress={() => setShowDone(!showDone)}
               className={`flex-row items-center px-3.5 py-2 rounded-full flex-1 ${
                 showDone ? 'bg-primary' : 'bg-gray-100'
               }`}
+              style={[
+                styles.filterToggle,
+                showDone ? styles.filterToggleActive : styles.filterToggleInactive
+              ]}
             >
               <Text className={`font-semibold text-sm ${
                 showDone ? 'text-white' : 'text-gray-500'
-              }`}>
+              }`} style={[
+                styles.filterToggleText,
+                showDone ? styles.filterToggleTextActive : styles.filterToggleTextInactive
+              ]}>
                 {showDone ? '✅ Inclure terminées' : 'Ouvertes seulement'}
               </Text>
             </TouchableOpacity>
@@ -677,17 +692,19 @@ export default function Home() {
             <TouchableOpacity
               onPress={resetFilters}
               className="px-3.5 py-2 rounded-full bg-gray-100"
+              style={styles.resetButton}
             >
-              <Text className="text-gray-500 font-semibold text-sm">Reset</Text>
+              <Text className="text-gray-500 font-semibold text-sm" style={styles.resetButtonText}>Reset</Text>
             </TouchableOpacity>
           </View>
 
-          <View className="space-y-2.5">
+          <View className="space-y-2.5" style={styles.filtersInputs}>
             <TextInput
               placeholder="🔍 Rechercher dans les tâches..."
               value={search}
               onChangeText={setSearch}
               className="border border-gray-200 rounded-xl px-3.5 py-3 text-sm bg-bgGray text-textMain"
+              style={styles.searchInput}
               placeholderTextColor="#94a3b8"
             />
 
@@ -696,17 +713,18 @@ export default function Home() {
               value={projectId}
               onChangeText={setProjectId}
               className="border border-gray-200 rounded-xl px-3.5 py-3 text-sm bg-bgGray text-textMain"
+              style={styles.projectInput}
               placeholderTextColor="#94a3b8"
             />
           </View>
 
           {activeFilters.length > 0 && (
-            <View className="mt-3">
-              <Text className="text-gray-500 text-xs mb-1.5 font-medium">Filtres actifs:</Text>
-              <View className="flex-row flex-wrap gap-1.5">
+            <View className="mt-3" style={styles.activeFiltersContainer}>
+              <Text className="text-gray-500 text-xs mb-1.5 font-medium" style={styles.activeFiltersLabel}>Filtres actifs:</Text>
+              <View className="flex-row flex-wrap gap-1.5" style={styles.activeFiltersList}>
                 {activeFilters.map((filter, i) => (
-                  <View key={i} className="bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200">
-                    <Text className="text-blue-700 text-xs font-medium">{filter}</Text>
+                  <View key={i} className="bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200" style={styles.activeFilterBadge}>
+                    <Text className="text-blue-700 text-xs font-medium" style={styles.activeFilterText}>{filter}</Text>
                   </View>
                 ))}
               </View>
@@ -722,17 +740,18 @@ export default function Home() {
             if (displayData.length === 0 && section.title === 'Terminées') return null;
             
             return (
-              <View key={section.title} className="mb-6">
-                <View className="flex-row justify-between items-center mb-3 px-1">
-                  <Text className="text-lg font-bold text-textMain">
+              <View key={section.title} className="mb-6" style={styles.sectionContainer}>
+                <View className="flex-row justify-between items-center mb-3 px-1" style={styles.sectionHeader}>
+                  <Text className="text-lg font-bold text-textMain" style={styles.sectionTitle}>
                     {section.title} ({displayData.length})
                   </Text>
                   {section.title === 'Terminées' && section.data.length > 0 && (
                     <TouchableOpacity 
                       onPress={() => setShowDone(s => !s)}
                       className="px-3 py-1.5 rounded-full bg-gray-100"
+                      style={styles.sectionToggle}
                     >
-                      <Text className="text-primary font-semibold text-xs">
+                      <Text className="text-primary font-semibold text-xs" style={styles.sectionToggleText}>
                         {showDone ? 'Masquer' : 'Afficher'}
                       </Text>
                     </TouchableOpacity>
@@ -740,9 +759,9 @@ export default function Home() {
                 </View>
                 
                 {displayData.length === 0 ? (
-                  <View className="bg-white p-6 rounded-2xl border border-gray-100 items-center">
-                    <Text className="text-3xl mb-2">✨</Text>
-                    <Text className="text-gray-500 text-sm">Aucune tâche {section.title.toLowerCase()}</Text>
+                  <View className="bg-white p-6 rounded-2xl border border-gray-100 items-center" style={styles.emptyState}>
+                    <Text className="text-3xl mb-2" style={styles.emptyStateIcon}>✨</Text>
+                    <Text className="text-gray-500 text-sm" style={styles.emptyStateText}>Aucune tâche {section.title.toLowerCase()}</Text>
                   </View>
                 ) : (
                   displayData.map((item) => (
@@ -757,18 +776,18 @@ export default function Home() {
         </View>
         
         {loading && (
-          <View className="bg-white p-6 rounded-2xl items-center mt-4">
-            <Text className="text-primary text-sm font-medium">⏳ Chargement...</Text>
+          <View className="bg-white p-6 rounded-2xl items-center mt-4" style={styles.loadingState}>
+            <Text className="text-primary text-sm font-medium" style={styles.loadingText}>⏳ Chargement...</Text>
           </View>
         )}
         
         {!loading && items.length === 0 && (
-          <View className="bg-white p-8 rounded-2xl items-center border border-gray-100">
-            <Text className="text-5xl mb-3">📋</Text>
-            <Text className="text-base font-semibold text-textMain mb-1">
+          <View className="bg-white p-8 rounded-2xl items-center border border-gray-100" style={styles.noTasksState}>
+            <Text className="text-5xl mb-3" style={styles.noTasksIcon}>📋</Text>
+            <Text className="text-base font-semibold text-textMain mb-1" style={styles.noTasksTitle}>
               Aucune tâche
             </Text>
-            <Text className="text-gray-500 text-sm text-center">
+            <Text className="text-gray-500 text-sm text-center" style={styles.noTasksSubtitle}>
               Vous n'avez pas encore de tâches assignées
             </Text>
           </View>
@@ -954,5 +973,256 @@ const styles = StyleSheet.create({
   },
   statusTextDefault: {
     color: '#6B7280',
+  },
+  // Nouveaux styles pour le header
+  headerSection: {
+    marginBottom: 24,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  headerTitle: {
+    fontSize: 30,
+    fontWeight: 'bold',
+    color: '#1A1A1A',
+    marginBottom: 4,
+  },
+  headerTitleAccent: {
+    color: '#6C63FF',
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: '#6E6E6E',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  logoutButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+  },
+  logoutButtonDisabled: {
+    opacity: 0.6,
+  },
+  logoutButtonText: {
+    fontWeight: '600',
+    fontSize: 14,
+    color: '#DC2626',
+  },
+  logoutButtonTextDisabled: {
+    color: '#9CA3AF',
+  },
+  refreshButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#6C63FF',
+    shadowColor: '#6C63FF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  refreshButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  // Nouveaux styles pour les filtres
+  filtersCard: {
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  filtersTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1A1A1A',
+    marginBottom: 12,
+  },
+  filtersToggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    gap: 8,
+  },
+  filterToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    flex: 1,
+  },
+  filterToggleActive: {
+    backgroundColor: '#6C63FF',
+  },
+  filterToggleInactive: {
+    backgroundColor: '#F3F4F6',
+  },
+  filterToggleText: {
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  filterToggleTextActive: {
+    color: '#FFFFFF',
+  },
+  filterToggleTextInactive: {
+    color: '#6B7280',
+  },
+  resetButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#F3F4F6',
+  },
+  resetButtonText: {
+    color: '#6B7280',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  filtersInputs: {
+    gap: 10,
+  },
+  searchInput: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 14,
+    backgroundColor: '#F7F8FA',
+    color: '#1A1A1A',
+  },
+  projectInput: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 14,
+    backgroundColor: '#F7F8FA',
+    color: '#1A1A1A',
+  },
+  activeFiltersContainer: {
+    marginTop: 12,
+  },
+  activeFiltersLabel: {
+    color: '#6B7280',
+    fontSize: 12,
+    marginBottom: 6,
+    fontWeight: '500',
+  },
+  activeFiltersList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  activeFilterBadge: {
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+  },
+  activeFilterText: {
+    color: '#1E40AF',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  // Nouveaux styles pour les sections
+  sectionContainer: {
+    marginBottom: 24,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+    paddingHorizontal: 4,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1A1A1A',
+  },
+  sectionToggle: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: '#F3F4F6',
+  },
+  sectionToggleText: {
+    color: '#6C63FF',
+    fontWeight: '600',
+    fontSize: 12,
+  },
+  emptyState: {
+    backgroundColor: '#FFFFFF',
+    padding: 24,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+    alignItems: 'center',
+  },
+  emptyStateIcon: {
+    fontSize: 48,
+    marginBottom: 8,
+  },
+  emptyStateText: {
+    color: '#6B7280',
+    fontSize: 14,
+  },
+  loadingState: {
+    backgroundColor: '#FFFFFF',
+    padding: 24,
+    borderRadius: 16,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  loadingText: {
+    color: '#6C63FF',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  noTasksState: {
+    backgroundColor: '#FFFFFF',
+    padding: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+  },
+  noTasksIcon: {
+    fontSize: 80,
+    marginBottom: 12,
+  },
+  noTasksTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1A1A1A',
+    marginBottom: 4,
+  },
+  noTasksSubtitle: {
+    color: '#6B7280',
+    fontSize: 14,
+    textAlign: 'center',
   },
 });

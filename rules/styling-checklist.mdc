@@ -1,0 +1,210 @@
+# Rule: Styling Checklist — Vérifications Obligatoires
+
+## Intent
+- **Checklist complète** pour garantir le styling sur tous les composants
+- **Vérifications** avant commit et déploiement
+- **Qualité** et cohérence visuelle garanties
+
+## Checklist de développement
+
+### **1. Imports obligatoires**
+```tsx
+// ✅ OBLIGATOIRE dans chaque composant
+import { StyleSheet } from 'react-native';
+```
+
+### **2. Pattern de code**
+```tsx
+// ✅ BON - Double système
+<View 
+  className="bg-primary rounded-xl p-4"
+  style={styles.card}
+>
+  <Text 
+    className="text-white font-bold"
+    style={styles.cardTitle}
+  >
+    Titre
+  </Text>
+</View>
+
+// ❌ MAUVAIS - Seulement NativeWind
+<View className="bg-primary rounded-xl p-4">
+  <Text className="text-white font-bold">Titre</Text>
+</View>
+```
+
+### **3. Styles de fallback**
+```tsx
+// ✅ OBLIGATOIRE - Objet styles avec StyleSheet.create()
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: '#6C63FF',
+    borderRadius: 12,
+    padding: 16,
+  },
+  cardTitle: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+});
+```
+
+### **4. Commentaire explicatif**
+```tsx
+// ✅ OBLIGATOIRE - Commentaire explicatif
+// Styles de fallback pour Expo Go (quand NativeWind ne fonctionne pas)
+const styles = StyleSheet.create({
+  // ... styles
+});
+```
+
+## Vérifications par type de composant
+
+### **Pages principales**
+- [ ] `app/(app)/home.tsx` ✅ Styles ajoutés
+- [ ] `app/(app)/dossier.tsx` ✅ Styles ajoutés  
+- [ ] `app/(app)/factures.tsx` ✅ Styles ajoutés
+- [ ] `app/(app)/contact.tsx` ✅ Styles ajoutés
+
+### **Composants UI**
+- [ ] `src/ui/components/Button.tsx` ✅ Déjà avec fallback
+- [ ] `src/ui/components/Input.tsx` ✅ Déjà avec fallback
+- [ ] `src/ui/components/Card.tsx` ✅ Déjà avec fallback
+- [ ] `src/ui/components/TaskDetailModal.tsx` ✅ Styles ajoutés
+
+### **Features**
+- [ ] `src/features/dossier/DossierScreen.tsx` ✅ Styles ajoutés
+- [ ] `src/features/factures/FacturesScreen.tsx` ✅ Styles ajoutés
+- [ ] `src/features/contact/ContactScreen.tsx` ✅ Styles ajoutés
+
+## Vérifications par élément
+
+### **Containers**
+- [ ] `style={styles.container}` sur le container principal
+- [ ] `backgroundColor: '#F7F8FA'` pour le fond
+- [ ] `flex: 1` pour l'occupation de l'espace
+
+### **Headers**
+- [ ] `style={styles.header}` sur les headers
+- [ ] `style={styles.headerTitle}` sur les titres
+- [ ] `style={styles.headerSubtitle}` sur les sous-titres
+
+### **Cards**
+- [ ] `style={styles.card}` sur les cartes
+- [ ] `backgroundColor: '#FFFFFF'` pour le fond blanc
+- [ ] `borderRadius: 12` pour les coins arrondis
+- [ ] `padding: 16` pour l'espacement interne
+
+### **Buttons**
+- [ ] `style={styles.button}` sur les boutons
+- [ ] `style={styles.buttonPrimary}` pour les boutons principaux
+- [ ] `style={styles.buttonText}` sur le texte des boutons
+
+### **Inputs**
+- [ ] `style={styles.input}` sur les champs de saisie
+- [ ] `borderColor: '#E5E7EB'` pour les bordures
+- [ ] `borderRadius: 8` pour les coins arrondis
+
+### **Text**
+- [ ] `style={styles.text}` sur les textes
+- [ ] `style={styles.textMain}` pour le texte principal
+- [ ] `style={styles.textMuted}` pour le texte secondaire
+
+## Couleurs Flowli (obligatoires)
+
+### **Couleurs principales**
+- [ ] `primary: '#6C63FF'` - Violet Flowli
+- [ ] `primaryLight: '#B3B0FF'` - Violet clair
+- [ ] `bgLight: '#FFFFFF'` - Blanc
+- [ ] `bgGray: '#F7F8FA'` - Gris clair
+
+### **Couleurs de texte**
+- [ ] `textMain: '#1A1A1A'` - Noir texte
+- [ ] `textMuted: '#6E6E6E'` - Gris texte
+
+### **Couleurs d'état**
+- [ ] `success: '#4CAF50'` - Vert
+- [ ] `warn: '#FF9800'` - Orange
+- [ ] `danger: '#F44336'` - Rouge
+
+## Typographie (obligatoire)
+
+### **Tailles de texte**
+- [ ] `h1: 24px` - Titres principaux
+- [ ] `h2: 20px` - Sous-titres
+- [ ] `body: 16px` - Texte principal
+- [ ] `secondary: 14px` - Texte secondaire
+- [ ] `button: 15px` - Texte des boutons
+
+### **Poids de police**
+- [ ] `bold: 'bold'` - Titres
+- [ ] `semibold: '600'` - Sous-titres
+- [ ] `medium: '500'` - Boutons
+- [ ] `regular: '400'` - Texte normal
+
+## Tests obligatoires
+
+### **Tests de base**
+- [ ] **Expo Go** : Vérifier l'affichage sur mobile
+- [ ] **Device physique** : Test sur iPhone/Android
+- [ ] **Web** : Test sur navigateur (si applicable)
+
+### **Tests de cohérence**
+- [ ] **Couleurs** : Vérifier la palette Flowli
+- [ ] **Typographie** : Vérifier les tailles et poids
+- [ ] **Espacement** : Vérifier les paddings/margins
+- [ ] **Bordures** : Vérifier les radius
+
+### **Tests de performance**
+- [ ] **Pas de re-render** : Vérifier les performances
+- [ ] **StyleSheet optimisé** : Pas de styles inline
+- [ ] **Fallback fonctionnel** : Styles appliqués même sans NativeWind
+
+## Checklist avant commit
+
+### **Code**
+- [ ] Import `StyleSheet` ajouté
+- [ ] Props `style={styles.xxx}` sur tous les éléments
+- [ ] Objet `styles` créé avec StyleSheet.create()
+- [ ] Commentaire explicatif ajouté
+- [ ] Lint OK, build OK
+
+### **Styling**
+- [ ] Couleurs Flowli utilisées
+- [ ] Typographie cohérente
+- [ ] Espacement harmonieux
+- [ ] Bordures cohérentes
+
+### **Tests**
+- [ ] Test sur Expo Go
+- [ ] Test sur device physique
+- [ ] Vérification de l'affichage
+- [ ] Pas de pages "sans style"
+
+## Checklist avant déploiement
+
+### **Vérifications finales**
+- [ ] **Toutes les pages** ont des styles de fallback
+- [ ] **Tous les composants** respectent le pattern
+- [ ] **Cohérence visuelle** entre toutes les pages
+- [ ] **Performance** optimale
+- [ ] **UX** fluide et professionnelle
+
+### **Indicateurs de qualité**
+- [ ] **0 page sans style** : Toutes les pages ont des fallbacks
+- [ ] **Cohérence visuelle** : Même apparence sur tous les devices
+- [ ] **Performance** : Pas de re-render inutile
+- [ ] **Maintenabilité** : Code facile à modifier
+
+## Règle d'or
+
+**Jamais de composant sans styles de fallback !**
+
+Cette checklist garantit :
+- ✅ **Affichage correct** sur tous les devices
+- ✅ **Cohérence visuelle** entre toutes les pages
+- ✅ **Maintenabilité** du code
+- ✅ **Performance** optimale
+- ✅ **UX** fluide et professionnelle

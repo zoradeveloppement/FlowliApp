@@ -1,0 +1,189 @@
+# Rule: Qualité & Conventions — Portail Client
+
+## Objectifs
+- Lisibilité, cohérence, dette maîtrisée.
+- DX fluide (moins de friction pour coder/déboguer).
+- Base saine pour la montée en charge.
+- **Styling robuste** avec fallback garanti.
+
+## Langage & Style
+- TypeScript partout (app Expo + API Vercel).
+- ESLint + Prettier obligatoires (CI en bloqueur).
+- Nommage: camelCase (variables/fonctions), PascalCase (composants/types).
+- Dossiers: kebab-case (`process-list`, `devices-register`).
+
+## Structure projet
+- Monorepo minimal:
+  - `apps/mobile` (Expo React Native + Web)
+  - `api/*` (Vercel Functions)
+  - `rules/*` (ces fichiers .mdc)
+  - `.env.example`, `README.md`
+
+## React / Expo
+- Composants UI = fonctionnels, hooks only.
+- État global: context léger (Auth) + hooks par domaine.
+- Aucune clé secrète dans le code client.
+- Appels réseau via un petit client `apiClient` (intercepteurs, auth).
+- **STYLING OBLIGATOIRE** : NativeWind + StyleSheet fallback sur tous les composants.
+- **Pattern de styles** : `className` + `style={styles.xxx}` sur chaque élément.
+- **Couleurs Flowli** : Palette standardisée (`#6C63FF`, `#1A1A1A`, etc.).
+
+## Styling & UI (NOUVEAU)
+### **Double système obligatoire**
+```tsx
+// ✅ BON - NativeWind + StyleSheet
+<View 
+  className="bg-primary rounded-xl p-4"
+  style={styles.card}
+>
+  <Text 
+    className="text-white font-bold"
+    style={styles.cardTitle}
+  >
+    Titre
+  </Text>
+</View>
+
+// ❌ MAUVAIS - Seulement NativeWind
+<View className="bg-primary rounded-xl p-4">
+  <Text className="text-white font-bold">Titre</Text>
+</View>
+```
+
+### **Règles de styling**
+- **Import obligatoire** : `import { StyleSheet } from 'react-native'`
+- **Props style** : Toujours ajouter `style={styles.xxx}` aux éléments
+- **Styles de fallback** : Créer un objet `styles` avec StyleSheet.create()
+- **Commentaire** : Ajouter le commentaire explicatif
+- **Couleurs Flowli** : Utiliser la palette standardisée
+- **Typographie** : Tailles cohérentes (14-24px)
+
+### **Palette de couleurs standardisée**
+```tsx
+const colors = {
+  primary: '#6C63FF',        // Violet Flowli
+  primaryLight: '#B3B0FF',   // Violet clair
+  bgLight: '#FFFFFF',        // Blanc
+  bgGray: '#F7F8FA',         // Gris clair
+  textMain: '#1A1A1A',       // Noir texte
+  textMuted: '#6E6E6E',      // Gris texte
+  success: '#4CAF50',        // Vert
+  warn: '#FF9800',          // Orange
+  danger: '#F44336',         // Rouge
+};
+```
+
+### **Pattern de nommage des styles**
+```tsx
+const styles = StyleSheet.create({
+  // Container principal
+  container: { flex: 1, backgroundColor: '#F7F8FA' },
+  
+  // Header
+  header: { padding: 16, backgroundColor: '#FFFFFF' },
+  headerTitle: { fontSize: 24, fontWeight: 'bold' },
+  
+  // Cards
+  card: { backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16 },
+  cardTitle: { fontSize: 16, fontWeight: '600' },
+  
+  // Buttons
+  button: { padding: 12, borderRadius: 8 },
+  buttonPrimary: { backgroundColor: '#6C63FF' },
+  buttonText: { color: '#FFFFFF', fontWeight: '600' },
+  
+  // States
+  loading: { opacity: 0.6 },
+  error: { color: '#F44336' },
+  success: { color: '#4CAF50' },
+});
+```
+
+## API (Vercel)
+- Une fonction = une responsabilité (petits handlers).
+- Valider systématiquement l'entrée (zod ou guards simples).
+- Réponses JSON typées (types partagés si possible).
+
+## Git & Commits
+- Branches par feature: `feat/<scope>`, `fix/<scope>`, `chore/<scope>`.
+- Conventional commits: `feat:`, `fix:`, `refactor:`, `docs:`, `chore:`, `test:`.
+- PR petite + description claire + checklist (lint/tests OK).
+
+## Tests (MVP raisonnable)
+- Unitaire: helpers pur TS + mapping de réponses Airtable.
+- Intégration API: happy path + erreurs (401/403/404/500).
+- E2E manuel MVP: login → lecture process → automation → push reçue.
+- **Test styling** : Vérifier l'affichage sur device mobile.
+
+## Observabilité (MVP)
+- Logs structurés JSON côté API (niveau `info` par défaut).
+- `x-correlation-id` optionnel sur requêtes entrantes, propagé en sortie.
+
+## Performance & Accessibilité
+- Listes virtualisées si besoin (plus tard).
+- A11y: libellés clairs, contraste suffisant, tailles tap-friendly.
+- **Performance styling** : StyleSheet optimisé par React Native.
+
+## Définition de Fini (DoD)
+- Lint OK, build OK, review OK.
+- Scénarios MVP manuels repassés.
+- **Styling OK** : Tous les composants ont des fallbacks.
+- Documentation succincte (README section "Comment tester ?").
+
+## Checklist de développement
+
+### **Avant de commiter**
+- [ ] Lint OK, build OK
+- [ ] Tous les éléments ont des `style={styles.xxx}`
+- [ ] Import `StyleSheet` ajouté
+- [ ] Objet `styles` créé avec StyleSheet.create()
+- [ ] Commentaire explicatif ajouté
+- [ ] Couleurs Flowli utilisées
+- [ ] Test sur device mobile
+- [ ] Vérification de l'affichage
+
+### **Pattern de code obligatoire**
+```tsx
+// ✅ BON - Double système
+<View 
+  className="bg-primary rounded-xl p-4"
+  style={styles.card}
+>
+  <Text 
+    className="text-white font-bold"
+    style={styles.cardTitle}
+  >
+    Titre
+  </Text>
+</View>
+
+// ❌ MAUVAIS - Seulement NativeWind
+<View className="bg-primary rounded-xl p-4">
+  <Text className="text-white font-bold">Titre</Text>
+</View>
+```
+
+## Avantages de cette approche
+
+### **1. Robustesse**
+- Fonctionne même si NativeWind échoue
+- Fallback garanti sur tous les devices
+- Pas de pages "sans style"
+
+### **2. Performance**
+- StyleSheet optimisé par React Native
+- Pas de re-calcul des styles
+- Meilleure performance mobile
+
+### **3. Maintenabilité**
+- Code prévisible et cohérent
+- Facile à déboguer
+- Évolutif
+
+### **4. UX**
+- Interface toujours stylée
+- Cohérence visuelle garantie
+- Expérience utilisateur fluide
+
+## Règle d'or
+**Jamais de composant sans styles de fallback !**

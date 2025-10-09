@@ -1,0 +1,490 @@
+# Rule: Styling Migration Guide — Guide de Migration
+
+## Intent
+- **Guide complet** pour migrer les composants existants
+- **Patterns** à suivre pour les nouveaux composants
+- **Exemples concrets** de migration
+- **Bonnes pratiques** pour le styling
+
+## Migration des composants existants
+
+### **Étape 1 : Identifier les éléments sans style**
+```tsx
+// AVANT - Seulement NativeWind
+<View className="bg-white p-4 rounded-xl">
+  <Text className="text-lg font-bold">Titre</Text>
+  <Text className="text-gray-500">Description</Text>
+</View>
+```
+
+### **Étape 2 : Ajouter l'import StyleSheet**
+```tsx
+// ✅ OBLIGATOIRE
+import { StyleSheet } from 'react-native';
+```
+
+### **Étape 3 : Créer l'objet styles**
+```tsx
+// ✅ OBLIGATOIRE - Styles de fallback
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    borderRadius: 12,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1A1A1A',
+  },
+  cardDescription: {
+    fontSize: 14,
+    color: '#6E6E6E',
+  },
+});
+```
+
+### **Étape 4 : Ajouter les props style**
+```tsx
+// ✅ APRÈS - Double système
+<View 
+  className="bg-white p-4 rounded-xl"
+  style={styles.card}
+>
+  <Text 
+    className="text-lg font-bold"
+    style={styles.cardTitle}
+  >
+    Titre
+  </Text>
+  <Text 
+    className="text-gray-500"
+    style={styles.cardDescription}
+  >
+    Description
+  </Text>
+</View>
+```
+
+### **Étape 5 : Ajouter le commentaire explicatif**
+```tsx
+// ✅ OBLIGATOIRE - Commentaire explicatif
+// Styles de fallback pour Expo Go (quand NativeWind ne fonctionne pas)
+const styles = StyleSheet.create({
+  // ... styles
+});
+```
+
+## Patterns par type de composant
+
+### **1. Pages principales**
+```tsx
+// Pattern pour les pages
+export default function HomePage() {
+  return (
+    <View className="flex-1 bg-bgGray" style={styles.container}>
+      <View className="mb-6" style={styles.headerSection}>
+        <Text className="text-3xl font-bold" style={styles.headerTitle}>
+          Titre
+        </Text>
+      </View>
+      
+      <ScrollView className="flex-1" style={styles.scrollView}>
+        {/* Contenu */}
+      </ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F7F8FA',
+  },
+  headerSection: {
+    marginBottom: 24,
+  },
+  headerTitle: {
+    fontSize: 30,
+    fontWeight: 'bold',
+    color: '#1A1A1A',
+  },
+  scrollView: {
+    flex: 1,
+  },
+});
+```
+
+### **2. Composants UI**
+```tsx
+// Pattern pour les composants UI
+export const Button: React.FC<ButtonProps> = ({ title, variant, onPress }) => {
+  return (
+    <TouchableOpacity
+      className={`px-4 py-3 rounded-full ${
+        variant === 'primary' ? 'bg-primary' : 'bg-gray-200'
+      }`}
+      style={[
+        styles.button,
+        variant === 'primary' ? styles.buttonPrimary : styles.buttonSecondary
+      ]}
+      onPress={onPress}
+    >
+      <Text 
+        className={`font-semibold ${
+          variant === 'primary' ? 'text-white' : 'text-gray-700'
+        }`}
+        style={[
+          styles.buttonText,
+          variant === 'primary' ? styles.buttonTextPrimary : styles.buttonTextSecondary
+        ]}
+      >
+        {title}
+      </Text>
+    </TouchableOpacity>
+  );
+};
+
+const styles = StyleSheet.create({
+  button: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 20,
+  },
+  buttonPrimary: {
+    backgroundColor: '#6C63FF',
+  },
+  buttonSecondary: {
+    backgroundColor: '#E5E7EB',
+  },
+  buttonText: {
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  buttonTextPrimary: {
+    color: '#FFFFFF',
+  },
+  buttonTextSecondary: {
+    color: '#374151',
+  },
+});
+```
+
+### **3. Cards et containers**
+```tsx
+// Pattern pour les cartes
+export const Card: React.FC<CardProps> = ({ children, padding = 'md' }) => {
+  return (
+    <View 
+      className="bg-white rounded-xl border border-gray-200 shadow-sm"
+      style={[
+        styles.card,
+        padding === 'sm' && styles.cardPaddingSmall,
+        padding === 'md' && styles.cardPaddingMedium,
+        padding === 'lg' && styles.cardPaddingLarge,
+      ]}
+    >
+      {children}
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  cardPaddingSmall: {
+    padding: 12,
+  },
+  cardPaddingMedium: {
+    padding: 16,
+  },
+  cardPaddingLarge: {
+    padding: 24,
+  },
+});
+```
+
+## Nouveaux composants
+
+### **Template de base**
+```tsx
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+
+interface ComponentProps {
+  // Props du composant
+}
+
+export const Component: React.FC<ComponentProps> = ({ 
+  // Props
+}) => {
+  return (
+    <View 
+      className="bg-white p-4 rounded-xl"
+      style={styles.container}
+    >
+      <Text 
+        className="text-lg font-bold"
+        style={styles.title}
+      >
+        Titre
+      </Text>
+    </View>
+  );
+};
+
+// Styles de fallback pour Expo Go (quand NativeWind ne fonctionne pas)
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    borderRadius: 12,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1A1A1A',
+  },
+});
+```
+
+## Bonnes pratiques
+
+### **1. Nommage des styles**
+```tsx
+// ✅ BON - Nommage cohérent
+const styles = StyleSheet.create({
+  // Container principal
+  container: { flex: 1, backgroundColor: '#F7F8FA' },
+  
+  // Header
+  header: { padding: 16, backgroundColor: '#FFFFFF' },
+  headerTitle: { fontSize: 24, fontWeight: 'bold' },
+  headerSubtitle: { fontSize: 14, color: '#6E6E6E' },
+  
+  // Cards
+  card: { backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16 },
+  cardTitle: { fontSize: 16, fontWeight: '600' },
+  cardContent: { marginTop: 8 },
+  
+  // Buttons
+  button: { padding: 12, borderRadius: 8 },
+  buttonPrimary: { backgroundColor: '#6C63FF' },
+  buttonSecondary: { backgroundColor: '#E5E7EB' },
+  buttonText: { color: '#FFFFFF', fontWeight: '600' },
+  
+  // States
+  loading: { opacity: 0.6 },
+  error: { color: '#F44336' },
+  success: { color: '#4CAF50' },
+});
+```
+
+### **2. Organisation des styles**
+```tsx
+// ✅ BON - Organisation logique
+const styles = StyleSheet.create({
+  // 1. Container principal
+  container: { flex: 1, backgroundColor: '#F7F8FA' },
+  
+  // 2. Header
+  header: { padding: 16, backgroundColor: '#FFFFFF' },
+  headerTitle: { fontSize: 24, fontWeight: 'bold' },
+  
+  // 3. Content
+  content: { flex: 1, padding: 16 },
+  
+  // 4. Cards
+  card: { backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16 },
+  
+  // 5. Buttons
+  button: { padding: 12, borderRadius: 8 },
+  
+  // 6. States
+  loading: { opacity: 0.6 },
+});
+```
+
+### **3. Réutilisation des styles**
+```tsx
+// ✅ BON - Réutilisation avec des variantes
+const styles = StyleSheet.create({
+  // Base
+  button: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  
+  // Variantes
+  buttonPrimary: {
+    backgroundColor: '#6C63FF',
+  },
+  buttonSecondary: {
+    backgroundColor: '#E5E7EB',
+  },
+  buttonDanger: {
+    backgroundColor: '#F44336',
+  },
+  
+  // Text
+  buttonText: {
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  buttonTextPrimary: {
+    color: '#FFFFFF',
+  },
+  buttonTextSecondary: {
+    color: '#374151',
+  },
+});
+```
+
+## Exemples de migration
+
+### **Exemple 1 : Page simple**
+```tsx
+// AVANT
+export default function HomePage() {
+  return (
+    <View className="flex-1 bg-bgGray">
+      <Text className="text-3xl font-bold text-textMain">
+        Mes tâches
+      </Text>
+    </View>
+  );
+}
+
+// APRÈS
+export default function HomePage() {
+  return (
+    <View className="flex-1 bg-bgGray" style={styles.container}>
+      <Text className="text-3xl font-bold text-textMain" style={styles.title}>
+        Mes tâches
+      </Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F7F8FA',
+  },
+  title: {
+    fontSize: 30,
+    fontWeight: 'bold',
+    color: '#1A1A1A',
+  },
+});
+```
+
+### **Exemple 2 : Composant complexe**
+```tsx
+// AVANT
+export const TaskCard = ({ task }) => {
+  return (
+    <View className="bg-white p-4 rounded-xl mb-3">
+      <View className="flex-row items-start justify-between mb-2">
+        <View className="flex-1 mr-3">
+          <Text className="text-body text-textMain font-medium mb-1">
+            {task.title}
+          </Text>
+          <Text className="text-secondary text-textMuted">
+            {task.projectName}
+          </Text>
+        </View>
+        <Badge status={task.status} />
+      </View>
+    </View>
+  );
+};
+
+// APRÈS
+export const TaskCard = ({ task }) => {
+  return (
+    <View className="bg-white p-4 rounded-xl mb-3" style={styles.card}>
+      <View className="flex-row items-start justify-between mb-2" style={styles.header}>
+        <View className="flex-1 mr-3" style={styles.content}>
+          <Text className="text-body text-textMain font-medium mb-1" style={styles.title}>
+            {task.title}
+          </Text>
+          <Text className="text-secondary text-textMuted" style={styles.subtitle}>
+            {task.projectName}
+          </Text>
+        </View>
+        <Badge status={task.status} />
+      </View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  content: {
+    flex: 1,
+    marginRight: 12,
+  },
+  title: {
+    fontSize: 16,
+    color: '#1A1A1A',
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#6E6E6E',
+  },
+});
+```
+
+## Checklist de migration
+
+### **Pour chaque composant**
+- [ ] Import `StyleSheet` ajouté
+- [ ] Props `style={styles.xxx}` sur tous les éléments
+- [ ] Objet `styles` créé avec StyleSheet.create()
+- [ ] Commentaire explicatif ajouté
+- [ ] Couleurs Flowli utilisées
+- [ ] Test sur device mobile
+
+### **Vérifications finales**
+- [ ] Lint OK, build OK
+- [ ] Affichage correct sur Expo Go
+- [ ] Affichage correct sur device physique
+- [ ] Cohérence visuelle avec les autres composants
+- [ ] Performance optimale
+
+## Règle d'or
+
+**Jamais de composant sans styles de fallback !**
+
+Cette approche garantit :
+- ✅ **Affichage correct** sur tous les devices
+- ✅ **Cohérence visuelle** entre toutes les pages
+- ✅ **Maintenabilité** du code
+- ✅ **Performance** optimale
+- ✅ **UX** fluide et professionnelle

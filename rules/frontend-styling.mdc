@@ -1,0 +1,267 @@
+# Rule: Frontend Styling — NativeWind + StyleSheet Fallback
+
+## Intent
+- **NativeWind/Tailwind** comme système de design principal
+- **StyleSheet de fallback** obligatoire pour garantir l'affichage mobile
+- **Cohérence visuelle** entre toutes les pages et composants
+- **Maintenabilité** avec un système de styles hybride
+
+## Problème résolu
+- **NativeWind ne fonctionne pas** toujours en mobile (Expo Go, certains devices)
+- **Pages sans style** = mauvaise UX
+- **Incohérence** entre login (qui fonctionne) et autres pages
+
+## Solution : Double système de styles
+
+### 1. **NativeWind en priorité**
+```tsx
+// Utiliser les classes Tailwind
+<View className="bg-primary rounded-xl p-4">
+  <Text className="text-white font-bold">Titre</Text>
+</View>
+```
+
+### 2. **StyleSheet de fallback obligatoire**
+```tsx
+// TOUJOURS ajouter des styles StyleSheet
+<View 
+  className="bg-primary rounded-xl p-4"
+  style={styles.card}
+>
+  <Text 
+    className="text-white font-bold"
+    style={styles.cardTitle}
+  >
+    Titre
+  </Text>
+</View>
+
+// Styles de fallback
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: '#6C63FF',
+    borderRadius: 12,
+    padding: 16,
+  },
+  cardTitle: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+  },
+});
+```
+
+## Règles de développement
+
+### ✅ **OBLIGATOIRE pour chaque composant**
+1. **Import StyleSheet** : `import { StyleSheet } from 'react-native'`
+2. **Props style** : Toujours ajouter `style={styles.xxx}` aux éléments
+3. **Styles de fallback** : Créer un objet `styles` avec StyleSheet.create()
+4. **Commentaire** : Ajouter le commentaire explicatif
+
+### ✅ **Pattern de nommage des styles**
+```tsx
+// Structure cohérente
+const styles = StyleSheet.create({
+  // Container principal
+  container: { flex: 1, backgroundColor: '#F7F8FA' },
+  
+  // Header
+  header: { padding: 16, backgroundColor: '#FFFFFF' },
+  headerTitle: { fontSize: 24, fontWeight: 'bold' },
+  
+  // Cards
+  card: { backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16 },
+  cardTitle: { fontSize: 16, fontWeight: '600' },
+  
+  // Buttons
+  button: { padding: 12, borderRadius: 8 },
+  buttonPrimary: { backgroundColor: '#6C63FF' },
+  buttonText: { color: '#FFFFFF', fontWeight: '600' },
+  
+  // States
+  loading: { opacity: 0.6 },
+  error: { color: '#F44336' },
+  success: { color: '#4CAF50' },
+});
+```
+
+### ✅ **Couleurs Flowli (obligatoires)**
+```tsx
+// Palette de couleurs standardisée
+const colors = {
+  primary: '#6C63FF',        // Violet Flowli
+  primaryLight: '#B3B0FF',   // Violet clair
+  bgLight: '#FFFFFF',        // Blanc
+  bgGray: '#F7F8FA',         // Gris clair
+  textMain: '#1A1A1A',       // Noir texte
+  textMuted: '#6E6E6E',      // Gris texte
+  success: '#4CAF50',        // Vert
+  warn: '#FF9800',          // Orange
+  danger: '#F44336',         // Rouge
+};
+```
+
+### ✅ **Typographie cohérente**
+```tsx
+// Tailles de texte standardisées
+const typography = {
+  h1: { fontSize: 24, fontWeight: 'bold' },
+  h2: { fontSize: 20, fontWeight: '600' },
+  body: { fontSize: 16, fontWeight: '400' },
+  secondary: { fontSize: 14, fontWeight: '400' },
+  button: { fontSize: 15, fontWeight: '500' },
+};
+```
+
+## Structure de fichiers
+
+### **Pages principales**
+```
+app/(app)/
+├── home.tsx           ✅ Styles ajoutés
+├── dossier.tsx        ✅ Styles ajoutés  
+├── factures.tsx       ✅ Styles ajoutés
+└── contact.tsx        ✅ Styles ajoutés
+```
+
+### **Composants UI**
+```
+src/ui/components/
+├── Button.tsx         ✅ Déjà avec fallback
+├── Input.tsx          ✅ Déjà avec fallback
+├── Card.tsx           ✅ Déjà avec fallback
+├── TaskDetailModal.tsx ✅ Styles ajoutés
+└── ...
+```
+
+### **Features**
+```
+src/features/
+├── dossier/DossierScreen.tsx    ✅ Styles ajoutés
+├── factures/FacturesScreen.tsx  ✅ Styles ajoutés
+└── contact/ContactScreen.tsx    ✅ Styles ajoutés
+```
+
+## Checklist de développement
+
+### **Avant de commiter**
+- [ ] Tous les éléments ont des `style={styles.xxx}`
+- [ ] Import `StyleSheet` ajouté
+- [ ] Objet `styles` créé avec StyleSheet.create()
+- [ ] Commentaire explicatif ajouté
+- [ ] Couleurs Flowli utilisées
+- [ ] Test sur device mobile
+
+### **Pattern de code**
+```tsx
+// ✅ BON - Double système
+<View 
+  className="bg-primary rounded-xl p-4"
+  style={styles.card}
+>
+  <Text 
+    className="text-white font-bold"
+    style={styles.cardTitle}
+  >
+    Titre
+  </Text>
+</View>
+
+// ❌ MAUVAIS - Seulement NativeWind
+<View className="bg-primary rounded-xl p-4">
+  <Text className="text-white font-bold">Titre</Text>
+</View>
+```
+
+## Avantages de cette approche
+
+### **1. Robustesse**
+- Fonctionne même si NativeWind échoue
+- Fallback garanti sur tous les devices
+- Pas de pages "sans style"
+
+### **2. Performance**
+- StyleSheet optimisé par React Native
+- Pas de re-calcul des styles
+- Meilleure performance mobile
+
+### **3. Maintenabilité**
+- Code prévisible et cohérent
+- Facile à déboguer
+- Évolutif
+
+### **4. UX**
+- Interface toujours stylée
+- Cohérence visuelle garantie
+- Expérience utilisateur fluide
+
+## Migration des composants existants
+
+### **Étapes pour chaque composant**
+1. **Identifier** les éléments sans style
+2. **Ajouter** import StyleSheet
+3. **Créer** objet styles avec StyleSheet.create()
+4. **Ajouter** props style à tous les éléments
+5. **Tester** sur device mobile
+6. **Valider** l'affichage
+
+### **Exemple de migration**
+```tsx
+// AVANT
+<View className="bg-white p-4 rounded-xl">
+  <Text className="text-lg font-bold">Titre</Text>
+</View>
+
+// APRÈS
+<View 
+  className="bg-white p-4 rounded-xl"
+  style={styles.card}
+>
+  <Text 
+    className="text-lg font-bold"
+    style={styles.cardTitle}
+  >
+    Titre
+  </Text>
+</View>
+
+// Styles ajoutés
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    borderRadius: 12,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1A1A1A',
+  },
+});
+```
+
+## Monitoring et qualité
+
+### **Indicateurs de qualité**
+- **0 page sans style** : Toutes les pages ont des fallbacks
+- **Cohérence visuelle** : Même apparence sur tous les devices
+- **Performance** : Pas de re-render inutile
+- **Maintenabilité** : Code facile à modifier
+
+### **Tests obligatoires**
+- [ ] Test sur Expo Go (mobile)
+- [ ] Test sur device physique
+- [ ] Test sur web (si applicable)
+- [ ] Vérification des couleurs Flowli
+- [ ] Validation de la typographie
+
+## Conclusion
+
+Cette approche **hybride NativeWind + StyleSheet** garantit :
+- ✅ **Affichage correct** sur tous les devices
+- ✅ **Cohérence visuelle** entre toutes les pages
+- ✅ **Maintenabilité** du code
+- ✅ **Performance** optimale
+- ✅ **UX** fluide et professionnelle
+
+**Règle d'or** : Jamais de composant sans styles de fallback !

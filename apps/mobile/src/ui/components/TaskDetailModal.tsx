@@ -74,58 +74,62 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <View className="flex-1 bg-bgGray">
+      <View className="flex-1 bg-bgGray" style={styles.container}>
         {/* Header avec gradient violet Flowli */}
         <LinearGradient
           colors={['#7C3AED', '#8B5CF6']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           className="pt-12 pb-6 px-6"
+          style={styles.headerGradient}
         >
-          <View className="flex-row items-center justify-between mb-4">
+          <View className="flex-row items-center justify-between mb-4" style={styles.headerRow}>
             <TouchableOpacity
               onPress={onClose}
               className="w-10 h-10 rounded-full bg-white/20 items-center justify-center"
+              style={styles.closeButton}
             >
-              <Text className="text-white text-lg font-bold">✕</Text>
+              <Text className="text-white text-lg font-bold" style={styles.closeButtonText}>✕</Text>
             </TouchableOpacity>
             
-            <View className="flex-row gap-2">
+            <View className="flex-row gap-2" style={styles.headerActions}>
               {task.status === 'A faire' && onMarkInProgress && (
                 <TouchableOpacity
                   onPress={() => onMarkInProgress(task.id)}
                   className="px-4 py-2 rounded-full bg-white/20"
+                  style={styles.actionButton}
                 >
-                  <Text className="text-white text-sm font-semibold">Commencer</Text>
+                  <Text className="text-white text-sm font-semibold" style={styles.actionButtonText}>Commencer</Text>
                 </TouchableOpacity>
               )}
               {task.status === 'En cours' && onMarkComplete && (
                 <TouchableOpacity
                   onPress={() => onMarkComplete(task.id)}
                   className="px-4 py-2 rounded-full bg-white"
+                  style={styles.actionButtonActive}
                 >
-                  <Text className="text-primary text-sm font-semibold">Terminer</Text>
+                  <Text className="text-primary text-sm font-semibold" style={styles.actionButtonTextActive}>Terminer</Text>
                 </TouchableOpacity>
               )}
             </View>
           </View>
 
-          <View className="flex-row items-center gap-3 mb-4">
-            <Text className="text-3xl">{getStatusIcon(task.status)}</Text>
-            <View className="flex-1">
-              <Text className="text-white text-2xl font-bold mb-1">
+          <View className="flex-row items-center gap-3 mb-4" style={styles.titleRow}>
+            <Text className="text-3xl" style={styles.statusIcon}>{getStatusIcon(task.status)}</Text>
+            <View className="flex-1" style={styles.titleContainer}>
+              <Text className="text-white text-2xl font-bold mb-1" style={styles.taskTitle}>
                 {task.title || '(Sans titre)'}
               </Text>
-              <View className="flex-row items-center gap-2">
+              <View className="flex-row items-center gap-2" style={styles.statusRow}>
                 <View 
                   className="px-3 py-1 rounded-full"
-                  style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
+                  style={styles.statusBadge}
                 >
-                  <Text className="text-white text-sm font-medium">{task.status}</Text>
+                  <Text className="text-white text-sm font-medium" style={styles.statusText}>{task.status}</Text>
                 </View>
                 {isOverdue(task.dueDate) && (
-                  <View className="px-3 py-1 rounded-full bg-red-500">
-                    <Text className="text-white text-sm font-medium">En retard</Text>
+                  <View className="px-3 py-1 rounded-full bg-red-500" style={styles.overdueBadge}>
+                    <Text className="text-white text-sm font-medium" style={styles.overdueText}>En retard</Text>
                   </View>
                 )}
               </View>
@@ -281,3 +285,106 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     </Modal>
   );
 };
+
+// Styles de fallback pour Expo Go (quand NativeWind ne fonctionne pas)
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F7F8FA',
+  },
+  headerGradient: {
+    paddingTop: 48,
+    paddingBottom: 24,
+    paddingHorizontal: 24,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  closeButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  actionButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  actionButtonActive: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+  },
+  actionButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  actionButtonTextActive: {
+    color: '#6C63FF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 16,
+  },
+  statusIcon: {
+    fontSize: 48,
+  },
+  titleContainer: {
+    flex: 1,
+  },
+  taskTitle: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  statusText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  overdueBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 20,
+    backgroundColor: '#EF4444',
+  },
+  overdueText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+});
