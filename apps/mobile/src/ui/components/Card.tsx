@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from 'react-native';
+import { View, Platform, StyleSheet } from 'react-native';
 import { BaseComponentProps } from '../types';
 
 interface CardProps extends BaseComponentProps {
@@ -26,13 +26,59 @@ export const Card: React.FC<CardProps> = ({
     }
   };
 
+  const getPaddingStyle = () => {
+    switch (padding) {
+      case 'sm':
+        return styles.paddingSmall;
+      case 'md':
+        return styles.paddingMedium;
+      case 'lg':
+        return styles.paddingLarge;
+      default:
+        return styles.paddingMedium;
+    }
+  };
+
   const baseClasses = 'bg-white rounded-xl border border-gray-200';
   const paddingClasses = getPaddingClasses();
   const shadowClasses = shadow ? 'shadow-card' : '';
 
   return (
-    <View className={`${baseClasses} ${paddingClasses} ${shadowClasses} ${className}`}>
+    <View 
+      className={`${baseClasses} ${paddingClasses} ${shadowClasses} ${className}`}
+      style={[
+        styles.card,
+        getPaddingStyle(),
+        shadow && styles.cardShadow
+      ]}
+    >
       {children}
     </View>
   );
 };
+
+// Styles de fallback pour Expo Go (quand NativeWind ne fonctionne pas)
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  paddingSmall: {
+    padding: 12,
+  },
+  paddingMedium: {
+    padding: 16,
+  },
+  paddingLarge: {
+    padding: 24,
+  },
+  cardShadow: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+});

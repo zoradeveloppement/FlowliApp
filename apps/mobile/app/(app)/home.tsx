@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, SectionList, RefreshControl, Platform, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, SectionList, RefreshControl, Platform, Alert, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Screen, AppLayout } from '../../src/ui/layout';
 import { Card, Progress, Badge, Button } from '../../src/ui/components';
@@ -53,43 +53,73 @@ function fmtRel(iso: string | null): string {
   }
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const getStatusClasses = () => {
-    switch (status) {
-      case 'Terminé':
-        return 'bg-green-50 border-green-200';
-      case 'En retard':
-        return 'bg-red-50 border-red-200';
-      case 'En cours':
-        return 'bg-blue-50 border-blue-200';
-      case 'A faire':
-        return 'bg-purple-50 border-purple-200';
-      default:
-        return 'bg-gray-100 border-gray-300';
-    }
-  };
+  function StatusBadge({ status }: { status: string }) {
+    const getStatusClasses = () => {
+      switch (status) {
+        case 'Terminé':
+          return 'bg-green-50 border-green-200';
+        case 'En retard':
+          return 'bg-red-50 border-red-200';
+        case 'En cours':
+          return 'bg-blue-50 border-blue-200';
+        case 'A faire':
+          return 'bg-purple-50 border-purple-200';
+        default:
+          return 'bg-gray-100 border-gray-300';
+      }
+    };
 
-  const getTextClasses = () => {
-    switch (status) {
-      case 'Terminé':
-        return 'text-green-800';
-      case 'En retard':
-        return 'text-red-800';
-      case 'En cours':
-        return 'text-blue-800';
-      case 'A faire':
-        return 'text-purple-800';
-      default:
-        return 'text-gray-600';
-    }
-  };
-  
-  return (
-    <View className={`px-3 py-1 rounded-full border ${getStatusClasses()}`}>
-      <Text className={`text-xs font-medium ${getTextClasses()}`}>{status}</Text>
-    </View>
-  );
-}
+    const getTextClasses = () => {
+      switch (status) {
+        case 'Terminé':
+          return 'text-green-800';
+        case 'En retard':
+          return 'text-red-800';
+        case 'En cours':
+          return 'text-blue-800';
+        case 'A faire':
+          return 'text-purple-800';
+        default:
+          return 'text-gray-600';
+      }
+    };
+
+    const getStatusStyle = () => {
+      switch (status) {
+        case 'Terminé':
+          return styles.statusBadgeSuccess;
+        case 'En retard':
+          return styles.statusBadgeError;
+        case 'En cours':
+          return styles.statusBadgeInfo;
+        case 'A faire':
+          return styles.statusBadgeWarning;
+        default:
+          return styles.statusBadgeDefault;
+      }
+    };
+
+    const getTextStyle = () => {
+      switch (status) {
+        case 'Terminé':
+          return styles.statusTextSuccess;
+        case 'En retard':
+          return styles.statusTextError;
+        case 'En cours':
+          return styles.statusTextInfo;
+        case 'A faire':
+          return styles.statusTextWarning;
+        default:
+          return styles.statusTextDefault;
+      }
+    };
+
+    return (
+      <View className={`px-3 py-1 rounded-full border ${getStatusClasses()}`} style={[styles.statusBadge, getStatusStyle()]}>
+        <Text className={`text-xs font-medium ${getTextClasses()}`} style={[styles.statusText, getTextStyle()]}>{status}</Text>
+      </View>
+    );
+  }
 
 export default function Home() {
   const router = useRouter();
@@ -322,40 +352,46 @@ export default function Home() {
   const renderItem = ({ item }: { item: TaskItem }) => {
     const pct = item.progress == null ? null : Math.round((item.progress <= 1 ? item.progress * 100 : item.progress));
     return (
-      <View className="bg-white mb-3 p-4 rounded-2xl border border-gray-100 shadow-sm">
-        <View className="flex-row justify-between items-start mb-2">
-          <Text className="text-base font-semibold flex-1 mr-2 text-textMain">
+      <View className="bg-white mb-3 p-4 rounded-2xl border border-gray-100 shadow-sm" style={styles.taskCard}>
+        <View className="flex-row justify-between items-start mb-2" style={styles.taskHeader}>
+          <Text className="text-base font-semibold flex-1 mr-2 text-textMain" style={styles.taskTitle}>
             {item.title || '(Sans titre)'}
           </Text>
           <StatusBadge status={item.status} />
         </View>
         
         {item.projectName && (
-          <View className="bg-bgGray self-start px-2.5 py-1 rounded-full mb-2">
-            <Text className="text-gray-500 text-xs font-medium">{item.projectName}</Text>
+          <View className="bg-bgGray self-start px-2.5 py-1 rounded-full mb-2" style={styles.projectBadge}>
+            <Text className="text-gray-500 text-xs font-medium" style={styles.projectText}>{item.projectName}</Text>
           </View>
         )}
         
-        <View className="flex-row items-center gap-4">
+        <View className="flex-row items-center gap-4" style={styles.taskFooter}>
           {pct !== null && (
-            <View className="flex-row items-center gap-1.5">
+            <View className="flex-row items-center gap-1.5" style={styles.progressContainer}>
               <View className={`w-8 h-8 rounded-full items-center justify-center border-2 ${
                 pct === 100 
                   ? 'bg-green-50 border-green-200' 
                   : 'bg-blue-50 border-blue-200'
-              }`}>
+              }`} style={[
+                styles.progressCircle,
+                pct === 100 ? styles.progressCircleSuccess : styles.progressCircleInfo
+              ]}>
                 <Text className={`text-xs font-bold ${
                   pct === 100 ? 'text-green-800' : 'text-blue-800'
-                }`}>
+                }`} style={[
+                  styles.progressText,
+                  pct === 100 ? styles.progressTextSuccess : styles.progressTextInfo
+                ]}>
                   {pct}%
                 </Text>
               </View>
             </View>
           )}
           
-          <View className="flex-row items-center gap-1">
-            <Text className="text-base">📅</Text>
-            <Text className="text-gray-500 text-sm font-medium">{fmtRel(item.dueDate)}</Text>
+          <View className="flex-row items-center gap-1" style={styles.dateContainer}>
+            <Text className="text-base" style={styles.dateIcon}>📅</Text>
+            <Text className="text-gray-500 text-sm font-medium" style={styles.dateText}>{fmtRel(item.dueDate)}</Text>
           </View>
         </View>
       </View>
@@ -378,16 +414,16 @@ export default function Home() {
   }
 
   return (
-    <View className="flex-1 bg-bgGray">
-      <ScrollView 
+    <View className="flex-1 bg-bgGray" style={styles.container}>
+      <ScrollView
         className="flex-1"
-        contentContainerStyle={{ padding: 16 }}
+        contentContainerStyle={styles.scrollContent}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         {/* Debug UI - Style Flowli */}
         {__DEV__ && (
-          <View className="mb-4">
-            <View className="flex-row gap-2 mb-2">
+          <View className="mb-4" style={styles.debugContainer}>
+            <View className="flex-row gap-2 mb-2" style={styles.debugButtons}>
               <TouchableOpacity 
                 onPress={() => setShowDebug(!showDebug)}
                 className={`px-4 py-2.5 rounded-full ${
@@ -395,10 +431,17 @@ export default function Home() {
                     ? 'bg-primary shadow-lg shadow-primary/30' 
                     : 'bg-gray-200 shadow-sm'
                 }`}
+                style={[
+                  styles.debugButton,
+                  showDebug ? styles.debugButtonActive : styles.debugButtonInactive
+                ]}
               >
                 <Text className={`text-xs font-semibold ${
                   showDebug ? 'text-white' : 'text-gray-500'
-                }`}>
+                }`} style={[
+                  styles.debugButtonText,
+                  showDebug ? styles.debugButtonTextActive : styles.debugButtonTextInactive
+                ]}>
                   {showDebug ? '🔧 Masquer Debug' : '🔧 Debug'}
                 </Text>
               </TouchableOpacity>
@@ -678,3 +721,186 @@ export default function Home() {
     </View>
   );
 }
+
+// Styles de fallback pour Expo Go (quand NativeWind ne fonctionne pas)
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F7F8FA',
+  },
+  scrollContent: {
+    padding: 16,
+  },
+  debugContainer: {
+    marginBottom: 16,
+  },
+  debugButtons: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 8,
+  },
+  debugButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  debugButtonActive: {
+    backgroundColor: '#7C3AED',
+    shadowColor: '#7C3AED',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  debugButtonInactive: {
+    backgroundColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  debugButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  debugButtonTextActive: {
+    color: '#FFFFFF',
+  },
+  debugButtonTextInactive: {
+    color: '#6B7280',
+  },
+  taskCard: {
+    backgroundColor: '#FFFFFF',
+    marginBottom: 12,
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  taskHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
+  taskTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    flex: 1,
+    marginRight: 8,
+    color: '#1A1A1A',
+  },
+  projectBadge: {
+    backgroundColor: '#F7F8FA',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+    marginBottom: 8,
+  },
+  projectText: {
+    color: '#6B7280',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  taskFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  progressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  progressCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+  },
+  progressCircleSuccess: {
+    backgroundColor: '#F0FDF4',
+    borderColor: '#BBF7D0',
+  },
+  progressCircleInfo: {
+    backgroundColor: '#EFF6FF',
+    borderColor: '#BFDBFE',
+  },
+  progressText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  progressTextSuccess: {
+    color: '#166534',
+  },
+  progressTextInfo: {
+    color: '#1E40AF',
+  },
+  dateContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  dateIcon: {
+    fontSize: 16,
+  },
+  dateText: {
+    color: '#6B7280',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  statusBadgeSuccess: {
+    backgroundColor: '#F0FDF4',
+    borderColor: '#BBF7D0',
+  },
+  statusBadgeError: {
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FECACA',
+  },
+  statusBadgeInfo: {
+    backgroundColor: '#EFF6FF',
+    borderColor: '#BFDBFE',
+  },
+  statusBadgeWarning: {
+    backgroundColor: '#FEF3C7',
+    borderColor: '#FDE68A',
+  },
+  statusBadgeDefault: {
+    backgroundColor: '#F3F4F6',
+    borderColor: '#D1D5DB',
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  statusTextSuccess: {
+    color: '#166534',
+  },
+  statusTextError: {
+    color: '#DC2626',
+  },
+  statusTextInfo: {
+    color: '#1E40AF',
+  },
+  statusTextWarning: {
+    color: '#D97706',
+  },
+  statusTextDefault: {
+    color: '#6B7280',
+  },
+});

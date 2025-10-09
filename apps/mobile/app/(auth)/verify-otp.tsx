@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { supabase } from '@/src/lib/supabase';
 import { Screen } from '../../src/ui/layout';
@@ -181,8 +181,8 @@ export default function VerifyOTP() {
 
   if (!email) {
     return (
-      <Screen className="bg-white">
-        <View className="flex-1 justify-center items-center">
+      <Screen className="bg-white" style={styles.container}>
+        <View className="flex-1 justify-center items-center" style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#7C3AED" />
         </View>
       </Screen>
@@ -192,38 +192,40 @@ export default function VerifyOTP() {
   const isCodeComplete = code.every(digit => digit !== '');
 
   return (
-    <Screen className="bg-white">
+    <Screen className="bg-white" style={styles.container}>
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
+        style={styles.keyboardView}
       >
-        <View className="flex-1 px-6 pt-12">
+        <View className="flex-1 px-6 pt-12" style={styles.mainContainer}>
           {/* Header avec bouton retour */}
           <TouchableOpacity 
             onPress={handleBackToLogin}
             className="mb-8"
             activeOpacity={0.7}
+            style={styles.backButton}
           >
-            <View className="flex-row items-center">
-              <Text className="text-2xl mr-2">←</Text>
-              <Text className="text-gray-600 text-base">Retour</Text>
+            <View className="flex-row items-center" style={styles.backButtonContent}>
+              <Text className="text-2xl mr-2" style={styles.backArrow}>←</Text>
+              <Text className="text-gray-600 text-base" style={styles.backText}>Retour</Text>
             </View>
           </TouchableOpacity>
 
           {/* Titre */}
-          <View className="mb-10">
-            <Text className="text-4xl font-bold text-gray-900 mb-3">
+          <View className="mb-10" style={styles.titleContainer}>
+            <Text className="text-4xl font-bold text-gray-900 mb-3" style={styles.title}>
               Vérification
             </Text>
-            <Text className="text-base text-gray-500 leading-relaxed">
+            <Text className="text-base text-gray-500 leading-relaxed" style={styles.subtitle}>
               Code envoyé à{'\n'}
-              <Text className="font-semibold text-gray-700">{maskEmail(email)}</Text>
+              <Text className="font-semibold text-gray-700" style={styles.emailText}>{maskEmail(email)}</Text>
             </Text>
           </View>
 
           {/* Inputs code - Style moderne */}
-          <View className="mb-8">
-            <View className="flex-row justify-between mb-4">
+          <View className="mb-8" style={styles.inputsContainer}>
+            <View className="flex-row justify-between mb-4" style={styles.inputsRow}>
               {code.map((digit, index) => (
                 <TextInput
                   key={index}
@@ -239,14 +241,18 @@ export default function VerifyOTP() {
                     ${digit ? 'bg-violet-50 border-2 border-violet-600 text-violet-600' : 'bg-gray-50 border-2 border-gray-200 text-gray-900'}
                     ${isBlocked ? 'opacity-50' : 'opacity-100'}
                   `}
-                  style={{ textAlignVertical: 'center' }}
+                  style={[
+                    styles.codeInput,
+                    digit ? styles.codeInputFilled : styles.codeInputEmpty,
+                    isBlocked && styles.codeInputBlocked
+                  ]}
                 />
               ))}
             </View>
             
             {/* Timer d'expiration */}
             {expiryTimer > 0 && expiryTimer < 60 && (
-              <Text className="text-center text-sm text-orange-600">
+              <Text className="text-center text-sm text-orange-600" style={styles.expiryTimer}>
                 Expire dans {formatTime(expiryTimer)}
               </Text>
             )}
@@ -267,12 +273,16 @@ export default function VerifyOTP() {
             disabled={resendLoading || resendTimer > 0 || isBlocked}
             activeOpacity={0.7}
             className="items-center py-3"
+            style={styles.resendButton}
           >
             <Text className={`text-base ${
               resendLoading || resendTimer > 0 || isBlocked 
                 ? 'text-gray-400' 
                 : 'text-violet-600 font-medium'
-            }`}>
+            }`} style={[
+              styles.resendText,
+              (resendLoading || resendTimer > 0 || isBlocked) && styles.resendTextDisabled
+            ]}>
               {resendLoading 
                 ? "Envoi..." 
                 : resendTimer > 0 
@@ -284,8 +294,8 @@ export default function VerifyOTP() {
 
           {/* Info sécurité */}
           {attempts > 0 && attempts < 3 && (
-            <View className="mt-6 bg-orange-50 rounded-2xl p-4">
-              <Text className="text-sm text-orange-700 text-center">
+            <View className="mt-6 bg-orange-50 rounded-2xl p-4" style={styles.warningContainer}>
+              <Text className="text-sm text-orange-700 text-center" style={styles.warningText}>
                 {3 - attempts} tentative{3 - attempts > 1 ? 's' : ''} restante{3 - attempts > 1 ? 's' : ''}
               </Text>
             </View>
@@ -309,3 +319,118 @@ export default function VerifyOTP() {
     </Screen>
   );
 }
+
+// Styles de fallback pour Expo Go (quand NativeWind ne fonctionne pas)
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  keyboardView: {
+    flex: 1,
+  },
+  mainContainer: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 48,
+  },
+  backButton: {
+    marginBottom: 32,
+  },
+  backButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backArrow: {
+    fontSize: 24,
+    marginRight: 8,
+  },
+  backText: {
+    color: '#6B7280',
+    fontSize: 16,
+  },
+  titleContainer: {
+    marginBottom: 40,
+  },
+  title: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginBottom: 12,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#6B7280',
+    lineHeight: 24,
+  },
+  emailText: {
+    fontWeight: '600',
+    color: '#374151',
+  },
+  inputsContainer: {
+    marginBottom: 32,
+  },
+  inputsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  codeInput: {
+    flex: 1,
+    marginHorizontal: 6,
+    height: 64,
+    borderRadius: 16,
+    textAlign: 'center',
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlignVertical: 'center',
+  },
+  codeInputEmpty: {
+    backgroundColor: '#F9FAFB',
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+    color: '#111827',
+  },
+  codeInputFilled: {
+    backgroundColor: '#F3F4F6',
+    borderWidth: 2,
+    borderColor: '#7C3AED',
+    color: '#7C3AED',
+  },
+  codeInputBlocked: {
+    opacity: 0.5,
+  },
+  expiryTimer: {
+    textAlign: 'center',
+    fontSize: 14,
+    color: '#EA580C',
+  },
+  resendButton: {
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  resendText: {
+    fontSize: 16,
+    color: '#7C3AED',
+    fontWeight: '500',
+  },
+  resendTextDisabled: {
+    color: '#9CA3AF',
+  },
+  warningContainer: {
+    marginTop: 24,
+    backgroundColor: '#FEF3C7',
+    borderRadius: 16,
+    padding: 16,
+  },
+  warningText: {
+    fontSize: 14,
+    color: '#B45309',
+    textAlign: 'center',
+  },
+});

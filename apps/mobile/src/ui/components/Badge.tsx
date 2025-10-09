@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, Platform, StyleSheet } from 'react-native';
 import { BadgeStatus, BaseComponentProps } from '../types';
 
 interface BadgeProps extends BaseComponentProps {
@@ -40,6 +40,34 @@ export const Badge: React.FC<BadgeProps> = ({
     }
   };
 
+  const getSizeStyle = () => {
+    switch (size) {
+      case 'sm':
+        return styles.badgeSmall;
+      case 'md':
+        return styles.badgeMedium;
+      case 'lg':
+        return styles.badgeLarge;
+      default:
+        return styles.badgeMedium;
+    }
+  };
+
+  const getStatusStyle = () => {
+    switch (status) {
+      case 'terminé':
+        return styles.badgeSuccess;
+      case 'en cours':
+        return styles.badgePrimary;
+      case 'à venir':
+        return styles.badgeGray;
+      case 'action requise':
+        return styles.badgeWarning;
+      default:
+        return styles.badgeGray;
+    }
+  };
+
   const getStatusIcon = () => {
     switch (status) {
       case 'terminé':
@@ -60,11 +88,60 @@ export const Badge: React.FC<BadgeProps> = ({
   const sizeClasses = getSizeClasses();
 
   return (
-    <View className={`${baseClasses} ${statusClasses} ${sizeClasses} ${className}`}>
-      <Text className="mr-1">{getStatusIcon()}</Text>
-      <Text className="font-medium capitalize">
+    <View 
+      className={`${baseClasses} ${statusClasses} ${sizeClasses} ${className}`}
+      style={[
+        styles.badge,
+        getSizeStyle(),
+        getStatusStyle()
+      ]}
+    >
+      <Text className="mr-1" style={styles.badgeIcon}>{getStatusIcon()}</Text>
+      <Text className="font-medium capitalize" style={styles.badgeText}>
         {status}
       </Text>
     </View>
   );
 };
+
+// Styles de fallback pour Expo Go (quand NativeWind ne fonctionne pas)
+const styles = StyleSheet.create({
+  badge: {
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+  },
+  badgeSmall: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  badgeMedium: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  badgeLarge: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  badgeSuccess: {
+    backgroundColor: '#4CAF50',
+  },
+  badgePrimary: {
+    backgroundColor: '#7C3AED',
+  },
+  badgeGray: {
+    backgroundColor: '#D1D5DB',
+  },
+  badgeWarning: {
+    backgroundColor: '#FF9800',
+  },
+  badgeIcon: {
+    marginRight: 4,
+  },
+  badgeText: {
+    fontWeight: '500',
+    textTransform: 'capitalize',
+    color: '#FFFFFF',
+  },
+});
