@@ -44,7 +44,7 @@ export default function Login() {
   const isDisabled = loading || !email;
 
   return (
-    <Screen className="bg-white" style={styles.container}>
+    <View className="flex-1 bg-white" style={styles.container}>
       <StatusBar barStyle="dark-content" />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -114,6 +114,12 @@ export default function Login() {
               <Text className="text-[12px] text-gray-400 text-center" style={styles.footerText}>
                 Un email avec un code à usage unique vous sera envoyé.
               </Text>
+              <Button
+                title="Créer un compte"
+                variant="ghost"
+                onPress={() => router.push({ pathname: '/(auth)/signup' } as any)}
+                className="mt-4"
+              />
             </View>
           </View>
         </ScrollView>
@@ -132,7 +138,7 @@ export default function Login() {
         visible={!!success}
         onHide={() => setSuccess(null)}
       />
-    </Screen>
+    </View>
   );
 }
 
