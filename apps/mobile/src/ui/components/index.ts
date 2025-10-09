@@ -10,4 +10,5 @@ export { ErrorState } from './ErrorState';
 export { LoadingState } from './LoadingState';
 export { NotificationBadge } from './NotificationBadge';
 export { InAppNotification } from './InAppNotification';
+export { TaskDetailModal } from './TaskDetailModal';
 export { ToastProvider, useToast } from './ToastProvider';

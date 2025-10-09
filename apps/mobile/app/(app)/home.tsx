@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, SectionList, RefreshControl, Platform, Alert, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, SectionList, RefreshControl, Platform, Alert, StyleSheet, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Screen, AppLayout } from '../../src/ui/layout';
 import { Card, Progress, Badge, Button } from '../../src/ui/components';
+import { TaskDetailModal } from '../../src/ui/components/TaskDetailModal';
 import { TailwindTest } from '../../src/ui/components/TailwindTest';
 import { supabase } from '@/src/lib/supabase';
 import { registerForPushToken } from '@/src/utils/push';
@@ -132,6 +133,10 @@ export default function Home() {
   const [items, setItems] = useState<TaskItem[]>([]);
   const [logoutLoading, setLogoutLoading] = useState(false);
   
+  // États pour le modal de détail
+  const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null);
+  const [showTaskDetail, setShowTaskDetail] = useState(false);
+  
   // Filter states
   const [showDone, setShowDone] = useState(false);
   const [search, setSearch] = useState('');
@@ -212,6 +217,43 @@ export default function Home() {
     setProjectId('');
     setShowDone(true);
     console.log('[FILTERS] 🔄 Filtres réinitialisés');
+  };
+
+  // Fonctions pour le modal de détail
+  const openTaskDetail = (task: TaskItem) => {
+    setSelectedTask(task);
+    setShowTaskDetail(true);
+  };
+
+  const closeTaskDetail = () => {
+    setShowTaskDetail(false);
+    setSelectedTask(null);
+  };
+
+  const handleMarkComplete = async (taskId: string) => {
+    try {
+      // TODO: Implémenter l'API pour marquer comme terminé
+      console.log('Marquer comme terminé:', taskId);
+      Alert.alert('Succès', 'Tâche marquée comme terminée');
+      closeTaskDetail();
+      // Recharger les tâches
+      await load();
+    } catch (error) {
+      Alert.alert('Erreur', 'Impossible de marquer la tâche comme terminée');
+    }
+  };
+
+  const handleMarkInProgress = async (taskId: string) => {
+    try {
+      // TODO: Implémenter l'API pour marquer comme en cours
+      console.log('Marquer comme en cours:', taskId);
+      Alert.alert('Succès', 'Tâche marquée comme en cours');
+      closeTaskDetail();
+      // Recharger les tâches
+      await load();
+    } catch (error) {
+      Alert.alert('Erreur', 'Impossible de marquer la tâche comme en cours');
+    }
   };
 
   const load = useCallback(async () => {
@@ -351,50 +393,60 @@ export default function Home() {
 
   const renderItem = ({ item }: { item: TaskItem }) => {
     const pct = item.progress == null ? null : Math.round((item.progress <= 1 ? item.progress * 100 : item.progress));
+    const isOverdue = item.dueDate && new Date(item.dueDate) < new Date() && item.status !== 'Terminé';
+    const isCompleted = item.status === 'Terminé';
+    
     return (
-      <View className="bg-white mb-3 p-4 rounded-2xl border border-gray-100 shadow-sm" style={styles.taskCard}>
-        <View className="flex-row justify-between items-start mb-2" style={styles.taskHeader}>
-          <Text className="text-base font-semibold flex-1 mr-2 text-textMain" style={styles.taskTitle}>
+      <TouchableOpacity
+        onPress={() => openTaskDetail(item)}
+        activeOpacity={0.7}
+        style={styles.card}
+      >
+        {/* Header simplifié */}
+        <View style={styles.header}>
+          <Text style={styles.title} numberOfLines={2}>
             {item.title || '(Sans titre)'}
           </Text>
           <StatusBadge status={item.status} />
         </View>
         
+        {/* Projet (optionnel) */}
         {item.projectName && (
-          <View className="bg-bgGray self-start px-2.5 py-1 rounded-full mb-2" style={styles.projectBadge}>
-            <Text className="text-gray-500 text-xs font-medium" style={styles.projectText}>{item.projectName}</Text>
-          </View>
+          <Text style={styles.project}>{item.projectName}</Text>
         )}
         
-        <View className="flex-row items-center gap-4" style={styles.taskFooter}>
+        {/* Alerte retard minimaliste */}
+        {isOverdue && (
+          <View style={styles.overdueBar} />
+        )}
+        
+        {/* Footer épuré */}
+        <View style={styles.footer}>
+          {/* Progression */}
           {pct !== null && (
-            <View className="flex-row items-center gap-1.5" style={styles.progressContainer}>
-              <View className={`w-8 h-8 rounded-full items-center justify-center border-2 ${
-                pct === 100 
-                  ? 'bg-green-50 border-green-200' 
-                  : 'bg-blue-50 border-blue-200'
-              }`} style={[
-                styles.progressCircle,
-                pct === 100 ? styles.progressCircleSuccess : styles.progressCircleInfo
+            <View style={styles.progressWrapper}>
+              <View style={[
+                styles.progressDot,
+                isCompleted ? styles.progressComplete : styles.progressActive
               ]}>
-                <Text className={`text-xs font-bold ${
-                  pct === 100 ? 'text-green-800' : 'text-blue-800'
-                }`} style={[
+                <Text style={[
                   styles.progressText,
-                  pct === 100 ? styles.progressTextSuccess : styles.progressTextInfo
+                  isCompleted ? styles.progressTextComplete : styles.progressTextActive
                 ]}>
-                  {pct}%
+                  {pct}
                 </Text>
               </View>
             </View>
           )}
           
-          <View className="flex-row items-center gap-1" style={styles.dateContainer}>
-            <Text className="text-base" style={styles.dateIcon}>📅</Text>
-            <Text className="text-gray-500 text-sm font-medium" style={styles.dateText}>{fmtRel(item.dueDate)}</Text>
-          </View>
+          {/* Date */}
+          {item.dueDate && (
+            <Text style={[styles.date, isOverdue && styles.dateOverdue]}>
+              {fmtRel(item.dueDate)}
+            </Text>
+          )}
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -718,6 +770,15 @@ export default function Home() {
           </View>
         )}
       </ScrollView>
+
+      {/* Modal de détail de tâche */}
+      <TaskDetailModal
+        visible={showTaskDetail}
+        task={selectedTask}
+        onClose={closeTaskDetail}
+        onMarkComplete={handleMarkComplete}
+        onMarkInProgress={handleMarkInProgress}
+      />
     </View>
   );
 }
@@ -770,93 +831,80 @@ const styles = StyleSheet.create({
   debugButtonTextInactive: {
     color: '#6B7280',
   },
-  taskCard: {
+  // Nouveaux styles épurés pour les cartes de tâches
+  card: {
     backgroundColor: '#FFFFFF',
     marginBottom: 12,
-    padding: 16,
-    borderRadius: 16,
+    padding: 20,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#F3F4F6',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    borderColor: '#F1F1F1',
   },
-  taskHeader: {
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 8,
+    marginBottom: 12,
   },
-  taskTitle: {
+  title: {
     fontSize: 16,
     fontWeight: '600',
-    flex: 1,
-    marginRight: 8,
     color: '#1A1A1A',
+    flex: 1,
+    marginRight: 12,
+    lineHeight: 22,
   },
-  projectBadge: {
-    backgroundColor: '#F7F8FA',
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 20,
-    marginBottom: 8,
-  },
-  projectText: {
-    color: '#6B7280',
-    fontSize: 12,
+  project: {
+    fontSize: 13,
+    color: '#9CA3AF',
+    marginBottom: 12,
     fontWeight: '500',
   },
-  taskFooter: {
+  overdueBar: {
+    height: 3,
+    backgroundColor: '#EF4444',
+    borderRadius: 2,
+    marginBottom: 12,
+  },
+  footer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: 12,
   },
-  progressContainer: {
+  progressWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
   },
-  progressCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  progressDot: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
   },
-  progressCircleSuccess: {
-    backgroundColor: '#F0FDF4',
-    borderColor: '#BBF7D0',
+  progressComplete: {
+    backgroundColor: '#ECFDF5',
   },
-  progressCircleInfo: {
-    backgroundColor: '#EFF6FF',
-    borderColor: '#BFDBFE',
+  progressActive: {
+    backgroundColor: '#F5F3FF',
   },
   progressText: {
-    fontSize: 12,
-    fontWeight: 'bold',
+    fontSize: 13,
+    fontWeight: '700',
   },
-  progressTextSuccess: {
-    color: '#166534',
+  progressTextComplete: {
+    color: '#059669',
   },
-  progressTextInfo: {
-    color: '#1E40AF',
+  progressTextActive: {
+    color: '#7C3AED',
   },
-  dateContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  dateIcon: {
-    fontSize: 16,
-  },
-  dateText: {
-    color: '#6B7280',
+  date: {
     fontSize: 14,
+    color: '#6B7280',
     fontWeight: '500',
+  },
+  dateOverdue: {
+    color: '#DC2626',
   },
   statusBadge: {
     paddingHorizontal: 12,
