@@ -494,7 +494,7 @@ export default function Home() {
                   styles.debugButtonText,
                   showDebug ? styles.debugButtonTextActive : styles.debugButtonTextInactive
                 ]}>
-                  {showDebug ? '🔧 Masquer Debug' : '🔧 Debug'}
+                  {showDebug ? '⚙️ Masquer Debug' : '⚙️ Debug'}
                 </Text>
               </TouchableOpacity>
               
@@ -516,7 +516,7 @@ export default function Home() {
 
             {showDebug && (
               <View className="bg-white p-4 rounded-2xl mt-3 border border-gray-200">
-                <Text className="text-sm font-bold mb-3 text-textMain">🔧 Debug Info</Text>
+                <Text className="text-sm font-bold mb-3 text-textMain">⚙️ Debug Info</Text>
                 <View className="space-y-1.5">
                   <Text className="text-xs text-gray-500">API URL: <Text className="font-semibold text-gray-700">{process.env.EXPO_PUBLIC_API_URL}</Text></Text>
                   <Text className="text-xs text-gray-500">Email: <Text className="font-semibold text-gray-700">{debugInfo?.email ?? '—'}</Text></Text>
@@ -586,7 +586,7 @@ export default function Home() {
         {/* Debug Push - Style Flowli */}
         {__DEV__ && (
           <View className="bg-yellow-50 p-4 rounded-2xl mb-4 border border-yellow-200">
-            <Text className="text-sm font-bold mb-3 text-yellow-800">🔔 Push Notifications</Text>
+            <Text className="text-sm font-bold mb-3 text-yellow-800">📱 Push Notifications</Text>
             
             <View className="space-y-2 mb-3">
               <View>
@@ -650,7 +650,7 @@ export default function Home() {
                 onPress={load} 
                 className="px-4 py-2 rounded-full bg-primary shadow-lg shadow-primary/30"
               >
-                <Text className="text-white font-semibold text-sm">🔄</Text>
+                <Text className="text-white font-semibold text-sm">↻</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -745,7 +745,11 @@ export default function Home() {
                     <Text className="text-gray-500 text-sm">Aucune tâche {section.title.toLowerCase()}</Text>
                   </View>
                 ) : (
-                  displayData.map((item) => renderItem({ item }))
+                  displayData.map((item) => (
+                    <View key={item.id}>
+                      {renderItem({ item })}
+                    </View>
+                  ))
                 )}
               </View>
             );
