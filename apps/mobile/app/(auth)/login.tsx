@@ -8,6 +8,7 @@ import { Input, Button, Snackbar, Card } from '../../src/ui/components';
 export default function Login() {
   const router = useRouter();
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -18,29 +19,26 @@ export default function Login() {
   const [resetLoading, setResetLoading] = useState(false);
   const [resetSuccess, setResetSuccess] = useState<string | null>(null);
 
-  const sendMagicLink = async () => {
-    if (!email) {
-      setError('Veuillez entrer votre email');
+  const handleLogin = async () => {
+    if (!email || !password) {
+      setError('Veuillez entrer votre email et mot de passe');
       return;
     }
     setLoading(true);
     setError(null);
     try {
-      const webBaseUrl = process.env.EXPO_PUBLIC_WEB_BASE_URL!;
-      const emailRedirectTo = `${webBaseUrl}/auth/callback`;
-
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: { emailRedirectTo }
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password
       });
 
       if (error) {
         setError(error.message);
       } else {
-        setSuccess('Code envoyé avec succès');
+        setSuccess('Connexion réussie !');
         setTimeout(() => {
-          router.push({ pathname: '/(auth)/verify-otp', params: { email } });
-        }, 450);
+          router.replace('/(app)/home');
+        }, 800);
       }
     } finally {
       setLoading(false);
@@ -80,7 +78,7 @@ export default function Login() {
     setShowResetForm(true);
   };
 
-  const isDisabled = loading || !email;
+  const isDisabled = loading || !email || !password;
 
   return (
     <View className="flex-1 bg-white" style={styles.container}>
@@ -107,9 +105,9 @@ export default function Login() {
 
             {/* Titre + sous-titre (tailles raisonnables mobiles) */}
             <View className="mb-8" style={styles.titleContainer}>
-              <Text className="text-2xl font-bold text-gray-900 text-center" style={styles.title}>Connexion sécurisée</Text>
+              <Text className="text-2xl font-bold text-gray-900 text-center" style={styles.title}>Connexion</Text>
               <Text className="text-sm text-gray-500 text-center mt-2" style={styles.subtitle}>
-                Connectez-vous en un instant avec votre email.
+                Connectez-vous avec votre email et mot de passe.
               </Text>
             </View>
 
@@ -122,18 +120,26 @@ export default function Login() {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 error={error ?? undefined}
+                className="rounded-2xl text-base mb-3"
+              />
+              <Input
+                placeholder="Votre mot de passe"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                error={error ?? undefined}
                 className="rounded-2xl text-base"
               />
               <Text className="text-[12px] text-gray-500 mt-2" style={styles.helperText}>
-                Utilisez l'email associé à votre compte.
+                Utilisez vos identifiants de connexion.
               </Text>
             </View>
 
             {/* CTA */}
             <Button
-              title={loading ? 'Envoi…' : 'Recevoir mon code'}
+              title={loading ? 'Connexion…' : 'Se connecter'}
               variant="primary"
-              onPress={sendMagicLink}
+              onPress={handleLogin}
               disabled={isDisabled}
               className="rounded-full py-3.5"
             />
@@ -198,7 +204,7 @@ export default function Login() {
             {/* Footer aide minimal */}
             <View className="items-center mt-8" style={styles.footerContainer}>
               <Text className="text-[12px] text-gray-400 text-center" style={styles.footerText}>
-                Un email avec un code à usage unique vous sera envoyé.
+                Connexion sécurisée avec mot de passe.
               </Text>
               <Button
                 title="Créer un compte"
