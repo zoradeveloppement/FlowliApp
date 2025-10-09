@@ -69,16 +69,16 @@ export const Snackbar: React.FC<SnackbarProps> = ({
     });
   };
 
-  const getTypeClasses = () => {
+  const getTypeStyles = () => {
     switch (type) {
       case 'success':
-        return 'bg-success';
+        return { backgroundColor: '#4CAF50' };
       case 'error':
-        return 'bg-danger';
+        return { backgroundColor: '#F44336' };
       case 'info':
-        return 'bg-primary';
+        return { backgroundColor: '#6C63FF' };
       default:
-        return 'bg-primary';
+        return { backgroundColor: '#6C63FF' };
     }
   };
 
@@ -99,8 +99,9 @@ export const Snackbar: React.FC<SnackbarProps> = ({
 
   return (
     <Animated.View
-      className={`absolute top-12 left-4 right-4 z-50 ${getTypeClasses()} rounded-lg p-4 ${className}`}
+      className={`absolute top-12 left-4 right-4 z-50 rounded-lg p-4 ${className}`}
       style={{
+        ...getTypeStyles(),
         transform: [{ translateY: slideAnim }],
         opacity: opacityAnim,
         ...(Platform.OS === 'web' && {
@@ -113,10 +114,10 @@ export const Snackbar: React.FC<SnackbarProps> = ({
       }}
     >
       <View className="flex-row items-center">
-        <Text className="text-white text-lg mr-3">
+        <Text className="text-lg mr-3" style={{ color: '#FFFFFF' }}>
           {getIcon()}
         </Text>
-        <Text className="text-white text-body flex-1 font-medium">
+        <Text className="text-body flex-1 font-medium" style={{ color: '#FFFFFF' }}>
           {message}
         </Text>
       </View>
