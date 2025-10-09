@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, TextInput, SectionList, Refre
 import { useRouter } from 'expo-router';
 import { Screen, AppLayout } from '../../src/ui/layout';
 import { Card, Progress, Badge, Button } from '../../src/ui/components';
+import { TailwindTest } from '../../src/ui/components/TailwindTest';
 import { supabase } from '@/src/lib/supabase';
 import { registerForPushToken } from '@/src/utils/push';
 import { registerDevice } from '@/src/lib/api';
@@ -53,25 +54,39 @@ function fmtRel(iso: string | null): string {
 }
 
 function StatusBadge({ status }: { status: string }) {
-  // Style Flowli: pills arrondis avec couleurs douces
-  const configs = {
-    'Terminé': { bg: '#f0fdf4', color: '#166534', border: '#bbf7d0' },
-    'En retard': { bg: '#fef2f2', color: '#991b1b', border: '#fecaca' },
-    'En cours': { bg: '#eff6ff', color: '#1e40af', border: '#bfdbfe' },
-    'A faire': { bg: '#f5f3ff', color: '#5b21b6', border: '#ddd6fe' },
+  const getStatusClasses = () => {
+    switch (status) {
+      case 'Terminé':
+        return 'bg-green-50 border-green-200';
+      case 'En retard':
+        return 'bg-red-50 border-red-200';
+      case 'En cours':
+        return 'bg-blue-50 border-blue-200';
+      case 'A faire':
+        return 'bg-purple-50 border-purple-200';
+      default:
+        return 'bg-gray-100 border-gray-300';
+    }
   };
-  const config = configs[status as keyof typeof configs] || { bg: '#f3f4f6', color: '#374151', border: '#e5e7eb' };
+
+  const getTextClasses = () => {
+    switch (status) {
+      case 'Terminé':
+        return 'text-green-800';
+      case 'En retard':
+        return 'text-red-800';
+      case 'En cours':
+        return 'text-blue-800';
+      case 'A faire':
+        return 'text-purple-800';
+      default:
+        return 'text-gray-600';
+    }
+  };
   
   return (
-    <View style={{ 
-      backgroundColor: config.bg, 
-      paddingHorizontal: 12, 
-      paddingVertical: 4, 
-      borderRadius: 999,
-      borderWidth: 1,
-      borderColor: config.border
-    }}>
-      <Text style={{ color: config.color, fontSize: 12, fontWeight: '500' }}>{status}</Text>
+    <View className={`px-3 py-1 rounded-full border ${getStatusClasses()}`}>
+      <Text className={`text-xs font-medium ${getTextClasses()}`}>{status}</Text>
     </View>
   );
 }
@@ -82,6 +97,7 @@ export default function Home() {
   const [email, setEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
+  const [showTailwindTest, setShowTailwindTest] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [items, setItems] = useState<TaskItem[]>([]);
   const [logoutLoading, setLogoutLoading] = useState(false);
@@ -306,66 +322,40 @@ export default function Home() {
   const renderItem = ({ item }: { item: TaskItem }) => {
     const pct = item.progress == null ? null : Math.round((item.progress <= 1 ? item.progress * 100 : item.progress));
     return (
-      <View style={{ 
-        backgroundColor: 'white',
-        marginBottom: 12,
-        padding: 16,
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: '#f1f5f9',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 3,
-        elevation: 1
-      }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-          <Text style={{ fontSize: 16, fontWeight: '600', flex: 1, marginRight: 8, color: '#111827' }}>
+      <View className="bg-white mb-3 p-4 rounded-2xl border border-gray-100 shadow-sm">
+        <View className="flex-row justify-between items-start mb-2">
+          <Text className="text-base font-semibold flex-1 mr-2 text-textMain">
             {item.title || '(Sans titre)'}
           </Text>
           <StatusBadge status={item.status} />
         </View>
         
         {item.projectName && (
-          <View style={{ 
-            backgroundColor: '#f8fafc', 
-            alignSelf: 'flex-start',
-            paddingHorizontal: 10,
-            paddingVertical: 4,
-            borderRadius: 999,
-            marginBottom: 8
-          }}>
-            <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '500' }}>{item.projectName}</Text>
+          <View className="bg-bgGray self-start px-2.5 py-1 rounded-full mb-2">
+            <Text className="text-gray-500 text-xs font-medium">{item.projectName}</Text>
           </View>
         )}
         
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+        <View className="flex-row items-center gap-4">
           {pct !== null && (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <View style={{ 
-                width: 32, 
-                height: 32, 
-                borderRadius: 999, 
-                backgroundColor: pct === 100 ? '#f0fdf4' : '#eff6ff',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderWidth: 2,
-                borderColor: pct === 100 ? '#bbf7d0' : '#bfdbfe'
-              }}>
-                <Text style={{ 
-                  fontSize: 11, 
-                  fontWeight: '700',
-                  color: pct === 100 ? '#166534' : '#1e40af'
-                }}>
+            <View className="flex-row items-center gap-1.5">
+              <View className={`w-8 h-8 rounded-full items-center justify-center border-2 ${
+                pct === 100 
+                  ? 'bg-green-50 border-green-200' 
+                  : 'bg-blue-50 border-blue-200'
+              }`}>
+                <Text className={`text-xs font-bold ${
+                  pct === 100 ? 'text-green-800' : 'text-blue-800'
+                }`}>
                   {pct}%
                 </Text>
               </View>
             </View>
           )}
           
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <Text style={{ fontSize: 16 }}>📅</Text>
-            <Text style={{ color: '#64748b', fontSize: 13, fontWeight: '500' }}>{fmtRel(item.dueDate)}</Text>
+          <View className="flex-row items-center gap-1">
+            <Text className="text-base">📅</Text>
+            <Text className="text-gray-500 text-sm font-medium">{fmtRel(item.dueDate)}</Text>
           </View>
         </View>
       </View>
@@ -382,66 +372,76 @@ export default function Home() {
 
   if (!sessionChecked) return null;
 
+  // Afficher le test Tailwind si activé
+  if (showTailwindTest) {
+    return <TailwindTest />;
+  }
+
   return (
-    <View style={{ flex: 1, backgroundColor: '#f8fafc' }}>
+    <View className="flex-1 bg-bgGray">
       <ScrollView 
-        style={{ flex: 1 }}
+        className="flex-1"
         contentContainerStyle={{ padding: 16 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         {/* Debug UI - Style Flowli */}
         {__DEV__ && (
-          <View style={{ marginBottom: 16 }}>
-            <TouchableOpacity 
-              onPress={() => setShowDebug(!showDebug)}
-              style={{ 
-                backgroundColor: showDebug ? '#7c3aed' : '#e2e8f0', 
-                paddingHorizontal: 16, 
-                paddingVertical: 10, 
-                borderRadius: 999,
-                alignSelf: 'flex-start',
-                shadowColor: showDebug ? '#7c3aed' : '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: showDebug ? 0.3 : 0.05,
-                shadowRadius: 4,
-                elevation: 2
-              }}
-            >
-              <Text style={{ color: showDebug ? 'white' : '#64748b', fontSize: 13, fontWeight: '600' }}>
-                {showDebug ? '🔧 Masquer Debug' : '🔧 Debug'}
-              </Text>
-            </TouchableOpacity>
+          <View className="mb-4">
+            <View className="flex-row gap-2 mb-2">
+              <TouchableOpacity 
+                onPress={() => setShowDebug(!showDebug)}
+                className={`px-4 py-2.5 rounded-full ${
+                  showDebug 
+                    ? 'bg-primary shadow-lg shadow-primary/30' 
+                    : 'bg-gray-200 shadow-sm'
+                }`}
+              >
+                <Text className={`text-xs font-semibold ${
+                  showDebug ? 'text-white' : 'text-gray-500'
+                }`}>
+                  {showDebug ? '🔧 Masquer Debug' : '🔧 Debug'}
+                </Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                onPress={() => setShowTailwindTest(!showTailwindTest)}
+                className={`px-4 py-2.5 rounded-full ${
+                  showTailwindTest 
+                    ? 'bg-green-500 shadow-lg shadow-green-500/30' 
+                    : 'bg-gray-200 shadow-sm'
+                }`}
+              >
+                <Text className={`text-xs font-semibold ${
+                  showTailwindTest ? 'text-white' : 'text-gray-500'
+                }`}>
+                  {showTailwindTest ? '🎨 Retour Normal' : '🎨 Test Tailwind'}
+                </Text>
+              </TouchableOpacity>
+            </View>
 
             {showDebug && (
-              <View style={{ 
-                backgroundColor: 'white', 
-                padding: 16, 
-                borderRadius: 16, 
-                marginTop: 12,
-                borderWidth: 1,
-                borderColor: '#e2e8f0'
-              }}>
-                <Text style={{ fontSize: 15, fontWeight: '700', marginBottom: 12, color: '#111827' }}>🔧 Debug Info</Text>
-                <View style={{ gap: 6 }}>
-                  <Text style={{ fontSize: 12, color: '#64748b' }}>API URL: <Text style={{ fontWeight: '600', color: '#374151' }}>{process.env.EXPO_PUBLIC_API_URL}</Text></Text>
-                  <Text style={{ fontSize: 12, color: '#64748b' }}>Email: <Text style={{ fontWeight: '600', color: '#374151' }}>{debugInfo?.email ?? '—'}</Text></Text>
-                  <Text style={{ fontSize: 12, color: '#64748b' }}>JWT envoyé: {debugInfo?.hasAuth ? '✅ oui' : '❌ non'}</Text>
-                  <Text style={{ fontSize: 12, color: '#64748b' }}>Session: {sessionChecked ? '✅ vérifiée' : '❌ non vérifiée'}</Text>
-                  <Text style={{ fontSize: 12, color: '#64748b' }}>Chargement: {loading ? '⏳ en cours' : '✅ terminé'}</Text>
+              <View className="bg-white p-4 rounded-2xl mt-3 border border-gray-200">
+                <Text className="text-sm font-bold mb-3 text-textMain">🔧 Debug Info</Text>
+                <View className="space-y-1.5">
+                  <Text className="text-xs text-gray-500">API URL: <Text className="font-semibold text-gray-700">{process.env.EXPO_PUBLIC_API_URL}</Text></Text>
+                  <Text className="text-xs text-gray-500">Email: <Text className="font-semibold text-gray-700">{debugInfo?.email ?? '—'}</Text></Text>
+                  <Text className="text-xs text-gray-500">JWT envoyé: {debugInfo?.hasAuth ? '✅ oui' : '❌ non'}</Text>
+                  <Text className="text-xs text-gray-500">Session: {sessionChecked ? '✅ vérifiée' : '❌ non vérifiée'}</Text>
+                  <Text className="text-xs text-gray-500">Chargement: {loading ? '⏳ en cours' : '✅ terminé'}</Text>
                   {error
-                    ? <Text style={{ fontSize: 12, color: '#dc2626', fontWeight: '500' }}>❌ {error}</Text>
-                    : <Text style={{ fontSize: 12, color: '#16a34a', fontWeight: '500' }}>✅ {debugInfo?.count ?? 0} tâches</Text>
+                    ? <Text className="text-xs text-red-600 font-medium">❌ {error}</Text>
+                    : <Text className="text-xs text-green-600 font-medium">✅ {debugInfo?.count ?? 0} tâches</Text>
                   }
                 </View>
                 
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
+                <View className="flex-row flex-wrap gap-2 mt-3">
                   {[
-                    { label: 'Load', color: '#2563eb', onPress: load },
-                    { label: 'Session', color: '#16a34a', onPress: async () => {
+                    { label: 'Load', color: 'bg-blue-600', onPress: load },
+                    { label: 'Session', color: 'bg-green-600', onPress: async () => {
                       const { data } = await supabase.auth.getSession();
                       console.log('[DEBUG] Session:', data.session ? '✅' : '❌');
                     }},
-                    { label: 'X-Debug', color: '#f59e0b', onPress: async () => {
+                    { label: 'X-Debug', color: 'bg-yellow-600', onPress: async () => {
                       try {
                         const base = process.env.EXPO_PUBLIC_API_URL!.replace(/\/+$/,'');
                         const authHeadersData = await authHeaders();
@@ -457,7 +457,7 @@ export default function Home() {
                         console.log('[DEBUG] Erreur:', error);
                       }
                     }},
-                    { label: 'Sans Filtres', color: '#8b5cf6', onPress: async () => {
+                    { label: 'Sans Filtres', color: 'bg-purple-600', onPress: async () => {
                       try {
                         const base = process.env.EXPO_PUBLIC_API_URL!.replace(/\/+$/,'');
                         const authHeadersData = await authHeaders();
@@ -477,14 +477,9 @@ export default function Home() {
                     <TouchableOpacity 
                       key={i}
                       onPress={btn.onPress}
-                      style={{ 
-                        backgroundColor: btn.color, 
-                        paddingHorizontal: 12, 
-                        paddingVertical: 6, 
-                        borderRadius: 999 
-                      }}
+                      className={`${btn.color} px-3 py-1.5 rounded-full`}
                     >
-                      <Text style={{ color: 'white', fontSize: 11, fontWeight: '600' }}>{btn.label}</Text>
+                      <Text className="text-white text-xs font-semibold">{btn.label}</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -495,30 +490,23 @@ export default function Home() {
 
         {/* Debug Push - Style Flowli */}
         {__DEV__ && (
-          <View style={{ 
-            backgroundColor: '#fffbeb', 
-            padding: 16, 
-            borderRadius: 16, 
-            marginBottom: 16, 
-            borderWidth: 1, 
-            borderColor: '#fef3c7' 
-          }}>
-            <Text style={{ fontSize: 15, fontWeight: '700', marginBottom: 12, color: '#78350f' }}>🔔 Push Notifications</Text>
+          <View className="bg-yellow-50 p-4 rounded-2xl mb-4 border border-yellow-200">
+            <Text className="text-sm font-bold mb-3 text-yellow-800">🔔 Push Notifications</Text>
             
-            <View style={{ gap: 8, marginBottom: 12 }}>
+            <View className="space-y-2 mb-3">
               <View>
-                <Text style={{ fontSize: 11, color: '#92400e', fontWeight: '600', marginBottom: 2 }}>API URL</Text>
-                <Text style={{ fontSize: 10, color: '#a16207', fontFamily: 'monospace' }}>{process.env.EXPO_PUBLIC_API_URL}</Text>
+                <Text className="text-xs text-yellow-700 font-semibold mb-1">API URL</Text>
+                <Text className="text-xs text-yellow-600 font-mono">{process.env.EXPO_PUBLIC_API_URL}</Text>
               </View>
               
               <View>
-                <Text style={{ fontSize: 11, color: '#92400e', fontWeight: '600', marginBottom: 2 }}>Email</Text>
-                <Text style={{ fontSize: 11, color: '#a16207' }}>{email || '—'}</Text>
+                <Text className="text-xs text-yellow-700 font-semibold mb-1">Email</Text>
+                <Text className="text-xs text-yellow-600">{email || '—'}</Text>
               </View>
               
               <View>
-                <Text style={{ fontSize: 11, color: '#92400e', fontWeight: '600', marginBottom: 2 }}>Push Token</Text>
-                <Text style={{ fontSize: 10, color: '#a16207', fontFamily: 'monospace' }}>
+                <Text className="text-xs text-yellow-700 font-semibold mb-1">Push Token</Text>
+                <Text className="text-xs text-yellow-600 font-mono">
                   {pushToken ? `${pushToken.slice(0, 8)}...` : 'Non disponible'}
                 </Text>
               </View>
@@ -527,15 +515,13 @@ export default function Home() {
             <TouchableOpacity
               onPress={reRegisterDevice}
               disabled={pushRegisterLoading}
-              style={{
-                backgroundColor: pushRegisterLoading ? '#d1d5db' : '#f59e0b',
-                paddingHorizontal: 16,
-                paddingVertical: 10,
-                borderRadius: 999,
-                opacity: pushRegisterLoading ? 0.6 : 1
-              }}
+              className={`px-4 py-2.5 rounded-full ${
+                pushRegisterLoading 
+                  ? 'bg-gray-400 opacity-60' 
+                  : 'bg-yellow-600'
+              }`}
             >
-              <Text style={{ color: 'white', fontSize: 13, fontWeight: '600', textAlign: 'center' }}>
+              <Text className="text-white text-sm font-semibold text-center">
                 {pushRegisterLoading ? 'Re-enregistrement...' : 'Re-enregistrer device'}
               </Text>
             </TouchableOpacity>
@@ -543,116 +529,70 @@ export default function Home() {
         )}
 
         {/* Header - Style Flowli */}
-        <View style={{ marginBottom: 24 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+        <View className="mb-6">
+          <View className="flex-row justify-between items-center mb-2">
             <View>
-              <Text style={{ fontSize: 28, fontWeight: '700', color: '#111827', marginBottom: 4 }}>
-                Mes <Text style={{ color: '#7c3aed' }}>tâches</Text>
+              <Text className="text-3xl font-bold text-textMain mb-1">
+                Mes <Text className="text-primary">tâches</Text>
               </Text>
-              <Text style={{ fontSize: 14, color: '#64748b' }}>{items.length} tâche{items.length > 1 ? 's' : ''} au total</Text>
+              <Text className="text-secondary">{items.length} tâche{items.length > 1 ? 's' : ''} au total</Text>
             </View>
             
-            <View style={{ flexDirection: 'row', gap: 8 }}>
+            <View className="flex-row gap-2">
               <TouchableOpacity 
                 onPress={logout} 
                 disabled={logoutLoading}
-                style={{ 
-                  paddingHorizontal: 16,
-                  paddingVertical: 8,
-                  borderRadius: 999,
-                  backgroundColor: 'white',
-                  borderWidth: 1,
-                  borderColor: '#fecaca',
-                  opacity: logoutLoading ? 0.6 : 1
-                }}
+                className={`px-4 py-2 rounded-full bg-white border border-red-200 ${
+                  logoutLoading ? 'opacity-60' : ''
+                }`}
               >
-                <Text style={{ fontWeight: '600', color: '#dc2626', fontSize: 13 }}>
+                <Text className="font-semibold text-red-600 text-sm">
                   {logoutLoading ? '...' : 'Déco'}
                 </Text>
               </TouchableOpacity>
               
               <TouchableOpacity 
                 onPress={load} 
-                style={{ 
-                  paddingHorizontal: 16, 
-                  paddingVertical: 8, 
-                  backgroundColor: '#7c3aed', 
-                  borderRadius: 999,
-                  shadowColor: '#7c3aed',
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: 0.3,
-                  shadowRadius: 8,
-                  elevation: 4
-                }}
+                className="px-4 py-2 rounded-full bg-primary shadow-lg shadow-primary/30"
               >
-                <Text style={{ color: 'white', fontWeight: '600', fontSize: 13 }}>🔄</Text>
+                <Text className="text-white font-semibold text-sm">🔄</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
 
         {/* Filtres - Style Flowli Card */}
-        <View style={{ 
-          backgroundColor: 'white', 
-          padding: 16, 
-          borderRadius: 20, 
-          marginBottom: 20,
-          borderWidth: 1,
-          borderColor: '#f1f5f9',
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.05,
-          shadowRadius: 4,
-          elevation: 2
-        }}>
-          <Text style={{ fontSize: 16, fontWeight: '700', marginBottom: 12, color: '#111827' }}>Filtres</Text>
+        <View className="bg-white p-4 rounded-2xl mb-5 border border-gray-100 shadow-sm">
+          <Text className="text-base font-bold mb-3 text-textMain">Filtres</Text>
           
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12, gap: 8 }}>
+          <View className="flex-row items-center mb-3 gap-2">
             <TouchableOpacity
               onPress={() => setShowDone(!showDone)}
-              style={{ 
-                flexDirection: 'row',
-                alignItems: 'center',
-                paddingHorizontal: 14, 
-                paddingVertical: 8, 
-                backgroundColor: showDone ? '#7c3aed' : '#f1f5f9', 
-                borderRadius: 999,
-                flex: 1
-              }}
+              className={`flex-row items-center px-3.5 py-2 rounded-full flex-1 ${
+                showDone ? 'bg-primary' : 'bg-gray-100'
+              }`}
             >
-              <Text style={{ color: showDone ? 'white' : '#64748b', fontWeight: '600', fontSize: 13 }}>
+              <Text className={`font-semibold text-sm ${
+                showDone ? 'text-white' : 'text-gray-500'
+              }`}>
                 {showDone ? '✅ Inclure terminées' : 'Ouvertes seulement'}
               </Text>
             </TouchableOpacity>
             
             <TouchableOpacity
               onPress={resetFilters}
-              style={{
-                paddingHorizontal: 14,
-                paddingVertical: 8,
-                backgroundColor: '#f1f5f9',
-                borderRadius: 999
-              }}
+              className="px-3.5 py-2 rounded-full bg-gray-100"
             >
-              <Text style={{ color: '#64748b', fontWeight: '600', fontSize: 13 }}>Reset</Text>
+              <Text className="text-gray-500 font-semibold text-sm">Reset</Text>
             </TouchableOpacity>
           </View>
 
-          <View style={{ gap: 10 }}>
+          <View className="space-y-2.5">
             <TextInput
               placeholder="🔍 Rechercher dans les tâches..."
               value={search}
               onChangeText={setSearch}
-              style={{
-                borderWidth: 1,
-                borderColor: '#e2e8f0',
-                borderRadius: 12,
-                paddingHorizontal: 14,
-                paddingVertical: 12,
-                fontSize: 14,
-                backgroundColor: '#f8fafc',
-                color: '#111827'
-              }}
+              className="border border-gray-200 rounded-xl px-3.5 py-3 text-sm bg-bgGray text-textMain"
               placeholderTextColor="#94a3b8"
             />
 
@@ -660,34 +600,18 @@ export default function Home() {
               placeholder="🏗️ ID du projet (optionnel)"
               value={projectId}
               onChangeText={setProjectId}
-              style={{
-                borderWidth: 1,
-                borderColor: '#e2e8f0',
-                borderRadius: 12,
-                paddingHorizontal: 14,
-                paddingVertical: 12,
-                fontSize: 14,
-                backgroundColor: '#f8fafc',
-                color: '#111827'
-              }}
+              className="border border-gray-200 rounded-xl px-3.5 py-3 text-sm bg-bgGray text-textMain"
               placeholderTextColor="#94a3b8"
             />
           </View>
 
           {activeFilters.length > 0 && (
-            <View style={{ marginTop: 12 }}>
-              <Text style={{ color: '#64748b', fontSize: 12, marginBottom: 6, fontWeight: '500' }}>Filtres actifs:</Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+            <View className="mt-3">
+              <Text className="text-gray-500 text-xs mb-1.5 font-medium">Filtres actifs:</Text>
+              <View className="flex-row flex-wrap gap-1.5">
                 {activeFilters.map((filter, i) => (
-                  <View key={i} style={{ 
-                    backgroundColor: '#f0f9ff', 
-                    paddingHorizontal: 10, 
-                    paddingVertical: 4, 
-                    borderRadius: 999,
-                    borderWidth: 1,
-                    borderColor: '#bae6fd'
-                  }}>
-                    <Text style={{ color: '#0369a1', fontSize: 11, fontWeight: '500' }}>{filter}</Text>
+                  <View key={i} className="bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200">
+                    <Text className="text-blue-700 text-xs font-medium">{filter}</Text>
                   </View>
                 ))}
               </View>
@@ -703,28 +627,17 @@ export default function Home() {
             if (displayData.length === 0 && section.title === 'Terminées') return null;
             
             return (
-              <View key={section.title} style={{ marginBottom: 24 }}>
-                <View style={{ 
-                  flexDirection: 'row', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'center', 
-                  marginBottom: 12,
-                  paddingHorizontal: 4
-                }}>
-                  <Text style={{ fontSize: 18, fontWeight: '700', color: '#111827' }}>
+              <View key={section.title} className="mb-6">
+                <View className="flex-row justify-between items-center mb-3 px-1">
+                  <Text className="text-lg font-bold text-textMain">
                     {section.title} ({displayData.length})
                   </Text>
                   {section.title === 'Terminées' && section.data.length > 0 && (
                     <TouchableOpacity 
                       onPress={() => setShowDone(s => !s)}
-                      style={{
-                        paddingHorizontal: 12,
-                        paddingVertical: 6,
-                        borderRadius: 999,
-                        backgroundColor: '#f1f5f9'
-                      }}
+                      className="px-3 py-1.5 rounded-full bg-gray-100"
                     >
-                      <Text style={{ color: '#7c3aed', fontWeight: '600', fontSize: 12 }}>
+                      <Text className="text-primary font-semibold text-xs">
                         {showDone ? 'Masquer' : 'Afficher'}
                       </Text>
                     </TouchableOpacity>
@@ -732,16 +645,9 @@ export default function Home() {
                 </View>
                 
                 {displayData.length === 0 ? (
-                  <View style={{ 
-                    backgroundColor: 'white',
-                    padding: 24,
-                    borderRadius: 16,
-                    borderWidth: 1,
-                    borderColor: '#f1f5f9',
-                    alignItems: 'center'
-                  }}>
-                    <Text style={{ fontSize: 32, marginBottom: 8 }}>✨</Text>
-                    <Text style={{ color: '#64748b', fontSize: 14 }}>Aucune tâche {section.title.toLowerCase()}</Text>
+                  <View className="bg-white p-6 rounded-2xl border border-gray-100 items-center">
+                    <Text className="text-3xl mb-2">✨</Text>
+                    <Text className="text-gray-500 text-sm">Aucune tâche {section.title.toLowerCase()}</Text>
                   </View>
                 ) : (
                   displayData.map((item) => renderItem({ item }))
@@ -752,31 +658,18 @@ export default function Home() {
         </View>
         
         {loading && (
-          <View style={{ 
-            backgroundColor: 'white',
-            padding: 24,
-            borderRadius: 16,
-            alignItems: 'center',
-            marginTop: 16
-          }}>
-            <Text style={{ color: '#7c3aed', fontSize: 14, fontWeight: '500' }}>⏳ Chargement...</Text>
+          <View className="bg-white p-6 rounded-2xl items-center mt-4">
+            <Text className="text-primary text-sm font-medium">⏳ Chargement...</Text>
           </View>
         )}
         
         {!loading && items.length === 0 && (
-          <View style={{ 
-            backgroundColor: 'white',
-            padding: 32,
-            borderRadius: 20,
-            alignItems: 'center',
-            borderWidth: 1,
-            borderColor: '#f1f5f9'
-          }}>
-            <Text style={{ fontSize: 48, marginBottom: 12 }}>📋</Text>
-            <Text style={{ fontSize: 16, fontWeight: '600', color: '#111827', marginBottom: 4 }}>
+          <View className="bg-white p-8 rounded-2xl items-center border border-gray-100">
+            <Text className="text-5xl mb-3">📋</Text>
+            <Text className="text-base font-semibold text-textMain mb-1">
               Aucune tâche
             </Text>
-            <Text style={{ color: '#64748b', fontSize: 14, textAlign: 'center' }}>
+            <Text className="text-gray-500 text-sm text-center">
               Vous n'avez pas encore de tâches assignées
             </Text>
           </View>

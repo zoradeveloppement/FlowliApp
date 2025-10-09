@@ -1,3 +1,46 @@
+/**
+ * DEPRECATED: This file is being phased out in favor of Tailwind/NativeWind classes.
+ * Use Tailwind classes directly in components instead.
+ * 
+ * Color mappings:
+ * - colors.primary → bg-primary, text-primary
+ * - colors.bgGray → bg-bgGray
+ * - colors.textMain → text-textMain
+ * - colors.textMuted → text-textMuted
+ * - colors.success → bg-success, text-success
+ * - colors.warn → bg-warn, text-warn
+ * - colors.danger → bg-danger, text-danger
+ * 
+ * Typography mappings:
+ * - typography.h1 → text-h1
+ * - typography.h2 → text-h2
+ * - typography.body → text-body
+ * - typography.secondary → text-secondary
+ * - typography.button → text-button
+ * 
+ * Spacing mappings:
+ * - spacing.xs → p-1, m-1, gap-1
+ * - spacing.sm → p-2, m-2, gap-2
+ * - spacing.md → p-4, m-4, gap-4
+ * - spacing.lg → p-6, m-6, gap-6
+ * - spacing.xl → p-8, m-8, gap-8
+ * - spacing.xxl → p-12, m-12, gap-12
+ * 
+ * Border radius mappings:
+ * - borderRadius.sm → rounded-sm
+ * - borderRadius.md → rounded-md
+ * - borderRadius.lg → rounded-lg
+ * - borderRadius.xl → rounded-xl
+ * - borderRadius.full → rounded-full
+ * 
+ * Shadow mappings:
+ * - shadows.card → shadow-card
+ * - shadows.button → shadow-button
+ * 
+ * This file is kept temporarily for reference during migration.
+ * All new components should use Tailwind classes directly.
+ */
+
 import { StyleSheet } from 'react-native';
 
 // Design tokens basés sur votre charte UX/UI

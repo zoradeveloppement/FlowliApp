@@ -1,7 +1,6 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, Platform } from 'react-native';
+import { TouchableOpacity, Text } from 'react-native';
 import { ButtonVariant, ButtonSize, BaseComponentProps } from '../types';
-import { globalStyles, colors, typography } from '../styles/globalStyles';
 
 interface ButtonProps extends BaseComponentProps {
   variant?: ButtonVariant;
@@ -17,86 +16,64 @@ export const Button: React.FC<ButtonProps> = ({
   onPress,
   disabled = false,
   title,
-  style,
+  className,
 }) => {
-  const getButtonStyle = () => {
-    const baseStyle = [globalStyles.button];
+  const getButtonClasses = () => {
+    const baseClasses = 'rounded-full flex-row items-center justify-center';
     
-    switch (variant) {
-      case 'primary':
-        return [...baseStyle, globalStyles.buttonPrimary, disabled && styles.disabled];
-      case 'secondary':
-        return [...baseStyle, globalStyles.buttonSecondary, disabled && styles.disabled];
-      case 'ghost':
-        return [...baseStyle, globalStyles.buttonGhost, disabled && styles.disabled];
-      case 'disabled':
-        return [...baseStyle, styles.disabled];
-      default:
-        return [...baseStyle, globalStyles.buttonPrimary];
-    }
+    // Size classes
+    const sizeClasses = {
+      sm: 'px-3 py-2',
+      md: 'px-4 py-3',
+      lg: 'px-6 py-4',
+    };
+    
+    // Variant classes
+    const variantClasses = {
+      primary: disabled 
+        ? 'bg-gray-300' 
+        : 'bg-primary shadow-lg shadow-primary/30',
+      secondary: disabled
+        ? 'bg-gray-200 border border-gray-300'
+        : 'bg-white border border-primary',
+      ghost: disabled
+        ? 'bg-transparent'
+        : 'bg-transparent',
+      disabled: 'bg-gray-300',
+    };
+    
+    return `${baseClasses} ${sizeClasses[size]} ${variantClasses[variant]} ${className || ''}`;
   };
 
-  const getTextStyle = () => {
-    switch (variant) {
-      case 'primary':
-        return [globalStyles.textWhite, typography.button];
-      case 'secondary':
-        return [globalStyles.textPrimary, typography.button];
-      case 'ghost':
-        return [globalStyles.textPrimary, typography.button];
-      case 'disabled':
-        return [styles.disabledText, typography.button];
-      default:
-        return [globalStyles.textWhite, typography.button];
-    }
-  };
-
-  const getSizeStyle = () => {
-    switch (size) {
-      case 'sm':
-        return styles.small;
-      case 'md':
-        return styles.medium;
-      case 'lg':
-        return styles.large;
-      default:
-        return styles.medium;
-    }
+  const getTextClasses = () => {
+    const baseClasses = 'font-medium text-center';
+    
+    const variantClasses = {
+      primary: disabled ? 'text-gray-500' : 'text-white',
+      secondary: disabled ? 'text-gray-400' : 'text-primary',
+      ghost: disabled ? 'text-gray-400' : 'text-primary',
+      disabled: 'text-gray-500',
+    };
+    
+    const sizeClasses = {
+      sm: 'text-sm',
+      md: 'text-base',
+      lg: 'text-lg',
+    };
+    
+    return `${baseClasses} ${sizeClasses[size]} ${variantClasses[variant]}`;
   };
 
   return (
     <TouchableOpacity
-      style={[...getButtonStyle(), getSizeStyle(), style]}
+      className={getButtonClasses()}
       onPress={onPress}
       disabled={disabled}
       activeOpacity={variant === 'ghost' ? 0.7 : 0.9}
     >
-      <Text style={getTextStyle()}>
+      <Text className={getTextClasses()}>
         {title}
       </Text>
     </TouchableOpacity>
   );
 };
-
-const styles = StyleSheet.create({
-  small: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-  },
-  medium: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-  },
-  large: {
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-  },
-  disabled: {
-    backgroundColor: colors.gray[300],
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  disabledText: {
-    color: colors.gray[500],
-  },
-});

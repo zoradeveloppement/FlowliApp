@@ -1,10 +1,9 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Platform, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Platform } from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
 import { useTheme } from '../theme/ThemeProvider';
 import { NotificationBadge } from '../components';
 import { useNotificationStore } from '../store/notificationStore';
-import { globalStyles, colors } from '../styles/globalStyles';
 
 interface BottomTabsProps {
   hasNewTasks?: boolean;
@@ -26,7 +25,7 @@ export const BottomTabs: React.FC<BottomTabsProps> = ({ hasNewTasks = false }) =
   if (!isMobile) return null;
 
   return (
-    <View style={styles.container}>
+    <View className="bg-white border-t border-gray-200 px-2 py-2 flex-row justify-around">
       {tabItems.map((item) => {
         const isActive = pathname === item.href;
         const isDossierTab = item.href === '/dossier';
@@ -42,22 +41,20 @@ export const BottomTabs: React.FC<BottomTabsProps> = ({ hasNewTasks = false }) =
         return (
           <TouchableOpacity
             key={item.href}
-            style={[
-              styles.tab,
-              isActive && styles.activeTab
-            ]}
+            className={`flex-1 items-center py-2 px-1 ${
+              isActive ? 'bg-primary/10' : ''
+            }`}
             onPress={() => router.push(item.href)}
           >
-            <View style={styles.iconContainer}>
-              <Text style={styles.icon}>{item.icon}</Text>
+            <View className="relative mb-1">
+              <Text className="text-2xl">{item.icon}</Text>
               {hasNotifications && (
                 <NotificationBadge size="sm" />
               )}
             </View>
-            <Text style={[
-              styles.label,
-              isActive && styles.activeLabel
-            ]}>
+            <Text className={`text-xs font-medium ${
+              isActive ? 'text-primary' : 'text-textMuted'
+            }`}>
               {item.name}
             </Text>
           </TouchableOpacity>
@@ -67,38 +64,3 @@ export const BottomTabs: React.FC<BottomTabsProps> = ({ hasNewTasks = false }) =
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.white,
-    borderTopWidth: 1,
-    borderTopColor: colors.gray[200],
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  tab: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-  },
-  activeTab: {
-    backgroundColor: colors.primary + '10',
-  },
-  iconContainer: {
-    position: 'relative',
-    marginBottom: 4,
-  },
-  icon: {
-    fontSize: 24,
-  },
-  label: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: colors.textMuted,
-  },
-  activeLabel: {
-    color: colors.primary,
-  },
-});
