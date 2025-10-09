@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { View, Text, KeyboardAvoidingView, Platform, ScrollView, StatusBar, StyleSheet } from 'react-native';
+import { View, Text, KeyboardAvoidingView, Platform, ScrollView, StatusBar, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { Screen } from '../../src/ui/layout';
-import { Input, Button, Snackbar } from '../../src/ui/components';
+import { Input, Button, Snackbar, Card } from '../../src/ui/components';
 
 export default function Login() {
   const router = useRouter();
@@ -11,6 +11,12 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  
+  // Password reset states
+  const [showResetForm, setShowResetForm] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetSuccess, setResetSuccess] = useState<string | null>(null);
 
   const sendMagicLink = async () => {
     if (!email) {
@@ -39,6 +45,39 @@ export default function Login() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const sendPasswordReset = async () => {
+    if (!resetEmail) {
+      setError('Veuillez entrer votre email');
+      return;
+    }
+    setResetLoading(true);
+    setError(null);
+    try {
+      const webBaseUrl = process.env.EXPO_PUBLIC_WEB_BASE_URL!;
+      const redirectTo = `${webBaseUrl}/auth/callback`;
+
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        resetEmail.trim().toLowerCase(),
+        { redirectTo }
+      );
+
+      if (error) {
+        setError(error.message);
+      } else {
+        setResetSuccess('Email envoyé si le compte existe.');
+        setShowResetForm(false);
+        setResetEmail('');
+      }
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  const handleResetClick = () => {
+    setResetEmail(email); // Pre-fill with current email if available
+    setShowResetForm(true);
   };
 
   const isDisabled = loading || !email;
@@ -99,6 +138,53 @@ export default function Login() {
               className="rounded-full py-3.5"
             />
 
+            {/* Password reset link */}
+            <TouchableOpacity
+              onPress={handleResetClick}
+              activeOpacity={0.7}
+              className="items-center mt-4"
+              style={styles.resetLink}
+            >
+              <Text className="text-violet-600 text-base font-medium" style={styles.resetLinkText}>
+                Mot de passe oublié ?
+              </Text>
+            </TouchableOpacity>
+
+            {/* Password reset form */}
+            {showResetForm && (
+              <Card className="mt-6">
+                <Text className="text-lg font-semibold text-gray-900 mb-4" style={styles.resetTitle}>
+                  Réinitialiser le mot de passe
+                </Text>
+                <Input
+                  placeholder="email@exemple.com"
+                  value={resetEmail}
+                  onChangeText={setResetEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  className="rounded-2xl text-base mb-4"
+                />
+                <View className="flex-row gap-3" style={styles.resetButtonsContainer}>
+                  <Button
+                    title="Annuler"
+                    variant="ghost"
+                    onPress={() => {
+                      setShowResetForm(false);
+                      setResetEmail('');
+                    }}
+                    className="flex-1 rounded-full py-3"
+                  />
+                  <Button
+                    title={resetLoading ? 'Envoi…' : 'Envoyer le lien'}
+                    variant="primary"
+                    onPress={sendPasswordReset}
+                    disabled={resetLoading || !resetEmail}
+                    className="flex-1 rounded-full py-3"
+                  />
+                </View>
+              </Card>
+            )}
+
             {/* Badge de confiance */}
             <View className="items-center mt-6" style={styles.trustContainer}>
               <View className="flex-row items-center bg-gray-50 rounded-full px-3.5 py-2" style={styles.trustBadge}>
@@ -137,6 +223,12 @@ export default function Login() {
         message={success || ''}
         visible={!!success}
         onHide={() => setSuccess(null)}
+      />
+      <Snackbar
+        type="success"
+        message={resetSuccess || ''}
+        visible={!!resetSuccess}
+        onHide={() => setResetSuccess(null)}
       />
     </View>
   );
@@ -247,5 +339,24 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#9CA3AF',
     textAlign: 'center',
+  },
+  resetLink: {
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  resetLinkText: {
+    color: '#7C3AED',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  resetTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#111827',
+    marginBottom: 16,
+  },
+  resetButtonsContainer: {
+    flexDirection: 'row',
+    gap: 12,
   },
 });
