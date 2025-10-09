@@ -56,7 +56,7 @@ export default function Login() {
           className="flex-1"
         >
           {/* Container centré */}
-          <View className="flex-1 items-stretch justify-center px-6 py-8">
+          <View className="flex-1 items-stretch justify-center px-8 py-12">
             {/* Branding compact */}
             <View className="items-center mb-8">
               <View className="w-14 h-14 rounded-full bg-violet-600 items-center justify-center mb-3">

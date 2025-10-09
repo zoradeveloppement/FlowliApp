@@ -1,6 +1,11 @@
 import { Stack } from 'expo-router';
+import { Platform } from 'react-native';
 import { ThemeProvider } from '../src/ui/theme/ThemeProvider';
 import { ToastProvider } from '../src/ui/components';
+
+if (Platform.OS === 'web') {
+  require('../global.css');
+}
 
 export default function RootLayout() {
   return (
