@@ -6,11 +6,9 @@ import { Card, Progress, Badge, Button } from '../../src/ui/components';
 import { TaskDetailModal } from '../../src/ui/components/TaskDetailModal';
 import { TailwindTest } from '../../src/ui/components/TailwindTest';
 import { supabase } from '@/src/lib/supabase';
-import { registerForPushToken } from '@/src/utils/push';
-import { registerDevice } from '@/src/lib/api';
+import { registerForPushToken, registerDeviceOnApi } from '@/src/utils/push';
 import { fetchTasks } from '@/src/api/tasks';
-import { authHeaders } from '@/src/lib/auth';
-import { get } from '@/src/lib/http';
+import { get } from '@/src/utils/http';
 
 type TaskItem = {
   id: string;
@@ -52,6 +50,18 @@ function fmtRel(iso: string | null): string {
     const label = unit === 'day' ? (s > 1 ? 'jours' : 'jour') : unit === 'hour' ? (s > 1 ? 'heures' : 'heure') : (s > 1 ? 'minutes' : 'minute');
     return value < 0 ? `il y a ${s} ${label}` : `dans ${s} ${label}`;
   }
+}
+
+function formatTimestamp(iso: string): string {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return 'Invalid date';
+  return d.toLocaleString('fr-FR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    day: '2-digit',
+    month: '2-digit'
+  });
 }
 
   function StatusBadge({ status }: { status: string }) {
@@ -122,6 +132,62 @@ function fmtRel(iso: string | null): string {
     );
   }
 
+  function RegisterStatusBadge({ status }: { status: number | null }) {
+    const getStatusInfo = () => {
+      if (status === 200) {
+        return {
+          text: '200 OK',
+          classes: 'bg-green-50 border-green-200',
+          textClasses: 'text-green-800',
+          style: styles.registerStatusSuccess,
+          textStyle: styles.registerStatusTextSuccess
+        };
+      } else if (status === 401) {
+        return {
+          text: '401 Auth',
+          classes: 'bg-red-50 border-red-200',
+          textClasses: 'text-red-800',
+          style: styles.registerStatusError,
+          textStyle: styles.registerStatusTextError
+        };
+      } else if (status === 404) {
+        return {
+          text: '404 Not Found',
+          classes: 'bg-orange-50 border-orange-200',
+          textClasses: 'text-orange-800',
+          style: styles.registerStatusWarning,
+          textStyle: styles.registerStatusTextWarning
+        };
+      } else if (status === 500) {
+        return {
+          text: '500 Server',
+          classes: 'bg-red-50 border-red-200',
+          textClasses: 'text-red-800',
+          style: styles.registerStatusError,
+          textStyle: styles.registerStatusTextError
+        };
+      } else {
+        return {
+          text: status ? `${status} Error` : 'Unknown',
+          classes: 'bg-gray-50 border-gray-200',
+          textClasses: 'text-gray-800',
+          style: styles.registerStatusDefault,
+          textStyle: styles.registerStatusTextDefault
+        };
+      }
+    };
+
+    const statusInfo = getStatusInfo();
+
+    return (
+      <View className={`px-3 py-1 rounded-full border ${statusInfo.classes}`} style={[styles.registerStatusBadge, statusInfo.style]}>
+        <Text className={`text-xs font-medium ${statusInfo.textClasses}`} style={[styles.registerStatusText, statusInfo.textStyle]}>
+          {statusInfo.text}
+        </Text>
+      </View>
+    );
+  }
+
 export default function Home() {
   const router = useRouter();
   const [sessionChecked, setSessionChecked] = useState(false);
@@ -148,6 +214,12 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [pushToken, setPushToken] = useState<string | null>(null);
   const [pushRegisterLoading, setPushRegisterLoading] = useState(false);
+  const [lastRegisterStatus, setLastRegisterStatus] = useState<{
+    timestamp: string;
+    status: number | null;
+    message: string;
+    success: boolean;
+  } | null>(null);
 
   // Debounce search input
   useEffect(() => {
@@ -184,28 +256,50 @@ export default function Home() {
       setPushToken(newToken);
       
       if (!newToken) {
-        throw new Error('Impossible d\'obtenir le token push');
+        setLastRegisterStatus({
+          timestamp: new Date().toISOString(),
+          status: null,
+          message: 'No token - impossible d\'obtenir le token push',
+          success: false
+        });
+        return;
       }
       
       console.log('[DEBUG PUSH] 🔑 Nouveau token (8 chars):', newToken.slice(0, 8));
       console.log('[DEBUG PUSH] 📧 Email session:', session.user.email);
       console.log('[DEBUG PUSH] 🌐 URL API:', process.env.EXPO_PUBLIC_API_URL);
       
-      const result = await registerDevice({
-        userId: session.user.id,
-        token: newToken,
-        platform: Platform.OS as 'ios' | 'android' | 'web',
-        isTester: true,
+      const r = await registerDeviceOnApi(newToken);
+      console.log('[DEBUG PUSH] result', r);
+      
+      // Update status state with API response
+      setLastRegisterStatus({
+        timestamp: new Date().toISOString(),
+        status: r.status,
+        message: r.data?.message || r.data?.error || r.raw || (r.ok ? 'OK' : 'Error'),
+        success: r.ok
       });
       
-      console.log('[DEBUG PUSH] ✅ Device re-enregistré avec succès');
-      console.log('[DEBUG PUSH] 📊 Status: 200 OK');
-      console.log('[DEBUG PUSH] 🔗 URL:', `${process.env.EXPO_PUBLIC_API_URL}/api/devices/register`);
+      if (r.ok) {
+        console.log('[DEBUG PUSH] ✅ Device re-enregistré avec succès');
+        console.log('[DEBUG PUSH] 📊 Status:', r.status);
+      } else {
+        console.log('[DEBUG PUSH] ❌ Erreur re-enregistrement:', r.raw || r.data);
+        console.log('[DEBUG PUSH] 📊 Status:', r.status);
+        Alert.alert('Erreur', `Échec du re-enregistrement: ${r.raw || r.data?.error || 'Unknown error'}`);
+      }
       
     } catch (error: any) {
       console.log('[DEBUG PUSH] ❌ Erreur re-enregistrement:', error?.message);
-      console.log('[DEBUG PUSH] 📊 Status:', error?.status || 'Unknown');
-      console.log('[DEBUG PUSH] 🔗 URL:', error?.url || 'Unknown');
+      
+      // Update status state for error
+      setLastRegisterStatus({
+        timestamp: new Date().toISOString(),
+        status: error?.status || null,
+        message: error?.message || 'Erreur inconnue',
+        success: false
+      });
+      
       Alert.alert('Erreur', `Échec du re-enregistrement: ${error?.message || 'Unknown error'}`);
     } finally {
       setPushRegisterLoading(false);
@@ -280,20 +374,23 @@ export default function Home() {
       if (params.search) queryParts.push(`search=${encodeURIComponent(params.search)}`);
       if (params.projectId) queryParts.push(`projectId=${encodeURIComponent(params.projectId)}`);
       const qs = queryParts.join('&');
-      const headers = await authHeaders();
-      console.log('[HOME] 🔑 Headers auth:', { hasAuth: !!headers.Authorization, tokenPreview: headers.Authorization?.slice(0, 20) + '...' });
       
       const url = `me/tasks${qs ? `?${qs}` : ''}`;
       console.log('[HOME] 🌐 Appel API:', url);
-      const resp = await get(url, headers);
+      const resp = await get(url);
 
-      const items = Array.isArray(resp) ? resp : resp.items ?? [];
-      const count = Array.isArray(resp) ? resp.length : (resp.count ?? items.length);
+      if (!resp.ok) {
+        throw new Error(resp.raw || `HTTP ${resp.status}`);
+      }
+
+      const data = resp.data;
+      const items = Array.isArray(data) ? data : data?.items ?? [];
+      const count = Array.isArray(data) ? data.length : (data?.count ?? items.length);
       
       console.log('[HOME] ✅ Tâches chargées:', { count, itemsLength: items.length });
 
       setItems(items);
-      setDebugInfo({ apiUrl: process.env.EXPO_PUBLIC_API_URL!, email, count, hasAuth: !!headers.Authorization });
+      setDebugInfo({ apiUrl: process.env.EXPO_PUBLIC_API_URL!, email, count, hasAuth: true });
     } catch (e: any) {
       console.log('[HOME] ❌ Erreur lors du chargement:', e?.message);
       setError(e.message ?? String(e));
@@ -339,13 +436,16 @@ export default function Home() {
           console.log('[HOME] 🔑 Token push (8 chars):', token.slice(0, 8));
           console.log('[HOME] 🌐 URL API:', process.env.EXPO_PUBLIC_API_URL);
           
-          await registerDevice({
-            userId: session.user.id,
-            token,
-            platform: Platform.OS as 'ios' | 'android' | 'web',
-            isTester,
-          });
-          console.log('[HOME] ✅ Device enregistré (200 OK)');
+          const r = await registerDeviceOnApi(token);
+          console.log('[HOME] result', r);
+          
+          if (r.ok) {
+            console.log('[HOME] ✅ Device enregistré (200 OK)');
+          } else {
+            console.log('[HOME] ❌ Erreur enregistrement device:', r.raw || r.data);
+            console.log('[HOME] 📊 Status:', r.status);
+            Alert.alert('Erreur enregistrement device', r.raw || r.data?.error || 'unknown');
+          }
         } catch (e: any) {
           console.log('[HOME] ❌ Erreur enregistrement device:', e?.message);
           console.log('[HOME] 📊 Status:', e?.status || 'Unknown');
@@ -538,32 +638,16 @@ export default function Home() {
                     }},
                     { label: 'X-Debug', color: 'bg-yellow-600', onPress: async () => {
                       try {
-                        const base = process.env.EXPO_PUBLIC_API_URL!.replace(/\/+$/,'');
-                        const authHeadersData = await authHeaders();
-                        const headers: Record<string, string> = { 
-                          ...(authHeadersData.Authorization ? { Authorization: authHeadersData.Authorization } : {}),
-                          'X-Debug': '1' 
-                        };
-                        const url = `${base}/me/tasks?email=louis.lemay02@gmail.com&statuses=A faire,En cours,En retard`;
-                        const resp = await fetch(url, { headers });
-                        const data = await resp.json();
-                        console.log('[DEBUG] X-Debug:', data);
+                        const resp = await get('me/tasks?email=louis.lemay02@gmail.com&statuses=A faire,En cours,En retard', { headers: { 'X-Debug': '1' } });
+                        console.log('[DEBUG] X-Debug:', resp);
                       } catch (error) {
                         console.log('[DEBUG] Erreur:', error);
                       }
                     }},
                     { label: 'Sans Filtres', color: 'bg-purple-600', onPress: async () => {
                       try {
-                        const base = process.env.EXPO_PUBLIC_API_URL!.replace(/\/+$/,'');
-                        const authHeadersData = await authHeaders();
-                        const headers: Record<string, string> = { 
-                          ...(authHeadersData.Authorization ? { Authorization: authHeadersData.Authorization } : {}),
-                          'X-Debug': '1' 
-                        };
-                        const url = `${base}/me/tasks?email=louis.lemay02@gmail.com`;
-                        const resp = await fetch(url, { headers });
-                        const data = await resp.json();
-                        console.log('[DEBUG] Sans filtres:', data);
+                        const resp = await get('me/tasks?email=louis.lemay02@gmail.com', { headers: { 'X-Debug': '1' } });
+                        console.log('[DEBUG] Sans filtres:', resp);
                       } catch (error) {
                         console.log('[DEBUG] Erreur:', error);
                       }
@@ -605,6 +689,21 @@ export default function Home() {
                   {pushToken ? `${pushToken.slice(0, 8)}...` : 'Non disponible'}
                 </Text>
               </View>
+
+              {/* Last Registration Status */}
+              {lastRegisterStatus && (
+                <View>
+                  <Text className="text-xs text-yellow-700 font-semibold mb-1">Dernier enregistrement</Text>
+                  <View className="flex-row items-center gap-2 mb-1">
+                    <RegisterStatusBadge status={lastRegisterStatus.status} />
+                    <Text className={`text-xs ${lastRegisterStatus.success ? 'text-green-700' : 'text-red-700'}`}>
+                      {lastRegisterStatus.success ? '✅' : '❌'}
+                    </Text>
+                  </View>
+                  <Text className="text-xs text-yellow-600 mb-1">{lastRegisterStatus.message}</Text>
+                  <Text className="text-xs text-yellow-500">{formatTimestamp(lastRegisterStatus.timestamp)}</Text>
+                </View>
+              )}
             </View>
             
             <TouchableOpacity
@@ -1224,5 +1323,44 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     fontSize: 14,
     textAlign: 'center',
+  },
+  // Register status badge styles
+  registerStatusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  registerStatusSuccess: {
+    backgroundColor: '#F0FDF4',
+    borderColor: '#BBF7D0',
+  },
+  registerStatusError: {
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FECACA',
+  },
+  registerStatusWarning: {
+    backgroundColor: '#FFF7ED',
+    borderColor: '#FED7AA',
+  },
+  registerStatusDefault: {
+    backgroundColor: '#F9FAFB',
+    borderColor: '#E5E7EB',
+  },
+  registerStatusText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  registerStatusTextSuccess: {
+    color: '#166534',
+  },
+  registerStatusTextError: {
+    color: '#DC2626',
+  },
+  registerStatusTextWarning: {
+    color: '#EA580C',
+  },
+  registerStatusTextDefault: {
+    color: '#6B7280',
   },
 });

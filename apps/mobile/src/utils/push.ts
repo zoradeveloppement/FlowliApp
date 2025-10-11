@@ -2,12 +2,15 @@ import { Platform } from 'react-native';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
+import { post, API_URL } from './http';
 
 // Android channel for foreground notifications
-Notifications.setNotificationChannelAsync?.('default', {
-  name: 'default',
-  importance: Notifications.AndroidImportance.DEFAULT,
-});
+if (Platform.OS === 'android') {
+  Notifications.setNotificationChannelAsync('default', {
+    name: 'default',
+    importance: Notifications.AndroidImportance.MAX,
+  });
+}
 
 export async function registerForPushToken(): Promise<string | null> {
   // 1) Ne rien faire sur le web (MVP = email côté web)
@@ -38,4 +41,15 @@ export async function registerForPushToken(): Promise<string | null> {
   // 5) Expo push token (mobile) avec projectId explicite
   const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
   return token;
+}
+
+export async function registerDeviceOnApi(expoPushToken: string) {
+  const payload = {
+    token: expoPushToken,
+    platform: Platform.OS,
+    appVersion: Constants?.nativeAppVersion ?? 'dev',
+  };
+  const r = await post('devices/register', payload);
+  // r = { ok:boolean, status:number, data:any, raw:string|null }
+  return r;
 }
