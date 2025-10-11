@@ -45,7 +45,7 @@ export async function registerForPushToken(): Promise<string | null> {
 
 export async function registerDeviceOnApi(expoPushToken: string) {
   const payload = {
-    token: expoPushToken,
+    expoPushToken,  // renamed from 'token'
     platform: Platform.OS,
     appVersion: Constants?.nativeAppVersion ?? 'dev',
   };

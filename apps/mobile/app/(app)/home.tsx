@@ -383,9 +383,9 @@ export default function Home() {
         throw new Error(resp.raw || `HTTP ${resp.status}`);
       }
 
-      const data = resp.data;
-      const items = Array.isArray(data) ? data : data?.items ?? [];
-      const count = Array.isArray(data) ? data.length : (data?.count ?? items.length);
+      const responseData = resp.data;
+      const items = Array.isArray(responseData) ? responseData : responseData?.items ?? [];
+      const count = Array.isArray(responseData) ? responseData.length : (responseData?.count ?? items.length);
       
       console.log('[HOME] ✅ Tâches chargées:', { count, itemsLength: items.length });
 
