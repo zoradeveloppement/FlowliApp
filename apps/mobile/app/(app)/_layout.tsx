@@ -14,6 +14,14 @@ export default function AppLayout() {
     }
   }, []);
 
+  // Debug listener pour voir les notifications en premier plan
+  useEffect(() => {
+    const sub = Notifications.addNotificationReceivedListener(n => {
+      console.log('[PUSH RECEIVED]', n.request.content.title, n.request.content.body);
+    });
+    return () => sub.remove();
+  }, []);
+
   return (
     <Tabs
       screenOptions={{
