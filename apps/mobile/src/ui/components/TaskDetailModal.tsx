@@ -74,240 +74,129 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <View className="flex-1 bg-bgGray" style={styles.container}>
-        {/* Header avec gradient violet Flowli - Style moderne */}
-        <LinearGradient
-          colors={['#6C63FF', '#7C3AED', '#8B5CF6']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          className="pt-12 pb-8 px-6"
-          style={styles.headerGradient}
-        >
-          {/* Top bar avec actions */}
-          <View className="flex-row items-center justify-between mb-6" style={styles.headerRow}>
-            <TouchableOpacity
-              onPress={onClose}
-              className="w-12 h-12 rounded-full bg-white/20 items-center justify-center"
-              style={styles.closeButton}
-            >
-              <Text className="text-white text-xl font-bold" style={styles.closeButtonText}>✕</Text>
-            </TouchableOpacity>
+      <View className="flex-1 bg-white" style={styles.container}>
+        {/* Header simplifié blanc */}
+        <View className="pt-12 pb-6 px-6 bg-white border-b border-gray-100" style={styles.header}>
+          {/* Bouton fermer */}
+          <TouchableOpacity
+            onPress={onClose}
+            className="absolute top-12 left-6 w-10 h-10 items-center justify-center"
+            style={styles.closeButton}
+          >
+            <Text className="text-gray-900 text-xl" style={styles.closeButtonText}>✕</Text>
+          </TouchableOpacity>
+          
+          {/* Titre de la tâche */}
+          <View className="mt-12" style={styles.titleContainer}>
+            <Text className="text-gray-900 text-2xl font-bold mb-3 leading-tight" style={styles.taskTitle}>
+              {task.title || '(Sans titre)'}
+            </Text>
             
-            <View className="flex-row gap-3" style={styles.headerActions}>
-              {task.status === 'A faire' && onMarkInProgress && (
-                <TouchableOpacity
-                  onPress={() => onMarkInProgress(task.id)}
-                  className="px-5 py-3 rounded-full bg-white/20"
-                  style={styles.actionButton}
-                >
-                  <Text className="text-white text-sm font-semibold" style={styles.actionButtonText}>Commencer</Text>
-                </TouchableOpacity>
-              )}
-              {task.status === 'En cours' && onMarkComplete && (
-                <TouchableOpacity
-                  onPress={() => onMarkComplete(task.id)}
-                  className="px-5 py-3 rounded-full bg-white shadow-lg"
-                  style={styles.actionButtonActive}
-                >
-                  <Text className="text-primary text-sm font-semibold" style={styles.actionButtonTextActive}>Terminer</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          </View>
-
-          {/* Titre principal avec icône et statut */}
-          <View className="flex-row items-start gap-4 mb-6" style={styles.titleRow}>
+            {/* Badge de statut */}
             <View 
-              className="w-16 h-16 rounded-2xl items-center justify-center"
-              style={styles.statusIconContainer}
+              className="px-3 py-1.5 rounded-full self-start"
+              style={[styles.statusBadge, { backgroundColor: `${getStatusColor(task.status)}15` }]}
             >
-              <Text className="text-3xl" style={styles.statusIcon}>{getStatusIcon(task.status)}</Text>
-            </View>
-            
-            <View className="flex-1" style={styles.titleContainer}>
-              <Text className="text-white text-2xl font-bold mb-3 leading-tight" style={styles.taskTitle}>
-                {task.title || '(Sans titre)'}
+              <Text 
+                className="text-sm font-semibold"
+                style={[styles.statusText, { color: getStatusColor(task.status) }]}
+              >
+                {getStatusIcon(task.status)} {task.status}
               </Text>
-              
-              <View className="flex-row items-center gap-3 flex-wrap" style={styles.statusRow}>
-                <View 
-                  className="px-4 py-2 rounded-full"
-                  style={styles.statusBadge}
-                >
-                  <Text className="text-white text-sm font-semibold" style={styles.statusText}>{task.status}</Text>
-                </View>
-                
-                {isOverdue(task.dueDate) && (
-                  <View className="px-4 py-2 rounded-full bg-red-500 shadow-lg" style={styles.overdueBadge}>
-                    <Text className="text-white text-sm font-semibold" style={styles.overdueText}>⚠️ En retard</Text>
-                  </View>
-                )}
-                
-                {task.progress !== null && (
-                  <View className="px-4 py-2 rounded-full bg-white/20" style={styles.progressBadge}>
-                    <Text className="text-white text-sm font-semibold" style={styles.progressText}>
-                      {Math.round(task.progress <= 1 ? task.progress * 100 : task.progress)}%
-                    </Text>
-                  </View>
-                )}
-              </View>
             </View>
           </View>
-        </LinearGradient>
+        </View>
 
-        <ScrollView className="flex-1 px-6 py-6" showsVerticalScrollIndicator={false}>
-          {/* Informations principales - Style Flowli */}
-          <View className="bg-white rounded-2xl p-6 mb-6 border border-gray-100 shadow-sm" style={styles.infoCard}>
-            <View className="flex-row items-center gap-3 mb-5">
-              <Text className="text-2xl">📋</Text>
-              <Text className="text-lg font-bold text-textMain" style={styles.sectionTitle}>Informations</Text>
-            </View>
+        <ScrollView className="flex-1 px-6 py-6 bg-gray-50" showsVerticalScrollIndicator={false}>
+          {/* Informations principales */}
+          <View className="bg-white rounded-2xl p-5 mb-4 shadow-sm" style={styles.infoCard}>
+            <Text className="text-base font-bold text-gray-900 mb-4" style={styles.sectionTitle}>Informations</Text>
             
-            <View className="space-y-5">
+            <View className="space-y-4">
               {/* Projet */}
               {task.projectName && (
-                <View className="flex-row items-center gap-4 p-4 bg-gray-50 rounded-xl" style={styles.infoItem}>
-                  <Text className="text-2xl">🏗️</Text>
-                  <View className="flex-1">
-                    <Text className="text-sm text-textMuted mb-1 font-medium" style={styles.infoLabel}>Projet</Text>
-                    <Text className="text-base font-semibold text-textMain" style={styles.infoValue}>{task.projectName}</Text>
-                  </View>
+                <View style={styles.infoItem}>
+                  <Text className="text-sm text-gray-600 mb-1 font-medium" style={styles.infoLabel}>Projet</Text>
+                  <Text className="text-base font-semibold text-gray-900" style={styles.infoValue}>{task.projectName}</Text>
                 </View>
               )}
 
               {/* Date d'échéance */}
-              <View className={`flex-row items-center gap-4 p-4 rounded-xl ${
-                isOverdue(task.dueDate) ? 'bg-red-50 border border-red-200' : 'bg-gray-50'
-              }`} style={styles.infoItem}>
-                <Text className="text-2xl">📅</Text>
-                <View className="flex-1">
-                  <Text className="text-sm text-textMuted mb-1 font-medium" style={styles.infoLabel}>Date d'échéance</Text>
-                  <Text className={`text-base font-semibold ${
-                    isOverdue(task.dueDate) ? 'text-red-600' : 'text-textMain'
-                  }`} style={styles.infoValue}>
+              {task.dueDate && (
+                <View style={styles.infoItem}>
+                  <Text className="text-sm text-gray-600 mb-1 font-medium" style={styles.infoLabel}>Date d'échéance</Text>
+                  <Text 
+                    className={`text-base font-semibold ${isOverdue(task.dueDate) ? 'text-red-600' : 'text-gray-900'}`}
+                    style={styles.infoValue}
+                  >
                     {formatDate(task.dueDate)}
                   </Text>
                 </View>
-              </View>
-
-              {/* ID de la tâche */}
-              <View className="flex-row items-center gap-4 p-4 bg-gray-50 rounded-xl" style={styles.infoItem}>
-                <Text className="text-2xl">🔑</Text>
-                <View className="flex-1">
-                  <Text className="text-sm text-textMuted mb-1 font-medium" style={styles.infoLabel}>ID de la tâche</Text>
-                  <Text className="text-base font-medium text-textMain font-mono" style={styles.infoValue}>{task.id}</Text>
-                </View>
-              </View>
+              )}
             </View>
           </View>
 
-          {/* Progression - Style Flowli */}
+          {/* Progression */}
           {task.progress !== null && (
-            <View className="bg-white rounded-2xl p-6 mb-6 border border-gray-100 shadow-sm" style={styles.progressCard}>
-              <View className="flex-row items-center gap-3 mb-5">
-                <Text className="text-2xl">📊</Text>
-                <Text className="text-lg font-bold text-textMain" style={styles.sectionTitle}>Progression</Text>
-              </View>
+            <View className="bg-white rounded-2xl p-5 mb-4 shadow-sm" style={styles.progressCard}>
+              <Text className="text-base font-bold text-gray-900 mb-4" style={styles.sectionTitle}>Progression</Text>
               
-              <View className="space-y-5">
-                {/* Barre de progression Flowli */}
-                <View className="bg-gray-100 rounded-full h-3 overflow-hidden" style={styles.progressBarContainer}>
+              <View className="space-y-3">
+                <View className="flex-row items-center justify-between mb-2">
+                  <Text className="text-sm text-gray-600 font-medium" style={styles.progressLabel}>Avancement</Text>
+                  <Text 
+                    className="text-sm font-bold"
+                    style={[styles.progressValue, { color: getStatusColor(task.status) }]}
+                  >
+                    {Math.round(task.progress <= 1 ? task.progress * 100 : task.progress)}%
+                  </Text>
+                </View>
+                
+                {/* Barre de progression */}
+                <View className="bg-gray-200 rounded-full h-2 overflow-hidden" style={styles.progressBarContainer}>
                   <View 
                     className="h-full rounded-full"
                     style={[
                       styles.progressBar,
                       { 
                         width: `${Math.round(task.progress <= 1 ? task.progress * 100 : task.progress)}%`,
-                        backgroundColor: task.status === 'Terminé' ? '#10B981' : '#6C63FF'
+                        backgroundColor: getStatusColor(task.status)
                       }
                     ]}
                   />
                 </View>
-                
-                <View className="flex-row items-center justify-between p-4 bg-gray-50 rounded-xl">
-                  <Text className="text-sm text-textMuted font-medium" style={styles.progressLabel}>Avancement</Text>
-                  <View className="flex-row items-center gap-2">
-                    <Text className="text-2xl font-bold" style={{ color: '#6C63FF' }}>
-                      {Math.round(task.progress <= 1 ? task.progress * 100 : task.progress)}%
-                    </Text>
-                    <View className="w-2 h-2 rounded-full" style={{ backgroundColor: '#6C63FF' }} />
-                  </View>
-                </View>
               </View>
-            </View>©
+            </View>
           )}
 
-          {/* Statut détaillé - Style Flowli */}
-          <View className="bg-white rounded-2xl p-6 mb-6 border border-gray-100 shadow-sm" style={styles.statusCard}>
-            <View className="flex-row items-center gap-3 mb-5">
-              <Text className="text-2xl">📈</Text>
-              <Text className="text-lg font-bold text-textMain" style={styles.sectionTitle}>Statut</Text>
-            </View>
+          {/* Actions */}
+          <View className="bg-white rounded-2xl p-5 mb-4 shadow-sm" style={styles.actionsCard}>
+            <Text className="text-base font-bold text-gray-900 mb-4" style={styles.sectionTitle}>Actions</Text>
             
-            <View className="flex-row items-center gap-5 p-4 bg-gray-50 rounded-xl">
-              <View 
-                className="w-16 h-16 rounded-2xl items-center justify-center shadow-sm"
-                style={[styles.statusIconContainer, { backgroundColor: `${getStatusColor(task.status)}20` }]}
-              >
-                <Text className="text-2xl">{getStatusIcon(task.status)}</Text>
-              </View>
-              
-              <View className="flex-1">
-                <Text className="text-lg font-bold text-textMain mb-2" style={styles.statusTitle}>{task.status}</Text>
-                <Text className="text-sm text-textMuted leading-relaxed" style={styles.statusDescription}>
-                  {task.status === 'Terminé' && '✅ Tâche terminée avec succès'}
-                  {task.status === 'En cours' && '🔄 Tâche en cours d\'exécution'}
-                  {task.status === 'En retard' && '⚠️ Tâche en retard par rapport à l\'échéance'}
-                  {task.status === 'A faire' && '📋 Tâche en attente de démarrage'}
-                </Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Actions rapides - Style Flowli */}
-          <View className="bg-white rounded-2xl p-6 mb-6 border border-gray-100 shadow-sm" style={styles.actionsCard}>
-            <View className="flex-row items-center gap-3 mb-5">
-              <Text className="text-2xl">⚡</Text>
-              <Text className="text-lg font-bold text-textMain" style={styles.sectionTitle}>Actions</Text>
-            </View>
-            
-            <View className="space-y-4">
-              {task.status === 'A faire' && (
+            <View className="space-y-3">
+              {task.status === 'A faire' && onMarkInProgress && (
                 <TouchableOpacity
-                  onPress={() => onMarkInProgress?.(task.id)}
-                  className="w-full py-4 px-6 rounded-xl bg-primary shadow-lg shadow-primary/30"
+                  onPress={() => onMarkInProgress(task.id)}
+                  className="w-full py-3.5 px-5 rounded-xl bg-primary shadow-sm"
                   style={styles.primaryActionButton}
                 >
                   <Text className="text-white text-base font-semibold text-center" style={styles.primaryActionText}>
-                    🚀 Commencer cette tâche
+                    Commencer cette tâche
                   </Text>
                 </TouchableOpacity>
               )}
               
-              {task.status === 'En cours' && (
+              {task.status === 'En cours' && onMarkComplete && (
                 <TouchableOpacity
-                  onPress={() => onMarkComplete?.(task.id)}
-                  className="w-full py-4 px-6 rounded-xl bg-primary shadow-lg shadow-primary/30"
+                  onPress={() => onMarkComplete(task.id)}
+                  className="w-full py-3.5 px-5 rounded-xl bg-primary shadow-sm"
                   style={styles.primaryActionButton}
                 >
                   <Text className="text-white text-base font-semibold text-center" style={styles.primaryActionText}>
-                    ✅ Marquer comme terminé
+                    Marquer comme terminé
                   </Text>
                 </TouchableOpacity>
               )}
-              
-              <TouchableOpacity
-                onPress={() => {
-                  // TODO: Implémenter le partage
-                  console.log('Partager la tâche:', task.id);
-                }}
-                className="w-full py-3 px-6 rounded-xl border border-gray-200 bg-white"
-                style={styles.secondaryActionButton}
-              >
-                <Text className="text-gray-600 text-base font-medium text-center" style={styles.secondaryActionText}>
-                  📤 Partager cette tâche
-                </Text>
-              </TouchableOpacity>
             </View>
           </View>
 
@@ -345,194 +234,82 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   );
 };
 
-// Styles Flowli pour le modal de détail
+// Styles minimalistes pour le modal de détail
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F8FA',
+    backgroundColor: '#FFFFFF',
   },
-  headerGradient: {
+  header: {
     paddingTop: 48,
-    paddingBottom: 32,
+    paddingBottom: 24,
     paddingHorizontal: 24,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 24,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
   },
   closeButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    width: 40,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
   closeButtonText: {
-    color: '#FFFFFF',
+    color: '#111827',
     fontSize: 20,
-    fontWeight: 'bold',
-  },
-  headerActions: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  actionButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  actionButtonActive: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 24,
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  actionButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  actionButtonTextActive: {
-    color: '#6C63FF',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 16,
-    marginBottom: 24,
-  },
-  statusIconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statusIcon: {
-    fontSize: 32,
   },
   titleContainer: {
-    flex: 1,
+    marginTop: 48,
   },
   taskTitle: {
-    color: '#FFFFFF',
+    color: '#111827',
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 12,
     lineHeight: 32,
-    fontFamily: 'Inter',
-  },
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    flexWrap: 'wrap',
   },
   statusBadge: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignSelf: 'flex-start',
   },
   statusText: {
-    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
-    fontFamily: 'Inter',
   },
-  overdueBadge: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#EF4444',
-    shadowColor: '#EF4444',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  overdueText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
-    fontFamily: 'Inter',
-  },
-  progressBadge: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  progressText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
-    fontFamily: 'Inter',
-  },
-  // Nouveaux styles pour les cartes
   infoCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    padding: 24,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: '#F3F4F6',
+    padding: 20,
+    marginBottom: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 2,
+    shadowRadius: 4,
+    elevation: 1,
   },
   progressCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    padding: 24,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: '#F3F4F6',
+    padding: 20,
+    marginBottom: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  statusCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 24,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: '#F3F4F6',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 2,
+    shadowRadius: 4,
+    elevation: 1,
   },
   actionsCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    padding: 24,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: '#F3F4F6',
+    padding: 20,
+    marginBottom: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 2,
+    shadowRadius: 4,
+    elevation: 1,
   },
   debugCard: {
     backgroundColor: '#FEF3C7',
@@ -548,91 +325,58 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
-    color: '#1A1A1A',
-    fontFamily: 'Inter',
+    color: '#111827',
   },
   infoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#F9FAFB',
-    borderRadius: 12,
     marginBottom: 16,
   },
   infoLabel: {
-    fontSize: 13,
+    fontSize: 14,
     color: '#6B7280',
     fontWeight: '500',
-    fontFamily: 'Inter',
+    marginBottom: 4,
   },
   infoValue: {
     fontSize: 16,
-    color: '#1A1A1A',
+    color: '#111827',
     fontWeight: '600',
-    fontFamily: 'Inter',
   },
   progressBarContainer: {
-    backgroundColor: '#F3F4F6',
-    borderRadius: 12,
-    height: 12,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 8,
+    height: 8,
     overflow: 'hidden',
   },
   progressBar: {
     height: '100%',
-    borderRadius: 12,
+    borderRadius: 8,
   },
   progressLabel: {
     fontSize: 14,
     color: '#6B7280',
     fontWeight: '500',
-    fontFamily: 'Inter',
   },
-  statusTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1A1A1A',
-    marginBottom: 8,
-    fontFamily: 'Inter',
-  },
-  statusDescription: {
+  progressValue: {
     fontSize: 14,
-    color: '#6B7280',
-    lineHeight: 20,
-    fontFamily: 'Inter',
+    fontWeight: 'bold',
   },
   primaryActionButton: {
-    backgroundColor: '#6C63FF',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
+    backgroundColor: '#7C3AED',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
     borderRadius: 12,
-    shadowColor: '#6C63FF',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowColor: '#7C3AED',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 2,
   },
   primaryActionText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
-    fontFamily: 'Inter',
-  },
-  secondaryActionButton: {
-    backgroundColor: '#FFFFFF',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  secondaryActionText: {
-    color: '#6B7280',
-    fontSize: 16,
-    fontWeight: '500',
-    textAlign: 'center',
-    fontFamily: 'Inter',
   },
 });
