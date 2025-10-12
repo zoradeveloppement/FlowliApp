@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert, Platform, StyleSheet } from 'react-native';
+import React from 'react';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { Screen, AppLayout } from '../../ui/layout';
-import { Card, Button, Skeleton } from '../../ui/components';
+import { Card } from '../../ui/components';
 
 interface Invoice {
   id: string;
@@ -88,154 +88,36 @@ const InvoiceCard: React.FC<{ invoice: Invoice; onDownload: (invoice: Invoice) =
   );
 };
 
-const EmptyState: React.FC = () => (
-  <Card className="items-center py-8">
-    <Text className="text-4xl mb-4">💰</Text>
-    <Text className="text-h2 text-textMain mb-2">Aucune facture</Text>
-    <Text className="text-body text-textMuted text-center">
-      Vous n'avez pas encore de factures.
+const DevelopmentState: React.FC = () => (
+  <Card className="items-center py-12" style={styles.developmentCard}>
+    <Text className="text-6xl mb-6" style={styles.developmentIcon}>🚧</Text>
+    <Text className="text-h1 text-textMain mb-3" style={styles.developmentTitle}>
+      En cours de développement
     </Text>
+    <Text className="text-body text-textMuted text-center px-6" style={styles.developmentMessage}>
+      La gestion des factures sera bientôt disponible.
+    </Text>
+    <View style={styles.developmentBadge}>
+      <Text style={styles.developmentBadgeText}>Prochainement</Text>
+    </View>
   </Card>
 );
 
 export const FacturesScreen: React.FC = () => {
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    loadInvoices();
-  }, []);
-
-  const loadInvoices = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock data
-      const mockInvoices: Invoice[] = [
-        {
-          id: '1',
-          number: 'FAC-2024-001',
-          date: '2024-01-15',
-          amount: 2500,
-          status: 'paid',
-          downloadUrl: 'https://example.com/invoice-1.pdf',
-        },
-        {
-          id: '2',
-          number: 'FAC-2024-002',
-          date: '2024-01-20',
-          amount: 1800,
-          status: 'pending',
-          downloadUrl: 'https://example.com/invoice-2.pdf',
-        },
-        {
-          id: '3',
-          number: 'FAC-2024-003',
-          date: '2024-01-25',
-          amount: 3200,
-          status: 'overdue',
-          downloadUrl: 'https://example.com/invoice-3.pdf',
-        },
-      ];
-      
-      setInvoices(mockInvoices);
-    } catch (err) {
-      setError('Erreur lors du chargement des factures');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDownload = (invoice: Invoice) => {
-    if (Platform.OS === 'web') {
-      // Open in new tab
-      if (invoice.downloadUrl) {
-        window.open(invoice.downloadUrl, '_blank');
-      } else {
-        Alert.alert('Erreur', 'URL de téléchargement non disponible');
-      }
-    } else {
-      // Mobile: show alert for now (in real app, use expo-file-system or similar)
-      Alert.alert(
-        'Téléchargement',
-        `Télécharger la facture ${invoice.number} ?`,
-        [
-          { text: 'Annuler', style: 'cancel' },
-          { 
-            text: 'Télécharger', 
-            onPress: () => {
-              // Implement actual download logic here
-              Alert.alert('Succès', 'Facture téléchargée !');
-            }
-          },
-        ]
-      );
-    }
-  };
-
-  if (loading) {
-    return (
-      <AppLayout>
-        <Screen>
-          <View className="space-y-4">
-            {[1, 2, 3].map(i => (
-              <Skeleton key={i} width="100%" height={150} />
-            ))}
-          </View>
-        </Screen>
-      </AppLayout>
-    );
-  }
-
-  if (error) {
-    return (
-      <AppLayout>
-        <Screen>
-          <Card className="items-center py-8">
-            <Text className="text-4xl mb-4">❌</Text>
-            <Text className="text-h2 text-textMain mb-2">Erreur</Text>
-            <Text className="text-body text-textMuted text-center mb-4">
-              {error}
-            </Text>
-            <Button
-              title="Réessayer"
-              variant="primary"
-              onPress={loadInvoices}
-            />
-          </Card>
-        </Screen>
-      </AppLayout>
-    );
-  }
-
   return (
     <AppLayout>
       <Screen>
-        <ScrollView className="flex-1">
-          <Text className="text-h1 text-textMain mb-6">Factures</Text>
+        <ScrollView className="flex-1" contentContainerStyle={styles.container}>
+          <View style={styles.header}>
+            <Text className="text-h1 text-textMain" style={styles.headerTitle}>
+              <Text style={styles.headerTitleAccent}>Facturation</Text>
+            </Text>
+            <Text className="text-body text-textMuted" style={styles.headerSubtitle}>
+              Gérez vos factures et paiements
+            </Text>
+          </View>
           
-          {invoices.length === 0 ? (
-            <EmptyState />
-          ) : (
-            <View>
-              <Text className="text-body text-textMuted mb-4">
-                {invoices.length} facture{invoices.length > 1 ? 's' : ''} trouvée{invoices.length > 1 ? 's' : ''}
-              </Text>
-              
-              {invoices.map(invoice => (
-                <InvoiceCard
-                  key={invoice.id}
-                  invoice={invoice}
-                  onDownload={handleDownload}
-                />
-              ))}
-            </View>
-          )}
+          <DevelopmentState />
         </ScrollView>
       </Screen>
     </AppLayout>
@@ -244,6 +126,68 @@ export const FacturesScreen: React.FC = () => {
 
 // Styles de fallback pour Expo Go (quand NativeWind ne fonctionne pas)
 const styles = StyleSheet.create({
+  container: {
+    padding: 16,
+  },
+  header: {
+    marginBottom: 24,
+  },
+  headerTitle: {
+    fontSize: 30,
+    fontWeight: 'bold',
+    color: '#1A1A1A',
+    marginBottom: 4,
+  },
+  headerTitleAccent: {
+    color: '#6C63FF',
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: '#6E6E6E',
+  },
+  developmentCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 48,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  developmentIcon: {
+    fontSize: 72,
+    marginBottom: 24,
+  },
+  developmentTitle: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: '#1A1A1A',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  developmentMessage: {
+    fontSize: 16,
+    color: '#6E6E6E',
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 24,
+  },
+  developmentBadge: {
+    backgroundColor: '#F5F3FF',
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#C4B5FD',
+  },
+  developmentBadgeText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6C63FF',
+  },
   invoiceCard: {
     marginBottom: 16,
   },

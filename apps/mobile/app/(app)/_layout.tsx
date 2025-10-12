@@ -26,35 +26,41 @@ export default function AppLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarStyle: { display: 'none' }, // We'll use our custom BottomTabs
+        tabBarStyle: {
+          backgroundColor: '#FFFFFF',
+          borderTopColor: '#E5E7EB',
+          borderTopWidth: 1,
+          paddingBottom: 8,
+          paddingTop: 8,
+          height: 65,
+        },
+        tabBarActiveTintColor: '#6C63FF', // Violet Flowli
+        tabBarInactiveTintColor: '#6E6E6E',
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '500',
+        },
       }}
     >
       <Tabs.Screen 
         name="home" 
         options={{
           title: 'Accueil',
-          tabBarIcon: () => <Text>🏠</Text>,
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 24, color }}>🏠</Text>,
         }}
       />
       <Tabs.Screen 
-        name="dossier" 
+        name="profile" 
         options={{
-          title: 'Mon dossier',
-          tabBarIcon: () => <Text>📁</Text>,
+          title: 'Profil',
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 24, color }}>👤</Text>,
         }}
       />
       <Tabs.Screen 
         name="factures" 
         options={{
-          title: 'Factures',
-          tabBarIcon: () => <Text>💰</Text>,
-        }}
-      />
-      <Tabs.Screen 
-        name="contact" 
-        options={{
-          title: 'Contact',
-          tabBarIcon: () => <Text>📞</Text>,
+          title: 'Facturation',
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 24, color }}>💰</Text>,
         }}
       />
     </Tabs>
