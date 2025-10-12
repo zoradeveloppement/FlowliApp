@@ -1,14 +1,15 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js'
+import { Platform } from 'react-native'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
-const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
-const anon = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+const url = process.env.EXPO_PUBLIC_SUPABASE_URL as string
+const anon = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY as string
 
-if (!url || !anon) {
-  console.warn('Supabase environment variables not found. Please set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY');
-}
-
-// Minimal Supabase client for the app
-export const supabase = createClient(
-  url || 'https://placeholder.supabase.co',
-  anon || 'placeholder-key'
-);
+export const supabase = createClient(url, anon, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    storage: Platform.OS === 'web' ? undefined : AsyncStorage,
+    detectSessionInUrl: Platform.OS === 'web'
+  }
+})

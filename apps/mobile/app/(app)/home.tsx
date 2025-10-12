@@ -68,28 +68,28 @@ function formatTimestamp(iso: string): string {
     const getStatusClasses = () => {
       switch (status) {
         case 'Terminé':
-          return 'bg-green-50 border-green-200';
+          return 'bg-emerald-50 border-emerald-200';
         case 'En retard':
           return 'bg-red-50 border-red-200';
         case 'En cours':
-          return 'bg-blue-50 border-blue-200';
+          return 'bg-violet-50 border-violet-200';
         case 'A faire':
-          return 'bg-purple-50 border-purple-200';
+          return 'bg-gray-50 border-gray-200';
         default:
-          return 'bg-gray-100 border-gray-300';
+          return 'bg-gray-50 border-gray-200';
       }
     };
 
     const getTextClasses = () => {
       switch (status) {
         case 'Terminé':
-          return 'text-green-800';
+          return 'text-emerald-800';
         case 'En retard':
           return 'text-red-800';
         case 'En cours':
-          return 'text-blue-800';
+          return 'text-violet-800';
         case 'A faire':
-          return 'text-purple-800';
+          return 'text-gray-600';
         default:
           return 'text-gray-600';
       }
@@ -102,9 +102,9 @@ function formatTimestamp(iso: string): string {
         case 'En retard':
           return styles.statusBadgeError;
         case 'En cours':
-          return styles.statusBadgeInfo;
+          return styles.statusBadgeFlowli;
         case 'A faire':
-          return styles.statusBadgeWarning;
+          return styles.statusBadgeDefault;
         default:
           return styles.statusBadgeDefault;
       }
@@ -117,17 +117,17 @@ function formatTimestamp(iso: string): string {
         case 'En retard':
           return styles.statusTextError;
         case 'En cours':
-          return styles.statusTextInfo;
+          return styles.statusTextFlowli;
         case 'A faire':
-          return styles.statusTextWarning;
+          return styles.statusTextDefault;
         default:
           return styles.statusTextDefault;
       }
     };
 
     return (
-      <View className={`px-3 py-1 rounded-full border ${getStatusClasses()}`} style={[styles.statusBadge, getStatusStyle()]}>
-        <Text className={`text-xs font-medium ${getTextClasses()}`} style={[styles.statusText, getTextStyle()]}>{status}</Text>
+      <View className={`px-3 py-1.5 rounded-full border ${getStatusClasses()}`} style={[styles.statusBadge, getStatusStyle()]}>
+        <Text className={`text-xs font-semibold ${getTextClasses()}`} style={[styles.statusText, getTextStyle()]}>{status}</Text>
       </View>
     );
   }
@@ -499,10 +499,11 @@ export default function Home() {
     return (
       <TouchableOpacity
         onPress={() => openTaskDetail(item)}
-        activeOpacity={0.7}
+        activeOpacity={0.8}
         style={styles.card}
+        className="bg-white rounded-2xl border border-gray-100 shadow-sm mb-3"
       >
-        {/* Header simplifié */}
+        {/* Header avec titre et badge */}
         <View style={styles.header}>
           <Text style={styles.title} numberOfLines={2}>
             {item.title || '(Sans titre)'}
@@ -512,38 +513,47 @@ export default function Home() {
         
         {/* Projet (optionnel) */}
         {item.projectName && (
-          <Text style={styles.project}>{item.projectName}</Text>
+          <View style={styles.projectContainer}>
+            <Text style={styles.projectIcon}>🏗️</Text>
+            <Text style={styles.project}>{item.projectName}</Text>
+          </View>
         )}
         
-        {/* Alerte retard minimaliste */}
+        {/* Alerte retard avec style Flowli */}
         {isOverdue && (
-          <View style={styles.overdueBar} />
+          <View style={styles.overdueContainer}>
+            <View style={styles.overdueBar} />
+            <Text style={styles.overdueText}>⚠️ En retard</Text>
+          </View>
         )}
         
-        {/* Footer épuré */}
+        {/* Footer avec progression et date */}
         <View style={styles.footer}>
-          {/* Progression */}
+          {/* Progression avec design Flowli */}
           {pct !== null && (
             <View style={styles.progressWrapper}>
               <View style={[
-                styles.progressDot,
+                styles.progressCircle,
                 isCompleted ? styles.progressComplete : styles.progressActive
               ]}>
                 <Text style={[
                   styles.progressText,
                   isCompleted ? styles.progressTextComplete : styles.progressTextActive
                 ]}>
-                  {pct}
+                  {pct}%
                 </Text>
               </View>
             </View>
           )}
           
-          {/* Date */}
+          {/* Date avec icône */}
           {item.dueDate && (
-            <Text style={[styles.date, isOverdue && styles.dateOverdue]}>
-              {fmtRel(item.dueDate)}
-            </Text>
+            <View style={styles.dateContainer}>
+              <Text style={styles.dateIcon}>📅</Text>
+              <Text style={[styles.date, isOverdue && styles.dateOverdue]}>
+                {fmtRel(item.dueDate)}
+              </Text>
+            </View>
           )}
         </View>
       </TouchableOpacity>
@@ -953,14 +963,19 @@ const styles = StyleSheet.create({
   debugButtonTextInactive: {
     color: '#6B7280',
   },
-  // Nouveaux styles épurés pour les cartes de tâches
+  // Styles Flowli pour les cartes de tâches
   card: {
     backgroundColor: '#FFFFFF',
     marginBottom: 12,
     padding: 20,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#F1F1F1',
+    borderColor: '#F3F4F6',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
   },
   header: {
     flexDirection: 'row',
@@ -974,63 +989,98 @@ const styles = StyleSheet.create({
     color: '#1A1A1A',
     flex: 1,
     marginRight: 12,
-    lineHeight: 22,
+    lineHeight: 24,
+    fontFamily: 'Inter',
+  },
+  projectContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    gap: 8,
+  },
+  projectIcon: {
+    fontSize: 14,
   },
   project: {
     fontSize: 13,
-    color: '#9CA3AF',
-    marginBottom: 12,
+    color: '#6E6E6E',
     fontWeight: '500',
+    fontFamily: 'Inter',
+  },
+  overdueContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    gap: 8,
   },
   overdueBar: {
     height: 3,
     backgroundColor: '#EF4444',
     borderRadius: 2,
-    marginBottom: 12,
+    flex: 1,
+  },
+  overdueText: {
+    fontSize: 12,
+    color: '#EF4444',
+    fontWeight: '600',
   },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     gap: 12,
   },
   progressWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  progressDot: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  progressCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 2,
   },
   progressComplete: {
     backgroundColor: '#ECFDF5',
+    borderColor: '#10B981',
   },
   progressActive: {
     backgroundColor: '#F5F3FF',
+    borderColor: '#6C63FF',
   },
   progressText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
   },
   progressTextComplete: {
-    color: '#059669',
+    color: '#10B981',
   },
   progressTextActive: {
-    color: '#7C3AED',
+    color: '#6C63FF',
+  },
+  dateContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  dateIcon: {
+    fontSize: 12,
   },
   date: {
     fontSize: 14,
     color: '#6B7280',
     fontWeight: '500',
+    fontFamily: 'Inter',
   },
   dateOverdue: {
-    color: '#DC2626',
+    color: '#EF4444',
+    fontWeight: '600',
   },
   statusBadge: {
     paddingHorizontal: 12,
-    paddingVertical: 4,
+    paddingVertical: 6,
     borderRadius: 20,
     borderWidth: 1,
   },
@@ -1042,21 +1092,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#FEF2F2',
     borderColor: '#FECACA',
   },
-  statusBadgeInfo: {
-    backgroundColor: '#EFF6FF',
-    borderColor: '#BFDBFE',
-  },
-  statusBadgeWarning: {
-    backgroundColor: '#FEF3C7',
-    borderColor: '#FDE68A',
+  statusBadgeFlowli: {
+    backgroundColor: '#F5F3FF',
+    borderColor: '#C4B5FD',
   },
   statusBadgeDefault: {
-    backgroundColor: '#F3F4F6',
-    borderColor: '#D1D5DB',
+    backgroundColor: '#F9FAFB',
+    borderColor: '#E5E7EB',
   },
   statusText: {
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: '600',
+    fontFamily: 'Inter',
   },
   statusTextSuccess: {
     color: '#166534',
@@ -1064,11 +1111,8 @@ const styles = StyleSheet.create({
   statusTextError: {
     color: '#DC2626',
   },
-  statusTextInfo: {
-    color: '#1E40AF',
-  },
-  statusTextWarning: {
-    color: '#D97706',
+  statusTextFlowli: {
+    color: '#6C63FF',
   },
   statusTextDefault: {
     color: '#6B7280',
