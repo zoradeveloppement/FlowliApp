@@ -4,7 +4,6 @@ import { useRouter } from 'expo-router';
 import { Screen, AppLayout } from '../../src/ui/layout';
 import { Card, Progress, Badge, Button } from '../../src/ui/components';
 import { TaskDetailModal } from '../../src/ui/components/TaskDetailModal';
-import { TailwindTest } from '../../src/ui/components/TailwindTest';
 import { supabase } from '@/src/lib/supabase';
 import { registerForPushToken, registerDeviceOnApi } from '@/src/utils/push';
 import { fetchTasks } from '@/src/api/tasks';
@@ -194,7 +193,6 @@ export default function Home() {
   const [email, setEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
-  const [showTailwindTest, setShowTailwindTest] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [items, setItems] = useState<TaskItem[]>([]);
   const [logoutLoading, setLogoutLoading] = useState(false);
@@ -570,10 +568,6 @@ export default function Home() {
 
   if (!sessionChecked) return null;
 
-  // Afficher le test Tailwind si activé
-  if (showTailwindTest) {
-    return <TailwindTest />;
-  }
 
   return (
     <View className="flex-1 bg-bgGray" style={styles.container}>
@@ -608,20 +602,6 @@ export default function Home() {
                 </Text>
               </TouchableOpacity>
               
-              <TouchableOpacity 
-                onPress={() => setShowTailwindTest(!showTailwindTest)}
-                className={`px-4 py-2.5 rounded-full ${
-                  showTailwindTest 
-                    ? 'bg-green-500 shadow-lg shadow-green-500/30' 
-                    : 'bg-gray-200 shadow-sm'
-                }`}
-              >
-                <Text className={`text-xs font-semibold ${
-                  showTailwindTest ? 'text-white' : 'text-gray-500'
-                }`}>
-                  {showTailwindTest ? '🎨 Retour Normal' : '🎨 Test Tailwind'}
-                </Text>
-              </TouchableOpacity>
             </View>
 
             {showDebug && (
