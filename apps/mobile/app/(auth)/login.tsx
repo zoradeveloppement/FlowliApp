@@ -54,15 +54,11 @@ export default function Login() {
     setError(null);
     try {
       const webBase = process.env.EXPO_PUBLIC_WEB_BASE_URL ?? 'http://localhost:8081'
-      const mobileRedirect = 'portailclient://auth/callback' // scheme défini dans app.config.ts
 
       const { error } = await supabase.auth.resetPasswordForEmail(
         resetEmail.trim().toLowerCase(),
         {
-          redirectTo: Platform.select({
-            web: `${webBase}/auth/callback`,
-            default: mobileRedirect,
-          })
+          redirectTo: `${webBase}/auth/callback`,
         }
       );
 
