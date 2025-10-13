@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, Animated } from 'react-native';
 import { useNotificationStore } from '../store/notificationStore';
+import { AppIcon } from '@/src/ui/icons/AppIcon';
 
 interface InAppNotificationProps {
   onMarkAsRead?: () => void;
@@ -58,7 +59,7 @@ export const InAppNotification: React.FC<InAppNotificationProps> = ({
     >
       <View className="flex-row items-center justify-between">
         <View className="flex-row items-center flex-1">
-          <Text className="text-white text-lg mr-3">🔔</Text>
+          <AppIcon name="bell" size={20} color="#FFFFFF" />
           <Text className="text-white text-body font-medium flex-1">
             {getNotificationMessage()}
           </Text>

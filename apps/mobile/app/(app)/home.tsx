@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, SectionList, RefreshControl, Platform, Alert, StyleSheet, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Screen, AppLayout } from '../../src/ui/layout';
+import { AppIcon } from '@/src/ui/icons/AppIcon';
 import { Card, Progress, Badge, Button } from '../../src/ui/components';
 import { TaskDetailModal } from '../../src/ui/components/TaskDetailModal';
 import { supabase } from '@/src/lib/supabase';
@@ -512,7 +513,7 @@ export default function Home() {
         {/* Projet (optionnel) */}
         {item.projectName && (
           <View style={styles.projectContainer}>
-            <Text style={styles.projectIcon}>🏗️</Text>
+            <AppIcon name="home" size={14} variant="muted" />
             <Text style={styles.project}>{item.projectName}</Text>
           </View>
         )}
@@ -547,7 +548,7 @@ export default function Home() {
           {/* Date avec icône */}
           {item.dueDate && (
             <View style={styles.dateContainer}>
-              <Text style={styles.dateIcon}>📅</Text>
+              <AppIcon name="calendar" size={12} variant="muted" />
               <Text style={[styles.date, isOverdue && styles.dateOverdue]}>
                 {fmtRel(item.dueDate)}
               </Text>
@@ -849,7 +850,7 @@ export default function Home() {
                 
                 {displayData.length === 0 ? (
                   <View className="bg-white p-6 rounded-2xl border border-gray-100 items-center" style={styles.emptyState}>
-                    <Text className="text-3xl mb-2" style={styles.emptyStateIcon}>✨</Text>
+                    <AppIcon name="x" size={24} variant="muted" />
                     <Text className="text-gray-500 text-sm" style={styles.emptyStateText}>Aucune tâche {section.title.toLowerCase()}</Text>
                   </View>
                 ) : (
@@ -872,7 +873,7 @@ export default function Home() {
         
         {!loading && items.length === 0 && (
           <View className="bg-white p-8 rounded-2xl items-center border border-gray-100" style={styles.noTasksState}>
-            <Text className="text-5xl mb-3" style={styles.noTasksIcon}>📋</Text>
+            <AppIcon name="receipt" size={40} variant="muted" />
             <Text className="text-base font-semibold text-textMain mb-1" style={styles.noTasksTitle}>
               Aucune tâche
             </Text>

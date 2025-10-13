@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Modal, Dimensions, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Card, Badge, Button, Progress } from './index';
+import { AppIcon } from '@/src/ui/icons/AppIcon';
 import { Task } from '../../api/parseTasks';
 
 interface TaskDetailModalProps {
@@ -47,18 +48,18 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     }
   };
 
-  const getStatusIcon = (status: string) => {
+  const renderStatusIcon = (status: string) => {
     switch (status) {
       case 'Terminé':
-        return '✅';
+        return <AppIcon name="check" size={16} variant="success" />;
       case 'En cours':
-        return '🔄';
+        return <AppIcon name="clock" size={16} variant="primary" />;
       case 'En retard':
-        return '⚠️';
+        return <AppIcon name="x" size={16} color="#EF4444" />;
       case 'A faire':
-        return '📋';
+        return <AppIcon name="calendar" size={16} variant="muted" />;
       default:
-        return '📋';
+        return <AppIcon name="calendar" size={16} variant="muted" />;
     }
   };
 
@@ -97,12 +98,15 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
               className="px-3 py-1.5 rounded-full self-start"
               style={[styles.statusBadge, { backgroundColor: `${getStatusColor(task.status)}15` }]}
             >
-              <Text 
-                className="text-sm font-semibold"
-                style={[styles.statusText, { color: getStatusColor(task.status) }]}
-              >
-                {getStatusIcon(task.status)} {task.status}
-              </Text>
+              <View className="flex-row items-center">
+                <View style={{ marginRight: 6 }}>{renderStatusIcon(task.status)}</View>
+                <Text 
+                  className="text-sm font-semibold"
+                  style={[styles.statusText, { color: getStatusColor(task.status) }]}
+                >
+                  {task.status}
+                </Text>
+              </View>
             </View>
           </View>
         </View>

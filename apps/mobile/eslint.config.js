@@ -7,4 +7,23 @@ module.exports = defineConfig([
   {
     ignores: ['dist/*'],
   },
+  {
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@expo/vector-icons',
+              message: 'Utilise AppIcon (lucide-react-native).',
+            },
+            {
+              name: 'react-native-vector-icons',
+              message: 'Utilise AppIcon (lucide-react-native).',
+            },
+          ],
+        },
+      ],
+    },
+  },
 ]);

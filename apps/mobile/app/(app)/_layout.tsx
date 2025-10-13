@@ -2,6 +2,7 @@ import { Tabs } from 'expo-router';
 import { useEffect } from 'react';
 import * as Notifications from 'expo-notifications';
 import { Platform, Text } from 'react-native';
+import { AppIcon } from '@/src/ui/icons/AppIcon';
 
 export default function AppLayout() {
   // Configuration du channel Android par défaut
@@ -46,21 +47,21 @@ export default function AppLayout() {
         name="home" 
         options={{
           title: 'Accueil',
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 24, color }}>🏠</Text>,
+          tabBarIcon: ({ color }) => <AppIcon name="home" size={24} color={color} variant={undefined as any} />,
         }}
       />
       <Tabs.Screen 
         name="profile" 
         options={{
           title: 'Profil',
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 24, color }}>👤</Text>,
+          tabBarIcon: ({ color }) => <AppIcon name="user" size={24} color={color} variant={undefined as any} />,
         }}
       />
       <Tabs.Screen 
         name="factures" 
         options={{
           title: 'Facturation',
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 24, color }}>💰</Text>,
+          tabBarIcon: ({ color }) => <AppIcon name="receipt" size={24} color={color} variant={undefined as any} />,
         }}
       />
     </Tabs>

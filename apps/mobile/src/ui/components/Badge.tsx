@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Platform, StyleSheet } from 'react-native';
 import { BadgeStatus, BaseComponentProps } from '../types';
+import { AppIcon } from '@/src/ui/icons/AppIcon';
 
 interface BadgeProps extends BaseComponentProps {
   status: BadgeStatus;
@@ -68,18 +69,18 @@ export const Badge: React.FC<BadgeProps> = ({
     }
   };
 
-  const getStatusIcon = () => {
+  const renderStatusIcon = () => {
     switch (status) {
       case 'terminé':
-        return '✅';
+        return <AppIcon name="check" size={16} color="#FFFFFF" strokeWidth={2} />;
       case 'en cours':
-        return '🔄';
+        return <AppIcon name="clock" size={16} color="#FFFFFF" strokeWidth={2} />;
       case 'à venir':
-        return '⏳';
+        return <AppIcon name="calendar" size={16} color="#FFFFFF" strokeWidth={2} />;
       case 'action requise':
-        return '⚠️';
+        return <AppIcon name="x" size={16} color="#FFFFFF" strokeWidth={2} />;
       default:
-        return '';
+        return null;
     }
   };
 
@@ -96,7 +97,7 @@ export const Badge: React.FC<BadgeProps> = ({
         getStatusStyle()
       ]}
     >
-      <Text className="mr-1" style={styles.badgeIcon}>{getStatusIcon()}</Text>
+      <View className="mr-1" style={styles.badgeIcon}>{renderStatusIcon()}</View>
       <Text className="font-medium capitalize" style={styles.badgeText}>
         {status}
       </Text>

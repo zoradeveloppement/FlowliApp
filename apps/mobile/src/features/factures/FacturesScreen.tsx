@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { Screen, AppLayout } from '../../ui/layout';
 import { Card } from '../../ui/components';
+import { AppIcon } from '@/src/ui/icons/AppIcon';
 
 interface Invoice {
   id: string;
@@ -90,7 +91,7 @@ const InvoiceCard: React.FC<{ invoice: Invoice; onDownload: (invoice: Invoice) =
 
 const DevelopmentState: React.FC = () => (
   <Card className="items-center py-12" style={styles.developmentCard}>
-    <Text className="text-6xl mb-6" style={styles.developmentIcon}>🚧</Text>
+    <AppIcon name="wrench" size={48} variant="muted" />
     <Text className="text-h1 text-textMain mb-3" style={styles.developmentTitle}>
       En cours de développement
     </Text>

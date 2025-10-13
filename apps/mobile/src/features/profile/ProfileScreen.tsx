@@ -5,6 +5,7 @@ import { Screen, AppLayout } from '../../ui/layout';
 import { Card, Button, Skeleton } from '../../ui/components';
 import { supabase } from '@/src/lib/supabase';
 import { get } from '@/src/utils/http';
+import { AppIcon } from '@/src/ui/icons/AppIcon';
 
 interface ContactData {
   id: string;
@@ -15,13 +16,13 @@ interface ContactData {
   address?: string;
 }
 
-const InfoRow: React.FC<{ icon: string; label: string; value?: string }> = ({ icon, label, value }) => {
+const InfoRow: React.FC<{ icon: React.ReactNode; label: string; value?: string }> = ({ icon, label, value }) => {
   if (!value) return null;
   
   return (
     <View style={styles.infoRow}>
       <View style={styles.infoLabel}>
-        <Text style={styles.infoIcon}>{icon}</Text>
+        <View style={styles.infoIcon}>{icon}</View>
         <Text style={styles.infoLabelText}>{label}</Text>
       </View>
       <Text style={styles.infoValue}>{value}</Text>
@@ -125,7 +126,7 @@ export const ProfileScreen: React.FC = () => {
         <Screen>
           <View style={styles.container}>
             <Card style={styles.errorCard}>
-              <Text style={styles.errorIcon}>❌</Text>
+              <View style={styles.errorIcon}><AppIcon name="x" size={32} color="#DC2626" /></View>
               <Text style={styles.errorTitle}>Erreur</Text>
               <Text style={styles.errorMessage}>{error}</Text>
               <Button
@@ -160,14 +161,14 @@ export const ProfileScreen: React.FC = () => {
           {/* Informations personnelles */}
           <Card style={styles.card}>
             <View style={styles.cardHeader}>
-              <Text style={styles.cardIcon}>👤</Text>
+              <View style={styles.cardIcon}><AppIcon name="user" size={20} variant="muted" /></View>
               <Text style={styles.cardTitle}>Informations personnelles</Text>
             </View>
             
             <View style={styles.cardContent}>
-              <InfoRow icon="👨‍💼" label="Nom" value={contact?.name} />
-              <InfoRow icon="📧" label="Email" value={contact?.email} />
-              <InfoRow icon="📱" label="Téléphone" value={contact?.phone} />
+              <InfoRow icon={<AppIcon name="user" size={16} variant="muted" />} label="Nom" value={contact?.name} />
+              <InfoRow icon={<AppIcon name="mail" size={16} variant="muted" />} label="Email" value={contact?.email} />
+              <InfoRow icon={<AppIcon name="phone" size={16} variant="muted" />} label="Téléphone" value={contact?.phone} />
             </View>
           </Card>
 
@@ -175,13 +176,13 @@ export const ProfileScreen: React.FC = () => {
           {(contact?.company || contact?.address) && (
             <Card style={styles.card}>
               <View style={styles.cardHeader}>
-                <Text style={styles.cardIcon}>🏢</Text>
+                <View style={styles.cardIcon}><AppIcon name="building" size={20} variant="muted" /></View>
                 <Text style={styles.cardTitle}>Entreprise</Text>
               </View>
               
               <View style={styles.cardContent}>
-                <InfoRow icon="🏢" label="Nom" value={contact?.company} />
-                <InfoRow icon="📍" label="Adresse" value={contact?.address} />
+                <InfoRow icon={<AppIcon name="building" size={16} variant="muted" />} label="Nom" value={contact?.company} />
+                <InfoRow icon={<AppIcon name="map-pin" size={16} variant="muted" />} label="Adresse" value={contact?.address} />
               </View>
             </Card>
           )}
