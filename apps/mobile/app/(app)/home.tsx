@@ -1029,7 +1029,7 @@ const styles = StyleSheet.create({
   },
   progressActive: {
     backgroundColor: '#F5F3FF',
-    borderColor: '#6C63FF',
+    borderColor: '#7C3AED',
   },
   progressText: {
     fontSize: 12,
@@ -1039,7 +1039,7 @@ const styles = StyleSheet.create({
     color: '#10B981',
   },
   progressTextActive: {
-    color: '#6C63FF',
+    color: '#7C3AED',
   },
   dateContainer: {
     flexDirection: 'row',
@@ -1093,7 +1093,7 @@ const styles = StyleSheet.create({
     color: '#DC2626',
   },
   statusTextFlowli: {
-    color: '#6C63FF',
+    color: '#7C3AED',
   },
   statusTextDefault: {
     color: '#6B7280',
@@ -1115,7 +1115,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   headerTitleAccent: {
-    color: '#6C63FF',
+    color: '#7C3AED',
   },
   headerSubtitle: {
     fontSize: 14,
@@ -1148,8 +1148,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#6C63FF',
-    shadowColor: '#6C63FF',
+    backgroundColor: '#7C3AED',
+    shadowColor: '#7C3AED',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -1195,7 +1195,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   filterToggleActive: {
-    backgroundColor: '#6C63FF',
+    backgroundColor: '#7C3AED',
   },
   filterToggleInactive: {
     backgroundColor: '#F3F4F6',
@@ -1294,7 +1294,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6',
   },
   sectionToggleText: {
-    color: '#6C63FF',
+    color: '#7C3AED',
     fontWeight: '600',
     fontSize: 12,
   },
@@ -1322,7 +1322,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   loadingText: {
-    color: '#6C63FF',
+    color: '#7C3AED',
     fontSize: 14,
     fontWeight: '500',
   },

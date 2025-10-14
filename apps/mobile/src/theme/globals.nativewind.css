@@ -1,0 +1,54 @@
+/**
+ * NativeWind Class Reference
+ * 
+ * This file documents the available utility classes used throughout the app.
+ * NativeWind doesn't actually use CSS files - this is purely for reference.
+ * 
+ * Colors are resolved dynamically through the ThemeProvider based on light/dark mode.
+ */
+
+/* Background Colors */
+/* .bg-background - Main background color */
+/* .bg-card - Card background */
+/* .bg-primary - Primary violet color */
+/* .bg-muted - Muted background */
+/* .bg-destructive - Error/destructive background */
+/* .bg-success - Success green background */
+
+/* Text Colors */
+/* .text-foreground - Main text color */
+/* .text-muted-foreground - Secondary/muted text */
+/* .text-primary - Primary violet text */
+/* .text-destructive - Error text */
+/* .text-success - Success text */
+/* .text-white - White text */
+
+/* Border Colors */
+/* .border-border - Default border color */
+/* .border-input - Input border color */
+/* .border-primary - Primary violet border */
+/* .border-destructive - Error border */
+
+/* Ring Colors (Focus) */
+/* .ring-primary - Primary focus ring */
+/* .ring-destructive - Error focus ring */
+/* .ring-offset-2 - Ring offset */
+
+/* Shadow Utilities */
+/* .shadow-card - Card shadow */
+/* .shadow-primary - Primary violet shadow */
+/* .shadow-hover - Hover state shadow */
+/* .shadow-premium - Premium card shadow */
+
+/* Layout Classes */
+/* .rounded-{size} - Border radius (sm, md, lg, xl, 2xl, 3xl, full) */
+/* .p-{size}, .px-{size}, .py-{size} - Padding */
+/* .m-{size}, .mx-{size}, .my-{size} - Margin */
+/* .gap-{size} - Flex/Grid gap */
+
+/* Typography */
+/* .text-{size} - Font sizes (xs, sm, md, lg, xl, h3, h2, h1) */
+/* .font-{weight} - Font weights (regular, medium, semibold, bold, extrabold) */
+
+/* Note: Actual color values are provided by useTheme() hook and applied via inline styles */
+

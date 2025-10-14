@@ -8,6 +8,14 @@ FlowliApp permet aux clients de suivre l'avancement de leurs projets, gérer leu
 
 ## ✨ Fonctionnalités
 
+### 🎉 Onboarding
+- Écran d'accueil moderne et engageant
+- Présentation des bénéfices Flowli
+- Liens vers Calendly et WhatsApp
+- Animation fluide et gradient violet
+- Persistance (affiché une seule fois)
+- **Documentation** : [ONBOARDING_QUICK_START.md](./ONBOARDING_QUICK_START.md)
+
 ### 🔐 Authentification
 - Connexion par email avec code OTP
 - Gestion des sessions sécurisées
@@ -53,10 +61,14 @@ FlowliApp permet aux clients de suivre l'avancement de leurs projets, gérer leu
 ```
 apps/mobile/
 ├── app/                    # Expo Router
+│   ├── (public)/          # Onboarding (première visite)
 │   ├── (auth)/            # Authentification
 │   ├── (app)/             # Application principale
+│   ├── (design)/          # Design showcase + debug
 │   └── _layout.tsx        # Layout racine
 ├── src/
+│   ├── components/
+│   │   └── onboarding/    # Composants onboarding
 │   ├── ui/                # Design System
 │   │   ├── components/    # Composants réutilisables
 │   │   ├── layout/        # Layouts
@@ -64,6 +76,9 @@ apps/mobile/
 │   │   ├── hooks/         # Hooks personnalisés
 │   │   ├── store/         # État global
 │   │   └── utils/         # Utilitaires
+│   ├── animations/        # Animations réutilisables
+│   ├── constants/         # Constantes (onboarding, etc.)
+│   ├── theme/             # Tokens de design
 │   ├── features/          # Fonctionnalités métier
 │   └── lib/               # Bibliothèques externes
 └── assets/                # Ressources
@@ -173,9 +188,15 @@ Voir [QA_CHECKLIST.md](./QA_CHECKLIST.md) pour la checklist complète.
 
 ## 📚 Documentation
 
+### Guides principaux
 - [Design System](./DESIGN_SYSTEM.md) - Guide du design system
 - [Guide de développement](./DEVELOPMENT_GUIDE.md) - Guide pour les développeurs
 - [Checklist QA](./QA_CHECKLIST.md) - Checklist de qualité
+
+### Onboarding
+- **[Quick Start](./ONBOARDING_QUICK_START.md)** - Démarrage rapide ⚡
+- [Documentation complète](./ONBOARDING.md) - Architecture et configuration
+- [Changelog](./CHANGELOG_ONBOARDING.md) - Détails de l'implémentation
 
 ## 🚀 Déploiement
 

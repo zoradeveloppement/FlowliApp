@@ -20,9 +20,11 @@ export default function RootLayout() {
       <ToastProvider>
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="index" />
+          <Stack.Screen name="(public)" />
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(app)" />
           <Stack.Screen name="auth" />
+          <Stack.Screen name="(design)" options={{ headerShown: false }} />
         </Stack>
       </ToastProvider>
     </ThemeProvider>

@@ -1,13 +1,13 @@
 import React from 'react';
-import { TouchableOpacity, Text, Platform, StyleSheet } from 'react-native';
-import { ButtonVariant, ButtonSize, BaseComponentProps } from '../types';
+import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 
-interface ButtonProps extends BaseComponentProps {
-  variant?: ButtonVariant;
-  size?: ButtonSize;
+interface ButtonProps {
+  variant?: 'primary' | 'secondary' | 'ghost' | 'disabled';
+  size?: 'sm' | 'md' | 'lg';
   onPress?: () => void;
   disabled?: boolean;
   title: string;
+  style?: any;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -16,54 +16,8 @@ export const Button: React.FC<ButtonProps> = ({
   onPress,
   disabled = false,
   title,
-  className,
+  style,
 }) => {
-  const getButtonClasses = () => {
-    const baseClasses = 'rounded-full flex-row items-center justify-center';
-    
-    // Size classes
-    const sizeClasses = {
-      sm: 'px-3 py-2',
-      md: 'px-4 py-3',
-      lg: 'px-6 py-4',
-    };
-    
-    // Variant classes
-    const variantClasses = {
-      primary: disabled 
-        ? 'bg-gray-300' 
-        : 'bg-primary shadow-lg shadow-primary/30',
-      secondary: disabled
-        ? 'bg-gray-200 border border-gray-300'
-        : 'bg-white border border-primary',
-      ghost: disabled
-        ? 'bg-transparent'
-        : 'bg-transparent',
-      disabled: 'bg-gray-300',
-    };
-    
-    return `${baseClasses} ${sizeClasses[size]} ${variantClasses[variant]} ${className || ''}`;
-  };
-
-  const getTextClasses = () => {
-    const baseClasses = 'font-medium text-center';
-    
-    const variantClasses = {
-      primary: disabled ? 'text-gray-500' : 'text-white',
-      secondary: disabled ? 'text-gray-400' : 'text-primary',
-      ghost: disabled ? 'text-gray-400' : 'text-primary',
-      disabled: 'text-gray-500',
-    };
-    
-    const sizeClasses = {
-      sm: 'text-sm',
-      md: 'text-base',
-      lg: 'text-lg',
-    };
-    
-    return `${baseClasses} ${sizeClasses[size]} ${variantClasses[variant]}`;
-  };
-
   const getButtonStyle = () => {
     const baseStyle = styles.button;
     
@@ -82,7 +36,7 @@ export const Button: React.FC<ButtonProps> = ({
       disabled: styles.buttonDisabled,
     };
     
-    return [baseStyle, sizeStyles[size], variantStyles[variant]];
+    return [baseStyle, sizeStyles[size], variantStyles[variant], style];
   };
 
   const getTextStyle = () => {
@@ -120,13 +74,13 @@ export const Button: React.FC<ButtonProps> = ({
   );
 };
 
-// Styles de fallback pour Expo Go (quand NativeWind ne fonctionne pas)
 const styles = StyleSheet.create({
   button: {
-    borderRadius: 9999,
+    borderRadius: 20,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    marginVertical: 4,
   },
   buttonSmall: {
     paddingHorizontal: 12,
@@ -157,7 +111,7 @@ const styles = StyleSheet.create({
     borderColor: '#7C3AED',
   },
   buttonSecondaryDisabled: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#F4F5F6',
     borderWidth: 1,
     borderColor: '#D1D5DB',
   },

@@ -45,11 +45,11 @@ export const Card: React.FC<CardProps> = ({
 
   return (
     <View 
-      className={`${baseClasses} ${paddingClasses} ${shadowClasses} ${className}`}
       style={[
         styles.card,
         getPaddingStyle(),
-        shadow && styles.cardShadow
+        shadow && styles.cardShadow,
+        style
       ]}
     >
       {children}

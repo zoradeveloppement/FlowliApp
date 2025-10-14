@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Card, Badge, Button, Progress } from './index';
 import { AppIcon } from '@/src/ui/icons/AppIcon';
 import { Task } from '../../api/parseTasks';
+import { tokens } from '@/src/theme/tokens';
 
 interface TaskDetailModalProps {
   visible: boolean;
@@ -38,7 +39,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
       case 'Terminé':
         return '#10B981';
       case 'En cours':
-        return '#6C63FF';
+        return '#7C3AED';
       case 'En retard':
         return '#EF4444';
       case 'A faire':
@@ -238,19 +239,19 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   );
 };
 
-// Styles minimalistes pour le modal de détail
+// Styles harmonisés avec la DA de l'onboarding
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: tokens.colors.backgroundLight,
   },
   header: {
-    paddingTop: 48,
-    paddingBottom: 24,
-    paddingHorizontal: 24,
-    backgroundColor: '#FFFFFF',
+    paddingTop: tokens.spacing[12],
+    paddingBottom: tokens.spacing[6],
+    paddingHorizontal: tokens.spacing[6],
+    backgroundColor: tokens.colors.backgroundLight,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: tokens.colors.borderLight,
   },
   closeButton: {
     width: 40,
@@ -259,34 +260,34 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   closeButtonText: {
-    color: '#111827',
-    fontSize: 20,
+    color: tokens.colors.foregroundLight,
+    fontSize: tokens.font.sizes.lg,
   },
   titleContainer: {
-    marginTop: 48,
+    marginTop: tokens.spacing[12],
   },
   taskTitle: {
-    color: '#111827',
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 12,
+    color: tokens.colors.foregroundLight,
+    fontSize: tokens.font.sizes.xl,
+    fontWeight: tokens.font.weights.bold,
+    marginBottom: tokens.spacing[3],
     lineHeight: 32,
   },
   statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
+    paddingHorizontal: tokens.spacing[3],
+    paddingVertical: tokens.spacing[1] + 2,
+    borderRadius: tokens.radius.full,
     alignSelf: 'flex-start',
   },
   statusText: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: tokens.font.sizes.sm,
+    fontWeight: tokens.font.weights.semibold,
   },
   infoCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
+    backgroundColor: tokens.colors.backgroundLight,
+    borderRadius: tokens.radius['2xl'],
+    padding: tokens.spacing[6],
+    marginBottom: tokens.spacing[4],
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -294,10 +295,10 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   progressCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
+    backgroundColor: tokens.colors.backgroundLight,
+    borderRadius: tokens.radius['2xl'],
+    padding: tokens.spacing[6],
+    marginBottom: tokens.spacing[4],
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -305,10 +306,10 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   actionsCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
+    backgroundColor: tokens.colors.backgroundLight,
+    borderRadius: tokens.radius['2xl'],
+    padding: tokens.spacing[6],
+    marginBottom: tokens.spacing[4],
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -317,9 +318,9 @@ const styles = StyleSheet.create({
   },
   debugCard: {
     backgroundColor: '#FEF3C7',
-    borderRadius: 16,
-    padding: 24,
-    marginBottom: 24,
+    borderRadius: tokens.radius['2xl'],
+    padding: tokens.spacing[6],
+    marginBottom: tokens.spacing[6],
     borderWidth: 1,
     borderColor: '#FDE68A',
     shadowColor: '#000',
@@ -329,58 +330,58 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#111827',
+    fontSize: tokens.font.sizes.md,
+    fontWeight: tokens.font.weights.bold,
+    color: tokens.colors.foregroundLight,
   },
   infoItem: {
-    marginBottom: 16,
+    marginBottom: tokens.spacing[4],
   },
   infoLabel: {
-    fontSize: 14,
-    color: '#6B7280',
-    fontWeight: '500',
-    marginBottom: 4,
+    fontSize: tokens.font.sizes.sm,
+    color: tokens.colors.mutedForegroundLight,
+    fontWeight: tokens.font.weights.medium,
+    marginBottom: tokens.spacing[1],
   },
   infoValue: {
-    fontSize: 16,
-    color: '#111827',
-    fontWeight: '600',
+    fontSize: tokens.font.sizes.md,
+    color: tokens.colors.foregroundLight,
+    fontWeight: tokens.font.weights.semibold,
   },
   progressBarContainer: {
-    backgroundColor: '#E5E7EB',
-    borderRadius: 8,
+    backgroundColor: tokens.colors.borderLight,
+    borderRadius: tokens.radius.lg,
     height: 8,
     overflow: 'hidden',
   },
   progressBar: {
     height: '100%',
-    borderRadius: 8,
+    borderRadius: tokens.radius.lg,
   },
   progressLabel: {
-    fontSize: 14,
-    color: '#6B7280',
-    fontWeight: '500',
+    fontSize: tokens.font.sizes.sm,
+    color: tokens.colors.mutedForegroundLight,
+    fontWeight: tokens.font.weights.medium,
   },
   progressValue: {
-    fontSize: 14,
-    fontWeight: 'bold',
+    fontSize: tokens.font.sizes.sm,
+    fontWeight: tokens.font.weights.bold,
   },
   primaryActionButton: {
-    backgroundColor: '#7C3AED',
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    shadowColor: '#7C3AED',
+    backgroundColor: tokens.colors.primary,
+    paddingVertical: tokens.spacing[3] + 2,
+    paddingHorizontal: tokens.spacing[6],
+    borderRadius: tokens.radius.xl,
+    shadowColor: tokens.colors.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 4,
     elevation: 2,
   },
   primaryActionText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
+    color: tokens.colors.primaryForeground,
+    fontSize: tokens.font.sizes.md,
+    fontWeight: tokens.font.weights.semibold,
     textAlign: 'center',
   },
 });

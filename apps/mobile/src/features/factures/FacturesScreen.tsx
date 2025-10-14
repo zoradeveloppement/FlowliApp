@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { Screen, AppLayout } from '../../ui/layout';
-import { Card } from '../../ui/components';
+import { Card, Button } from '../../ui/components';
 import { AppIcon } from '@/src/ui/icons/AppIcon';
+import { tokens } from '@/src/theme/tokens';
 
 interface Invoice {
   id: string;
@@ -44,21 +45,21 @@ const InvoiceCard: React.FC<{ invoice: Invoice; onDownload: (invoice: Invoice) =
   };
 
   return (
-    <Card className="mb-4" style={styles.invoiceCard}>
-      <View className="flex-row items-start justify-between mb-3" style={styles.invoiceHeader}>
-        <View className="flex-1" style={styles.invoiceInfo}>
-          <Text className="text-body text-textMain font-medium mb-1" style={styles.invoiceNumber}>
+    <Card style={styles.invoiceCard}>
+      <View style={styles.invoiceHeader}>
+        <View style={styles.invoiceInfo}>
+          <Text style={styles.invoiceNumber}>
             Facture #{invoice.number}
           </Text>
-          <Text className="text-secondary text-textMuted mb-2" style={styles.invoiceDate}>
+          <Text style={styles.invoiceDate}>
             {new Date(invoice.date).toLocaleDateString('fr-FR')}
           </Text>
-          <Text className="text-h2 text-textMain font-semibold" style={styles.invoiceAmount}>
+          <Text style={styles.invoiceAmount}>
             {invoice.amount.toLocaleString('fr-FR')} €
           </Text>
         </View>
-        <View className="items-end" style={styles.invoiceStatus}>
-          <Text className={`text-body font-medium ${getStatusColor(invoice.status)}`} style={[
+        <View style={styles.invoiceStatus}>
+          <Text style={[
             styles.statusText,
             getStatusColor(invoice.status) === 'text-success' && styles.statusSuccess,
             getStatusColor(invoice.status) === 'text-warn' && styles.statusWarn,
@@ -69,7 +70,7 @@ const InvoiceCard: React.FC<{ invoice: Invoice; onDownload: (invoice: Invoice) =
         </View>
       </View>
       
-      <View className="flex-row space-x-3" style={styles.invoiceActions}>
+      <View style={styles.invoiceActions}>
         <Button
           title="📄 Voir PDF"
           variant="secondary"
@@ -90,12 +91,12 @@ const InvoiceCard: React.FC<{ invoice: Invoice; onDownload: (invoice: Invoice) =
 };
 
 const DevelopmentState: React.FC = () => (
-  <Card className="items-center py-12" style={styles.developmentCard}>
+  <Card style={styles.developmentCard}>
     <AppIcon name="wrench" size={48} variant="muted" />
-    <Text className="text-h1 text-textMain mb-3" style={styles.developmentTitle}>
+    <Text style={styles.developmentTitle}>
       En cours de développement
     </Text>
-    <Text className="text-body text-textMuted text-center px-6" style={styles.developmentMessage}>
+    <Text style={styles.developmentMessage}>
       La gestion des factures sera bientôt disponible.
     </Text>
     <View style={styles.developmentBadge}>
@@ -108,12 +109,12 @@ export const FacturesScreen: React.FC = () => {
   return (
     <AppLayout>
       <Screen>
-        <ScrollView className="flex-1" contentContainerStyle={styles.container}>
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.container}>
           <View style={styles.header}>
-            <Text className="text-h1 text-textMain" style={styles.headerTitle}>
+            <Text style={styles.headerTitle}>
               <Text style={styles.headerTitleAccent}>Facturation</Text>
             </Text>
-            <Text className="text-body text-textMuted" style={styles.headerSubtitle}>
+            <Text style={styles.headerSubtitle}>
               Gérez vos factures et paiements
             </Text>
           </View>
@@ -125,104 +126,108 @@ export const FacturesScreen: React.FC = () => {
   );
 };
 
-// Styles de fallback pour Expo Go (quand NativeWind ne fonctionne pas)
+// Styles harmonisés avec la DA de l'onboarding
 const styles = StyleSheet.create({
+  scrollView: {
+    flex: 1,
+  },
   container: {
-    padding: 16,
+    padding: tokens.spacing[4],
   },
   header: {
-    marginBottom: 24,
+    marginBottom: tokens.spacing[6],
   },
   headerTitle: {
-    fontSize: 30,
-    fontWeight: 'bold',
-    color: '#1A1A1A',
-    marginBottom: 4,
+    fontSize: tokens.font.sizes.h2,
+    fontWeight: tokens.font.weights.bold,
+    color: tokens.colors.foregroundLight,
+    marginBottom: tokens.spacing[1],
   },
   headerTitleAccent: {
-    color: '#6C63FF',
+    color: tokens.colors.primary,
   },
   headerSubtitle: {
-    fontSize: 14,
-    color: '#6E6E6E',
+    fontSize: tokens.font.sizes.sm,
+    color: tokens.colors.mutedForegroundLight,
   },
   developmentCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 48,
+    backgroundColor: tokens.colors.backgroundLight,
+    borderRadius: tokens.radius['2xl'],
+    padding: tokens.spacing[12],
     borderWidth: 1,
-    borderColor: '#F3F4F6',
+    borderColor: tokens.colors.borderLight,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 2,
+    alignItems: 'center',
   },
   developmentIcon: {
     fontSize: 72,
-    marginBottom: 24,
+    marginBottom: tokens.spacing[6],
   },
   developmentTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#1A1A1A',
-    marginBottom: 12,
+    fontSize: tokens.font.sizes.xl,
+    fontWeight: tokens.font.weights.semibold,
+    color: tokens.colors.foregroundLight,
+    marginBottom: tokens.spacing[3],
     textAlign: 'center',
   },
   developmentMessage: {
-    fontSize: 16,
-    color: '#6E6E6E',
+    fontSize: tokens.font.sizes.md,
+    color: tokens.colors.mutedForegroundLight,
     textAlign: 'center',
     lineHeight: 24,
-    marginBottom: 24,
+    marginBottom: tokens.spacing[6],
   },
   developmentBadge: {
     backgroundColor: '#F5F3FF',
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: tokens.spacing[6],
+    paddingVertical: tokens.spacing[2],
+    borderRadius: tokens.radius.full,
     borderWidth: 1,
     borderColor: '#C4B5FD',
   },
   developmentBadgeText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#6C63FF',
+    fontSize: tokens.font.sizes.sm,
+    fontWeight: tokens.font.weights.semibold,
+    color: tokens.colors.primary,
   },
   invoiceCard: {
-    marginBottom: 16,
+    marginBottom: tokens.spacing[4],
   },
   invoiceHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: tokens.spacing[3],
   },
   invoiceInfo: {
     flex: 1,
   },
   invoiceNumber: {
-    fontSize: 16,
-    color: '#1A1A1A',
-    fontWeight: '500',
-    marginBottom: 4,
+    fontSize: tokens.font.sizes.md,
+    color: tokens.colors.foregroundLight,
+    fontWeight: tokens.font.weights.medium,
+    marginBottom: tokens.spacing[1],
   },
   invoiceDate: {
-    fontSize: 14,
-    color: '#6E6E6E',
-    marginBottom: 8,
+    fontSize: tokens.font.sizes.sm,
+    color: tokens.colors.mutedForegroundLight,
+    marginBottom: tokens.spacing[2],
   },
   invoiceAmount: {
-    fontSize: 20,
-    color: '#1A1A1A',
-    fontWeight: '600',
+    fontSize: tokens.font.sizes.lg,
+    color: tokens.colors.foregroundLight,
+    fontWeight: tokens.font.weights.semibold,
   },
   invoiceStatus: {
     alignItems: 'flex-end',
   },
   statusText: {
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: tokens.font.sizes.md,
+    fontWeight: tokens.font.weights.medium,
   },
   statusSuccess: {
     color: '#4CAF50',
@@ -235,6 +240,6 @@ const styles = StyleSheet.create({
   },
   invoiceActions: {
     flexDirection: 'row',
-    gap: 12,
+    gap: tokens.spacing[3],
   },
 });

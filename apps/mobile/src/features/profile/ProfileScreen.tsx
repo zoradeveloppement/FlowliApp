@@ -6,6 +6,7 @@ import { Card, Button, Skeleton } from '../../ui/components';
 import { supabase } from '@/src/lib/supabase';
 import { get } from '@/src/utils/http';
 import { AppIcon } from '@/src/ui/icons/AppIcon';
+import { tokens } from '@/src/theme/tokens';
 
 interface ContactData {
   id: string;
@@ -209,49 +210,49 @@ export const ProfileScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F8FA',
+    backgroundColor: tokens.colors.mutedLight,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    padding: 16,
+    padding: tokens.spacing[4],
   },
   header: {
-    marginBottom: 24,
+    marginBottom: tokens.spacing[6],
   },
   headerTitle: {
-    fontSize: 30,
-    fontWeight: 'bold',
-    color: '#1A1A1A',
-    marginBottom: 4,
+    fontSize: tokens.font.sizes.h2,
+    fontWeight: tokens.font.weights.bold,
+    color: tokens.colors.foregroundLight,
+    marginBottom: tokens.spacing[1],
   },
   headerTitleAccent: {
-    color: '#6C63FF',
+    color: tokens.colors.primary,
   },
   headerSubtitle: {
-    fontSize: 14,
-    color: '#6E6E6E',
+    fontSize: tokens.font.sizes.sm,
+    color: tokens.colors.mutedForegroundLight,
   },
   headerSkeleton: {
-    marginBottom: 8,
+    marginBottom: tokens.spacing[2],
   },
   subheaderSkeleton: {
-    marginBottom: 24,
+    marginBottom: tokens.spacing[6],
   },
   skeletonContainer: {
-    gap: 16,
+    gap: tokens.spacing[4],
   },
   skeletonCard: {
-    borderRadius: 16,
+    borderRadius: tokens.radius['2xl'],
   },
   card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
+    backgroundColor: tokens.colors.backgroundLight,
+    borderRadius: tokens.radius['2xl'],
+    padding: tokens.spacing[6],
+    marginBottom: tokens.spacing[4],
     borderWidth: 1,
-    borderColor: '#F3F4F6',
+    borderColor: tokens.colors.borderLight,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -261,54 +262,54 @@ const styles = StyleSheet.create({
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
-    paddingBottom: 12,
+    marginBottom: tokens.spacing[4],
+    paddingBottom: tokens.spacing[3],
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: tokens.colors.borderLight,
   },
   cardIcon: {
     fontSize: 24,
-    marginRight: 8,
+    marginRight: tokens.spacing[2],
   },
   cardTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1A1A1A',
+    fontSize: tokens.font.sizes.lg,
+    fontWeight: tokens.font.weights.semibold,
+    color: tokens.colors.foregroundLight,
   },
   cardContent: {
-    gap: 16,
+    gap: tokens.spacing[4],
   },
   infoRow: {
-    gap: 8,
+    gap: tokens.spacing[2],
   },
   infoLabel: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: tokens.spacing[1],
   },
   infoIcon: {
     fontSize: 16,
-    marginRight: 8,
+    marginRight: tokens.spacing[2],
   },
   infoLabelText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#6B7280',
+    fontSize: tokens.font.sizes.xs,
+    fontWeight: tokens.font.weights.semibold,
+    color: tokens.colors.mutedForegroundLight,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   infoValue: {
-    fontSize: 16,
-    color: '#1A1A1A',
-    fontWeight: '500',
-    paddingLeft: 24,
+    fontSize: tokens.font.sizes.md,
+    color: tokens.colors.foregroundLight,
+    fontWeight: tokens.font.weights.medium,
+    paddingLeft: tokens.spacing[6],
   },
   logoutButton: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 8,
-    marginBottom: 16,
+    backgroundColor: tokens.colors.backgroundLight,
+    borderRadius: tokens.radius.xl,
+    padding: tokens.spacing[4],
+    marginTop: tokens.spacing[2],
+    marginBottom: tokens.spacing[4],
     borderWidth: 2,
     borderColor: '#FEE2E2',
     shadowColor: '#EF4444',
@@ -321,9 +322,9 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   logoutButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#DC2626',
+    fontSize: tokens.font.sizes.md,
+    fontWeight: tokens.font.weights.semibold,
+    color: tokens.colors.destructiveDark,
     textAlign: 'center',
   },
   logoutButtonTextDisabled: {
@@ -331,29 +332,29 @@ const styles = StyleSheet.create({
   },
   errorCard: {
     alignItems: 'center',
-    padding: 32,
+    padding: tokens.spacing[8],
   },
   errorIcon: {
     fontSize: 48,
-    marginBottom: 16,
+    marginBottom: tokens.spacing[4],
   },
   errorTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#1A1A1A',
-    marginBottom: 8,
+    fontSize: tokens.font.sizes.lg,
+    fontWeight: tokens.font.weights.semibold,
+    color: tokens.colors.foregroundLight,
+    marginBottom: tokens.spacing[2],
   },
   errorMessage: {
-    fontSize: 14,
-    color: '#6E6E6E',
+    fontSize: tokens.font.sizes.sm,
+    color: tokens.colors.mutedForegroundLight,
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: tokens.spacing[6],
   },
   retryButton: {
-    marginTop: 8,
+    marginTop: tokens.spacing[2],
   },
   footerSpacer: {
-    height: 24,
+    height: tokens.spacing[6],
   },
 });
 

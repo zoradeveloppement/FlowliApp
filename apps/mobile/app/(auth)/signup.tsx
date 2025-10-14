@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { post } from '@/lib/http';
 import { Screen } from '../../src/ui/layout';
 import { Input, Button, Card, Snackbar } from '../../src/ui/components';
+import { tokens } from '../../src/theme/tokens';
 
 // Email masking utility
 function maskEmail(email: string) {
@@ -284,11 +285,11 @@ export default function Signup() {
   );
 }
 
-// Styles de fallback pour Expo Go
+// Styles harmonisés avec la DA de l'onboarding
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: tokens.colors.backgroundLight,
   },
   keyboardView: {
     flex: 1,
@@ -300,73 +301,73 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'stretch',
     justifyContent: 'center',
-    paddingHorizontal: 32,
-    paddingVertical: 48,
+    paddingHorizontal: tokens.spacing[8],
+    paddingVertical: tokens.spacing[12],
   },
   brandingContainer: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: tokens.spacing[8],
   },
   logoContainer: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#7C3AED',
+    backgroundColor: tokens.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    marginBottom: tokens.spacing[3],
   },
   logoText: {
-    color: '#FFFFFF',
-    fontSize: 24,
-    fontWeight: 'bold',
+    color: tokens.colors.primaryForeground,
+    fontSize: tokens.font.sizes.xl,
+    fontWeight: tokens.font.weights.bold,
   },
   brandText: {
-    fontSize: 12,
+    fontSize: tokens.font.sizes.xs,
     letterSpacing: 2,
-    color: '#6B7280',
-    fontWeight: '600',
+    color: tokens.colors.mutedForegroundLight,
+    fontWeight: tokens.font.weights.semibold,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#111827',
+    fontSize: tokens.font.sizes.xl,
+    fontWeight: tokens.font.weights.bold,
+    color: tokens.colors.foregroundLight,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 14,
-    color: '#6B7280',
+    fontSize: tokens.font.sizes.sm,
+    color: tokens.colors.mutedForegroundLight,
     textAlign: 'center',
   },
   trustContainer: {
     alignItems: 'center',
-    marginTop: 24,
+    marginTop: tokens.spacing[6],
   },
   trustBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    backgroundColor: tokens.colors.mutedLight,
+    borderRadius: tokens.radius.full,
+    paddingHorizontal: tokens.spacing[3] + 2,
+    paddingVertical: tokens.spacing[2],
   },
   checkIcon: {
     width: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: '#10B981',
+    backgroundColor: tokens.colors.success,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 8,
+    marginRight: tokens.spacing[2],
   },
   checkText: {
-    color: '#FFFFFF',
+    color: tokens.colors.primaryForeground,
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: tokens.font.weights.bold,
   },
   trustText: {
     color: '#4B5563',
-    fontSize: 12,
-    fontWeight: '500',
+    fontSize: tokens.font.sizes.xs,
+    fontWeight: tokens.font.weights.medium,
   },
 });

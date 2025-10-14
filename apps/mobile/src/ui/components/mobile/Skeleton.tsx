@@ -1,18 +1,18 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Animated } from 'react-native';
-import { BaseComponentProps } from '../types';
+import { View, Animated, StyleSheet } from 'react-native';
 
-interface SkeletonProps extends BaseComponentProps {
+interface SkeletonProps {
   width?: number | string;
   height?: number | string;
   borderRadius?: number;
+  style?: any;
 }
 
 export const Skeleton: React.FC<SkeletonProps> = ({
   width = '100%',
   height = 20,
   borderRadius = 8,
-  className = '',
+  style,
 }) => {
   const opacity = useRef(new Animated.Value(0.3)).current;
 
@@ -51,3 +51,9 @@ export const Skeleton: React.FC<SkeletonProps> = ({
     />
   );
 };
+
+const styles = StyleSheet.create({
+  skeleton: {
+    backgroundColor: '#F4F5F6',
+  },
+});
