@@ -24,9 +24,9 @@ const AppBottomNav = () => {
   return (
     <StickyBottomActions
       items={[
-        { key: "home",    label: "Home",        iconName: "Home",        href: "/(app)/home",     testID: "nav-home" },
-        { key: "billing", label: "Facturation", iconName: "ReceiptText", href: "/(app)/factures", testID: "nav-billing" },
-        { key: "profile", label: "Profil",      iconName: "UserRound",   href: "/(app)/profile",  testID: "nav-profile" },
+        { key: "home",    label: "Home",        iconName: "Home",        href: "/home",     testID: "nav-home" },
+        { key: "billing", label: "Facturation", iconName: "ReceiptText", href: "/factures", testID: "nav-billing" },
+        { key: "profile", label: "Profil",      iconName: "UserRound",   href: "/profile",  testID: "nav-profile" },
       ]}
       elevated
       hideWhenKeyboardShown

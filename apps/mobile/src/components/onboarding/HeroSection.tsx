@@ -14,7 +14,7 @@ export const HeroSection = () => {
     <View style={styles.container}>
       {/* Badge confiance */}
       <Animated.View style={[styles.badge, badgeAnim]}>
-        <CheckCircle size={16} color={tokens.colors.primary} strokeWidth={2} />
+        <CheckCircle size={16} color={tokens.colors.primaryForeground} strokeWidth={2} />
         <Text style={styles.badgeText}>{ONBOARDING_CONTENT.hero.badge}</Text>
       </Animated.View>
 
@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: tokens.font.sizes.sm,
     fontWeight: tokens.font.weights.medium,
-    color: tokens.colors.primary,
+    color: tokens.colors.primaryForeground, // Blanc au lieu de violet
   },
   title: {
     fontSize: tokens.font.sizes.h2,

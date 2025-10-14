@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Pressable, ActivityIndicator, Platform, Keyboard, Animated } from "react-native";
+import { View, Pressable, ActivityIndicator, Platform, Keyboard, Animated, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { usePathname, router } from "expo-router";
 import * as Haptics from "expo-haptics";
@@ -41,7 +41,18 @@ const useKeyboardVisible = () => {
 
 const isActiveHref = (pathname: string, href?: string, strategy: "exact" | "startsWith" = "startsWith") => {
   if (!href) return false;
-  return strategy === "exact" ? pathname === href : pathname.startsWith(href);
+  
+  // Normaliser les chemins pour la comparaison
+  const normalizedPathname = pathname.replace(/\/$/, ''); // Supprimer le slash final
+  const normalizedHref = href.replace(/\/$/, ''); // Supprimer le slash final
+  
+  console.log(`[isActiveHref] Comparing: "${normalizedPathname}" with "${normalizedHref}"`);
+  
+  if (strategy === "exact") {
+    return normalizedPathname === normalizedHref;
+  } else {
+    return normalizedPathname.startsWith(normalizedHref);
+  }
 };
 
 const Pill: React.FC<{
@@ -50,6 +61,10 @@ const Pill: React.FC<{
   compact: boolean;
   itemClassName?: string;
 }> = ({ item, active, compact, itemClassName }) => {
+  console.log(`[Pill] ${item.label} - active: ${active}, href: ${item.href}`);
+  if (active) {
+    console.log(`[Pill] 🎯 ${item.label} is ACTIVE - applying pillActive styles`);
+  }
   const scale = React.useRef(new Animated.Value(1)).current;
   const Icon = item.iconName && Lucide[item.iconName] ? Lucide[item.iconName] : Lucide.ChevronRight;
 
@@ -75,36 +90,34 @@ const Pill: React.FC<{
         accessibilityRole="button"
         accessibilityLabel={item.accessibilityLabel ?? item.label}
         testID={item.testID}
-        className={[
-          "flex-row items-center justify-between",
-          "rounded-3xl bg-black/90 border border-white/10",
-          active ? "ring-1 ring-white/25" : "ring-0",
-          Platform.OS === "ios" ? "shadow-lg" : "",
-          itemClassName ?? "",
-        ].join(" ")}
-        style={{
-          height: compact ? 52 : 56,
-          paddingHorizontal: compact ? 16 : 20,
-          ...(Platform.OS === "ios"
-            ? { shadowColor: "#000", shadowOpacity: 0.4, shadowRadius: 10, shadowOffset: { width: 0, height: 6 } }
-            : { elevation: 10 }),
-          opacity: item.disabled ? 0.5 : 1,
-        }}
+        style={[
+          styles.pill,
+          {
+            height: compact ? 52 : 56,
+            paddingHorizontal: compact ? 16 : 20,
+            opacity: item.disabled ? 0.5 : 1,
+            ...(active ? styles.pillActive : {}),
+          }
+        ]}
       >
-        <Text className={compact ? "text-sm font-semibold text-white" : "text-base font-semibold text-white"}>
+        <Text style={[
+          styles.pillText,
+          { fontSize: compact ? 14 : 16 },
+          active ? styles.pillTextActive : {}
+        ]}>
           {item.label}
         </Text>
 
         {item.loading ? (
           <ActivityIndicator />
         ) : (
-          <View className="flex-row items-center">
+          <View style={styles.pillRight}>
             {typeof item.badgeCount === "number" && item.badgeCount > 0 && (
-              <View className="min-w-5 h-5 px-1 rounded-full bg-white/15 items-center justify-center mr-2">
-                <Text className="text-[11px] text-white">{item.badgeCount}</Text>
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{item.badgeCount}</Text>
               </View>
             )}
-            <Icon size={compact ? 18 : 20} color="#fff" />
+            <Icon size={compact ? 18 : 20} color={active ? "#000000" : "#fff"} />
           </View>
         )}
       </Pressable>
@@ -125,6 +138,8 @@ const StickyBottomActions: React.FC<StickyBottomActionsProps> = ({
   const pathname = usePathname();
   const keyboardVisible = useKeyboardVisible();
 
+  console.log('[StickyBottomActions] Current pathname:', pathname);
+
   const compact = items.length === 3; // auto-compact pour 3 boutons
   const gap = compact ? 10 : 12;
 
@@ -133,11 +148,13 @@ const StickyBottomActions: React.FC<StickyBottomActionsProps> = ({
   return (
     <View
       pointerEvents="box-none"
-      className={["absolute inset-x-0 bottom-0 px-4 pt-2", containerClassName ?? ""].join(" ")}
-      style={{ paddingBottom: insets.bottom + bottomOffset }}
+      style={[
+        styles.stickyContainer,
+        { paddingBottom: insets.bottom + bottomOffset }
+      ]}
     >
       {/* Pas de fond opaque: on ne rend que les pills */}
-      <View className="flex-row" style={{ columnGap: compact ? 10 : 12 }}>
+      <View style={[styles.pillsContainer, { columnGap: compact ? 10 : 12 }]}>
         {items.map((it) => (
           <Pill
             key={it.key}
@@ -153,3 +170,72 @@ const StickyBottomActions: React.FC<StickyBottomActionsProps> = ({
 };
 
 export default StickyBottomActions;
+
+// Styles de fallback pour iOS (quand NativeWind ne fonctionne pas)
+const styles = StyleSheet.create({
+  pill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: 24,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.4,
+        shadowRadius: 10,
+      },
+      android: {
+        elevation: 10,
+      },
+    }),
+  },
+  pillActive: {
+    borderColor: 'rgba(0, 0, 0, 0.6)',
+    borderWidth: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)', // Fond blanc pour contraste
+  },
+  pillText: {
+    color: '#ffffff',
+    fontWeight: '600',
+  },
+  pillTextActive: {
+    color: '#000000', // Texte noir pour l'état actif
+  },
+  pillRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 8, // Espacement entre texte et icône
+  },
+  badge: {
+    minWidth: 20,
+    height: 20,
+    paddingHorizontal: 4,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  badgeText: {
+    fontSize: 11,
+    color: '#ffffff',
+    fontWeight: '600',
+  },
+  pillsContainer: {
+    flexDirection: 'row',
+  },
+  stickyContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    backgroundColor: 'transparent', // Pas de fond
+    alignItems: 'center', // Centrer les boutons
+  },
+});

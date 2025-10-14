@@ -11,16 +11,12 @@ export default function Root() {
   const segments = useSegments()
   const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(true)
 
-  // Vérifier si l'onboarding a déjà été vu
+  // Toujours afficher l'onboarding en premier
   useEffect(() => {
     const checkOnboarding = async () => {
       try {
-        const hasSeenOnboarding = await AsyncStorage.getItem(ONBOARDING_SEEN_KEY)
-        
-        if (!hasSeenOnboarding) {
-          // Première visite : afficher l'onboarding
-          router.replace('/(public)/onboarding')
-        }
+        // Toujours rediriger vers l'onboarding en premier
+        router.replace('/(public)/onboarding')
       } catch (error) {
         console.error('Error checking onboarding status:', error)
       } finally {

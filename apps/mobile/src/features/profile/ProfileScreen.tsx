@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert, StyleSheet, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert, StyleSheet, RefreshControl, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Screen, AppLayout } from '../../ui/layout';
 import { Card, Button, Skeleton } from '../../ui/components';
@@ -7,6 +7,7 @@ import { supabase } from '@/src/lib/supabase';
 import { get } from '@/src/utils/http';
 import { AppIcon } from '@/src/ui/icons/AppIcon';
 import { tokens } from '@/src/theme/tokens';
+import { useFadeInDelayed } from '@/src/animations';
 
 interface ContactData {
   id: string;
@@ -38,6 +39,12 @@ export const ProfileScreen: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [logoutLoading, setLogoutLoading] = useState(false);
+  
+  // Animations d'apparition
+  const headerAnim = useFadeInDelayed({ delay: 0 });
+  const personalInfoAnim = useFadeInDelayed({ delay: 200 });
+  const companyInfoAnim = useFadeInDelayed({ delay: 400 });
+  const logoutAnim = useFadeInDelayed({ delay: 600 });
 
   const loadContact = async () => {
     try {
@@ -84,7 +91,7 @@ export const ProfileScreen: React.FC = () => {
             setLogoutLoading(true);
             try {
               await supabase.auth.signOut();
-              router.replace('/(auth)/login');
+              router.replace('/(public)/onboarding');
             } catch (error: any) {
               console.error('Erreur lors de la déconnexion:', error);
               Alert.alert('Erreur', 'Impossible de se déconnecter. Veuillez réessayer.');
@@ -103,156 +110,168 @@ export const ProfileScreen: React.FC = () => {
 
   if (loading) {
     return (
-      <AppLayout>
-        <Screen>
-          <View style={styles.container}>
-            <View style={styles.header}>
-              <Skeleton width={200} height={36} style={styles.headerSkeleton} />
-              <Skeleton width={150} height={20} style={styles.subheaderSkeleton} />
-            </View>
-            
-            <View style={styles.skeletonContainer}>
-              <Skeleton width="100%" height={200} style={styles.skeletonCard} />
-              <Skeleton width="100%" height={150} style={styles.skeletonCard} />
-            </View>
+      <View className="flex-1 bg-bgGray" style={styles.container}>
+        <ScrollView className="flex-1" contentContainerStyle={styles.scrollContent}>
+          <View style={styles.headerSection}>
+            <Skeleton width={200} height={36} style={styles.headerSkeleton} />
+            <Skeleton width={150} height={20} style={styles.subheaderSkeleton} />
           </View>
-        </Screen>
-      </AppLayout>
+          
+          <View style={styles.skeletonContainer}>
+            <Skeleton width="100%" height={200} style={styles.skeletonCard} />
+            <Skeleton width="100%" height={150} style={styles.skeletonCard} />
+          </View>
+        </ScrollView>
+      </View>
     );
   }
 
   if (error) {
     return (
-      <AppLayout>
-        <Screen>
-          <View style={styles.container}>
-            <Card style={styles.errorCard}>
-              <View style={styles.errorIcon}><AppIcon name="x" size={32} color="#DC2626" /></View>
-              <Text style={styles.errorTitle}>Erreur</Text>
-              <Text style={styles.errorMessage}>{error}</Text>
-              <Button
-                title="Réessayer"
-                variant="primary"
-                onPress={loadContact}
-                style={styles.retryButton}
-              />
-            </Card>
+      <View className="flex-1 bg-bgGray" style={styles.container}>
+        <ScrollView className="flex-1" contentContainerStyle={styles.scrollContent}>
+          <View style={styles.errorCard}>
+            <View style={styles.errorIcon}><AppIcon name="x" size={32} color="#DC2626" /></View>
+            <Text style={styles.errorTitle}>Erreur</Text>
+            <Text style={styles.errorMessage}>{error}</Text>
+            <Button
+              title="Réessayer"
+              variant="primary"
+              onPress={loadContact}
+              style={styles.retryButton}
+            />
           </View>
-        </Screen>
-      </AppLayout>
+        </ScrollView>
+      </View>
     );
   }
 
   return (
-    <AppLayout>
-      <Screen>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={[styles.scrollContent, { paddingBottom: 96 }]}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        >
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.headerTitle}>
-              Mon <Text style={styles.headerTitleAccent}>Profil</Text>
-            </Text>
-            <Text style={styles.headerSubtitle}>Vos informations personnelles</Text>
+    <View className="flex-1 bg-bgGray" style={styles.container}>
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      >
+        {/* Header - Style Flowli */}
+        <Animated.View style={[styles.headerSection, headerAnim]} className="mb-6">
+          <View className="flex-row justify-between items-center mb-2" style={styles.headerRow}>
+            <View>
+              <Text className="text-3xl font-bold text-textMain mb-1" style={styles.headerTitle}>
+                Mon <Text className="text-primary" style={styles.headerTitleAccent}>Profil</Text>
+              </Text>
+              <Text className="text-secondary" style={styles.headerSubtitle}>Vos informations personnelles</Text>
+            </View>
           </View>
+        </Animated.View>
 
-          {/* Informations personnelles */}
-          <Card style={styles.card}>
-            <View style={styles.cardHeader}>
-              <View style={styles.cardIcon}><AppIcon name="user" size={20} variant="muted" /></View>
-              <Text style={styles.cardTitle}>Informations personnelles</Text>
+        {/* Informations personnelles - Style Flowli Card */}
+        <Animated.View style={[styles.card, personalInfoAnim]} className="bg-white p-4 rounded-2xl mb-5 border border-gray-100 shadow-sm">
+          <View className="flex-row items-center mb-4" style={styles.cardHeader}>
+            <View className="w-10 h-10 rounded-full bg-violet-100 items-center justify-center mr-3" style={styles.cardIconContainer}>
+              <AppIcon name="user" size={20} variant="muted" />
+            </View>
+            <Text className="text-lg font-bold text-textMain" style={styles.cardTitle}>Informations personnelles</Text>
+          </View>
+          
+          <View style={styles.cardContent}>
+            <InfoRow icon={<AppIcon name="user" size={16} variant="muted" />} label="Nom" value={contact?.name} />
+            <InfoRow icon={<AppIcon name="mail" size={16} variant="muted" />} label="Email" value={contact?.email} />
+            <InfoRow icon={<AppIcon name="phone" size={16} variant="muted" />} label="Téléphone" value={contact?.phone} />
+          </View>
+        </Animated.View>
+
+        {/* Entreprise (si disponible) - Style Flowli Card */}
+        {(contact?.company || contact?.address) && (
+          <Animated.View style={[styles.card, companyInfoAnim]} className="bg-white p-4 rounded-2xl mb-5 border border-gray-100 shadow-sm">
+            <View className="flex-row items-center mb-4" style={styles.cardHeader}>
+              <View className="w-10 h-10 rounded-full bg-blue-100 items-center justify-center mr-3" style={styles.cardIconContainer}>
+                <AppIcon name="building" size={20} variant="muted" />
+              </View>
+              <Text className="text-lg font-bold text-textMain" style={styles.cardTitle}>Entreprise</Text>
             </View>
             
             <View style={styles.cardContent}>
-              <InfoRow icon={<AppIcon name="user" size={16} variant="muted" />} label="Nom" value={contact?.name} />
-              <InfoRow icon={<AppIcon name="mail" size={16} variant="muted" />} label="Email" value={contact?.email} />
-              <InfoRow icon={<AppIcon name="phone" size={16} variant="muted" />} label="Téléphone" value={contact?.phone} />
+              <InfoRow icon={<AppIcon name="building" size={16} variant="muted" />} label="Nom" value={contact?.company} />
+              <InfoRow icon={<AppIcon name="map-pin" size={16} variant="muted" />} label="Adresse" value={contact?.address} />
             </View>
-          </Card>
+          </Animated.View>
+        )}
 
-          {/* Entreprise (si disponible) */}
-          {(contact?.company || contact?.address) && (
-            <Card style={styles.card}>
-              <View style={styles.cardHeader}>
-                <View style={styles.cardIcon}><AppIcon name="building" size={20} variant="muted" /></View>
-                <Text style={styles.cardTitle}>Entreprise</Text>
-              </View>
-              
-              <View style={styles.cardContent}>
-                <InfoRow icon={<AppIcon name="building" size={16} variant="muted" />} label="Nom" value={contact?.company} />
-                <InfoRow icon={<AppIcon name="map-pin" size={16} variant="muted" />} label="Adresse" value={contact?.address} />
-              </View>
-            </Card>
-          )}
-
-          {/* Bouton de déconnexion */}
+        {/* Bouton de déconnexion - Style Flowli */}
+        <Animated.View style={logoutAnim}>
           <TouchableOpacity
             onPress={logout}
             disabled={logoutLoading}
-            style={[styles.logoutButton, logoutLoading && styles.logoutButtonDisabled]}
+            className={`px-6 py-4 rounded-2xl border-2 ${
+              logoutLoading 
+                ? 'bg-gray-100 border-gray-200 opacity-60' 
+                : 'bg-white border-red-200 shadow-sm'
+            }`}
+            style={[
+              styles.logoutButton,
+              logoutLoading && styles.logoutButtonDisabled
+            ]}
           >
-            <Text style={[styles.logoutButtonText, logoutLoading && styles.logoutButtonTextDisabled]}>
-              {logoutLoading ? 'Déconnexion...' : '🚪 Se déconnecter'}
-            </Text>
+            <View className="flex-row items-center justify-center">
+              <AppIcon name="logOut" size={20} variant="muted" />
+              <Text className={`ml-2 text-base font-semibold ${
+                logoutLoading ? 'text-gray-500' : 'text-red-600'
+              }`} style={[
+                styles.logoutButtonText,
+                logoutLoading && styles.logoutButtonTextDisabled
+              ]}>
+                {logoutLoading ? 'Déconnexion...' : 'Se déconnecter'}
+              </Text>
+            </View>
           </TouchableOpacity>
+        </Animated.View>
 
-          {/* Footer spacer */}
-          <View style={styles.footerSpacer} />
-        </ScrollView>
-      </Screen>
-    </AppLayout>
+        {/* Footer spacer */}
+        <View style={styles.footerSpacer} />
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: tokens.colors.mutedLight,
-  },
-  scrollView: {
-    flex: 1,
+    backgroundColor: '#F7F8FA',
   },
   scrollContent: {
-    padding: tokens.spacing[4],
+    padding: 16,
   },
-  header: {
-    marginBottom: tokens.spacing[6],
+  headerSection: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
   },
   headerTitle: {
-    fontSize: tokens.font.sizes.h2,
-    fontWeight: tokens.font.weights.bold,
-    color: tokens.colors.foregroundLight,
-    marginBottom: tokens.spacing[1],
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#1A1A1A',
+    marginBottom: 4,
   },
   headerTitleAccent: {
-    color: tokens.colors.primary,
+    color: '#7C3AED',
   },
   headerSubtitle: {
-    fontSize: tokens.font.sizes.sm,
-    color: tokens.colors.mutedForegroundLight,
-  },
-  headerSkeleton: {
-    marginBottom: tokens.spacing[2],
-  },
-  subheaderSkeleton: {
-    marginBottom: tokens.spacing[6],
-  },
-  skeletonContainer: {
-    gap: tokens.spacing[4],
-  },
-  skeletonCard: {
-    borderRadius: tokens.radius['2xl'],
+    fontSize: 14,
+    color: '#6B7280',
   },
   card: {
-    backgroundColor: tokens.colors.backgroundLight,
-    borderRadius: tokens.radius['2xl'],
-    padding: tokens.spacing[6],
-    marginBottom: tokens.spacing[4],
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
     borderWidth: 1,
-    borderColor: tokens.colors.borderLight,
+    borderColor: '#F3F4F6',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -262,54 +281,58 @@ const styles = StyleSheet.create({
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: tokens.spacing[4],
-    paddingBottom: tokens.spacing[3],
+    marginBottom: 16,
+    paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: tokens.colors.borderLight,
+    borderBottomColor: '#F3F4F6',
   },
-  cardIcon: {
-    fontSize: 24,
-    marginRight: tokens.spacing[2],
+  cardIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
   cardTitle: {
-    fontSize: tokens.font.sizes.lg,
-    fontWeight: tokens.font.weights.semibold,
-    color: tokens.colors.foregroundLight,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1A1A1A',
   },
   cardContent: {
-    gap: tokens.spacing[4],
+    gap: 16,
   },
   infoRow: {
-    gap: tokens.spacing[2],
+    gap: 8,
   },
   infoLabel: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: tokens.spacing[1],
+    marginBottom: 4,
   },
   infoIcon: {
     fontSize: 16,
-    marginRight: tokens.spacing[2],
+    marginRight: 8,
   },
   infoLabelText: {
-    fontSize: tokens.font.sizes.xs,
-    fontWeight: tokens.font.weights.semibold,
-    color: tokens.colors.mutedForegroundLight,
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6B7280',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   infoValue: {
-    fontSize: tokens.font.sizes.md,
-    color: tokens.colors.foregroundLight,
-    fontWeight: tokens.font.weights.medium,
-    paddingLeft: tokens.spacing[6],
+    fontSize: 16,
+    color: '#1A1A1A',
+    fontWeight: '500',
+    paddingLeft: 24,
   },
   logoutButton: {
-    backgroundColor: tokens.colors.backgroundLight,
-    borderRadius: tokens.radius.xl,
-    padding: tokens.spacing[4],
-    marginTop: tokens.spacing[2],
-    marginBottom: tokens.spacing[4],
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 8,
+    marginBottom: 16,
     borderWidth: 2,
     borderColor: '#FEE2E2',
     shadowColor: '#EF4444',
@@ -322,9 +345,9 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   logoutButtonText: {
-    fontSize: tokens.font.sizes.md,
-    fontWeight: tokens.font.weights.semibold,
-    color: tokens.colors.destructiveDark,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#DC2626',
     textAlign: 'center',
   },
   logoutButtonTextDisabled: {
@@ -332,29 +355,42 @@ const styles = StyleSheet.create({
   },
   errorCard: {
     alignItems: 'center',
-    padding: tokens.spacing[8],
+    padding: 32,
   },
   errorIcon: {
     fontSize: 48,
-    marginBottom: tokens.spacing[4],
+    marginBottom: 16,
   },
   errorTitle: {
-    fontSize: tokens.font.sizes.lg,
-    fontWeight: tokens.font.weights.semibold,
-    color: tokens.colors.foregroundLight,
-    marginBottom: tokens.spacing[2],
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1A1A1A',
+    marginBottom: 8,
   },
   errorMessage: {
-    fontSize: tokens.font.sizes.sm,
-    color: tokens.colors.mutedForegroundLight,
+    fontSize: 14,
+    color: '#6B7280',
     textAlign: 'center',
-    marginBottom: tokens.spacing[6],
+    marginBottom: 24,
   },
   retryButton: {
-    marginTop: tokens.spacing[2],
+    marginTop: 8,
   },
   footerSpacer: {
-    height: tokens.spacing[6],
+    height: 24,
+  },
+  // Skeleton styles
+  headerSkeleton: {
+    marginBottom: 8,
+  },
+  subheaderSkeleton: {
+    marginBottom: 24,
+  },
+  skeletonContainer: {
+    gap: 16,
+  },
+  skeletonCard: {
+    borderRadius: 16,
   },
 });
 

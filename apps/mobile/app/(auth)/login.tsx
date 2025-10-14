@@ -95,6 +95,17 @@ export default function Login() {
           contentContainerStyle={styles.scrollContent}
           className="flex-1"
         >
+          {/* Bouton retour vers onboarding */}
+          <TouchableOpacity
+            onPress={() => router.push('/(public)/onboarding')}
+            className="absolute top-12 left-6 z-10"
+            style={styles.backButton}
+          >
+            <View className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center">
+              <Text className="text-gray-600 text-lg">←</Text>
+            </View>
+          </TouchableOpacity>
+
           {/* Container centré */}
           <View className="flex-1 items-stretch justify-center px-8 py-12" style={styles.mainContainer}>
             {/* Branding compact */}
@@ -366,5 +377,11 @@ const styles = StyleSheet.create({
   resetButtonsContainer: {
     flexDirection: 'row',
     gap: tokens.spacing[3],
+  },
+  backButton: {
+    position: 'absolute',
+    top: 48,
+    left: 24,
+    zIndex: 10,
   },
 });

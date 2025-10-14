@@ -1,8 +1,8 @@
 import React from 'react';
-import { ScrollView, View, StyleSheet, Platform } from 'react-native';
+import { ScrollView, View, StyleSheet, Platform, TouchableOpacity, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Calendar, Clock, CheckCircle, TrendingUp, Zap } from 'lucide-react-native';
+import { Calendar, Clock, CheckCircle, TrendingUp, Zap, MessageCircle } from 'lucide-react-native';
 import { StatusBar } from 'expo-status-bar';
 import StickyBottomActions from '../../components/StickyBottomActions';
 
@@ -14,7 +14,6 @@ import {
   FeatureCard,
   FeaturesList,
   ClientLogos,
-  WhatsAppFAB,
   LoginPrompt,
 } from '@/src/components/onboarding';
 
@@ -95,12 +94,38 @@ export default function OnboardingScreen() {
             <LoginPrompt />
           </View>
 
-          {/* Spacer pour le FAB */}
+          {/* WhatsApp button intégré */}
+          <View style={styles.whatsappSection}>
+            <TouchableOpacity
+              style={styles.whatsappButton}
+              onPress={async () => {
+                try {
+                  const { Linking } = await import('react-native');
+                  const { ONBOARDING_LINKS } = await import('@/src/constants/onboarding');
+                  const canOpen = await Linking.canOpenURL(ONBOARDING_LINKS.whatsapp);
+                  if (canOpen) {
+                    await Linking.openURL(ONBOARDING_LINKS.whatsapp);
+                  }
+                } catch (error) {
+                  console.error('Error opening WhatsApp:', error);
+                }
+              }}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="Contacter sur WhatsApp"
+              accessibilityHint="Ouvre WhatsApp pour discuter de votre projet"
+              activeOpacity={0.8}
+            >
+              <View style={styles.whatsappButtonContent}>
+                <MessageCircle size={20} color="#FFFFFF" strokeWidth={2} />
+                <Text style={styles.whatsappButtonText}>Discuter sur WhatsApp</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+
+          {/* Spacer pour les boutons sticky */}
           <View style={{ height: 80 }} />
         </ScrollView>
-
-        {/* WhatsApp FAB flottant */}
-        <WhatsAppFAB />
         
         {/* Sticky Bottom Actions */}
         <StickyBottomActions
@@ -148,6 +173,33 @@ const styles = StyleSheet.create({
   },
   socialSection: {
     paddingVertical: tokens.spacing[4],
+  },
+  whatsappSection: {
+    paddingHorizontal: tokens.spacing[6],
+    paddingVertical: tokens.spacing[4],
+    alignItems: 'center',
+  },
+  whatsappButton: {
+    backgroundColor: tokens.colors.success,
+    borderRadius: tokens.radius.full,
+    paddingHorizontal: tokens.spacing[6],
+    paddingVertical: tokens.spacing[4],
+    shadowColor: tokens.colors.success,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  whatsappButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: tokens.spacing[3],
+  },
+  whatsappButtonText: {
+    color: '#FFFFFF',
+    fontSize: tokens.font.sizes.md,
+    fontWeight: tokens.font.weights.semibold,
   },
 });
 

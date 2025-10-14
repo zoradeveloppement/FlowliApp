@@ -9,6 +9,7 @@ import { supabase } from '@/src/lib/supabase';
 import { registerForPushToken, registerDeviceOnApi } from '@/src/utils/push';
 import { fetchTasks } from '@/src/api/tasks';
 import { get } from '@/src/utils/http';
+import { useFadeInDelayed } from '@/src/animations';
 
 type TaskItem = {
   id: string;
@@ -198,6 +199,12 @@ export default function Home() {
   const [items, setItems] = useState<TaskItem[]>([]);
   const [logoutLoading, setLogoutLoading] = useState(false);
   
+  // Animations d'apparition
+  const headerAnim = useFadeInDelayed({ delay: 0 });
+  const statsAnim = useFadeInDelayed({ delay: 200 });
+  const tasksAnim = useFadeInDelayed({ delay: 400 });
+  const debugAnim = useFadeInDelayed({ delay: 600 });
+  
   // États pour le modal de détail
   const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null);
   const [showTaskDetail, setShowTaskDetail] = useState(false);
@@ -230,7 +237,7 @@ export default function Home() {
     setLogoutLoading(true);
     try {
       await supabase.auth.signOut();
-      router.replace('/(auth)/login');
+      router.replace('/(public)/onboarding');
     } catch (error: any) {
       console.error('Erreur lors de la déconnexion:', error);
       Alert.alert('Erreur', 'Impossible de se déconnecter. Veuillez réessayer.');
@@ -579,7 +586,7 @@ export default function Home() {
       >
         {/* Debug UI - Style Flowli */}
         {__DEV__ && (
-          <View className="mb-4" style={styles.debugContainer}>
+          <Animated.View style={[styles.debugContainer, debugAnim]} className="mb-4">
             <View className="flex-row gap-2 mb-2" style={styles.debugButtons}>
               <TouchableOpacity 
                 onPress={() => setShowDebug(!showDebug)}
@@ -600,6 +607,16 @@ export default function Home() {
                   showDebug ? styles.debugButtonTextActive : styles.debugButtonTextInactive
                 ]}>
                   {showDebug ? '⚙️ Masquer Debug' : '⚙️ Debug'}
+                </Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                onPress={() => router.push('/(dev)/nw-check')}
+                className="px-4 py-2.5 rounded-full bg-violet-600 shadow-lg shadow-violet-600/30"
+                style={styles.debugButton}
+              >
+                <Text className="text-xs font-semibold text-white" style={styles.debugButtonText}>
+                  🎨 Test NativeWind
                 </Text>
               </TouchableOpacity>
               
@@ -655,12 +672,12 @@ export default function Home() {
                 </View>
               </View>
             )}
-          </View>
+          </Animated.View>
         )}
 
         {/* Debug Push - Style Flowli */}
         {__DEV__ && (
-          <View className="bg-yellow-50 p-4 rounded-2xl mb-4 border border-yellow-200">
+          <Animated.View style={debugAnim} className="bg-yellow-50 p-4 rounded-2xl mb-4 border border-yellow-200">
             <Text className="text-sm font-bold mb-3 text-yellow-800">📱 Push Notifications</Text>
             
             <View className="space-y-2 mb-3">
@@ -710,11 +727,11 @@ export default function Home() {
                 {pushRegisterLoading ? 'Re-enregistrement...' : 'Re-enregistrer device'}
               </Text>
             </TouchableOpacity>
-          </View>
+          </Animated.View>
         )}
 
         {/* Header - Style Flowli */}
-        <View className="mb-6" style={styles.headerSection}>
+        <Animated.View style={[styles.headerSection, headerAnim]} className="mb-6">
           <View className="flex-row justify-between items-center mb-2" style={styles.headerRow}>
             <View>
               <Text className="text-3xl font-bold text-textMain mb-1" style={styles.headerTitle}>
@@ -752,10 +769,10 @@ export default function Home() {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </Animated.View>
 
         {/* Filtres - Style Flowli Card */}
-        <View className="bg-white p-4 rounded-2xl mb-5 border border-gray-100 shadow-sm" style={styles.filtersCard}>
+        <Animated.View style={[styles.filtersCard, statsAnim]} className="bg-white p-4 rounded-2xl mb-5 border border-gray-100 shadow-sm">
           <Text className="text-base font-bold mb-3 text-textMain" style={styles.filtersTitle}>Filtres</Text>
           
           <View className="flex-row items-center mb-3 gap-2" style={styles.filtersToggleRow}>
@@ -820,10 +837,10 @@ export default function Home() {
               </View>
             </View>
           )}
-        </View>
+        </Animated.View>
 
         {/* Liste des tâches */}
-        <View>
+        <Animated.View style={tasksAnim}>
           {sections.map((section) => {
             const displayData = section.title === 'Terminées' && !showDone ? [] : section.data;
             
@@ -863,7 +880,7 @@ export default function Home() {
               </View>
             );
           })}
-        </View>
+        </Animated.View>
         
         {loading && (
           <View className="bg-white p-6 rounded-2xl items-center mt-4" style={styles.loadingState}>
