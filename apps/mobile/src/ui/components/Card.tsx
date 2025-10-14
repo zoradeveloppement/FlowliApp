@@ -12,6 +12,7 @@ export const Card: React.FC<CardProps> = ({
   padding = 'md',
   shadow = true,
   className = '',
+  style,
 }) => {
   const getPaddingClasses = () => {
     switch (padding) {
@@ -45,6 +46,7 @@ export const Card: React.FC<CardProps> = ({
 
   return (
     <View 
+      className={`${baseClasses} ${paddingClasses} ${shadowClasses} ${className}`}
       style={[
         styles.card,
         getPaddingStyle(),

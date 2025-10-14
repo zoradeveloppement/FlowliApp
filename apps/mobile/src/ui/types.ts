@@ -10,4 +10,5 @@ export type SnackbarType = 'success' | 'error' | 'info';
 export interface BaseComponentProps {
   className?: string;
   children?: React.ReactNode;
+  style?: any;
 }

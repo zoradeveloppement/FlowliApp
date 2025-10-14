@@ -34,11 +34,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 
   if (isMobile) {
     return (
-      <View className="h-screen flex-col bg-bgGray">
-        <View className="flex-1">
-          {children}
-        </View>
-        <BottomTabs hasNewTasks={hasNewTasks} />
+      <View className="flex-1 bg-bgGray">
+        {children}
       </View>
     );
   }

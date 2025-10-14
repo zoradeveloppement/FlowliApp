@@ -1,8 +1,9 @@
-import { Tabs } from 'expo-router';
+import { Stack } from 'expo-router';
 import { useEffect } from 'react';
 import * as Notifications from 'expo-notifications';
-import { Platform, Text } from 'react-native';
+import { Platform, Text, View } from 'react-native';
 import { AppIcon } from '@/src/ui/icons/AppIcon';
+import AppBottomNav from '../../components/AppBottomNav';
 
 export default function AppLayout() {
   // Configuration du channel Android par défaut
@@ -24,46 +25,19 @@ export default function AppLayout() {
   }, []);
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle: {
-          backgroundColor: '#FFFFFF',
-          borderTopColor: '#E5E7EB',
-          borderTopWidth: 1,
-          paddingBottom: 8,
-          paddingTop: 8,
-          height: 65,
-        },
-        tabBarActiveTintColor: '#6C63FF', // Violet Flowli
-        tabBarInactiveTintColor: '#6E6E6E',
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '500',
-        },
-      }}
-    >
-      <Tabs.Screen 
-        name="home" 
-        options={{
-          title: 'Accueil',
-          tabBarIcon: ({ color }) => <AppIcon name="home" size={24} color={color} variant={undefined as any} />,
+    <View style={{ flex: 1 }}>
+      <Stack
+        screenOptions={{
+          headerShown: false,
         }}
-      />
-      <Tabs.Screen 
-        name="profile" 
-        options={{
-          title: 'Profil',
-          tabBarIcon: ({ color }) => <AppIcon name="user" size={24} color={color} variant={undefined as any} />,
-        }}
-      />
-      <Tabs.Screen 
-        name="factures" 
-        options={{
-          title: 'Facturation',
-          tabBarIcon: ({ color }) => <AppIcon name="receipt" size={24} color={color} variant={undefined as any} />,
-        }}
-      />
-    </Tabs>
+      >
+        <Stack.Screen name="home" />
+        <Stack.Screen name="factures" />
+        <Stack.Screen name="profile" />
+      </Stack>
+      
+      {/* Bottom Navigation */}
+      <AppBottomNav />
+    </View>
   );
 }

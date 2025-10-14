@@ -109,7 +109,7 @@ export const FacturesScreen: React.FC = () => {
   return (
     <AppLayout>
       <Screen>
-        <ScrollView style={styles.scrollView} contentContainerStyle={styles.container}>
+        <ScrollView style={styles.scrollView} contentContainerStyle={[styles.container, { paddingBottom: 96 }]}>
           <View style={styles.header}>
             <Text style={styles.headerTitle}>
               <Text style={styles.headerTitleAccent}>Facturation</Text>

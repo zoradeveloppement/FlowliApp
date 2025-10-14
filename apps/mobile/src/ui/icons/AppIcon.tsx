@@ -5,7 +5,8 @@ import { ColorValue, useColorScheme } from 'react-native';
 type Name =
   | 'check' | 'bell' | 'mail' | 'search' | 'shield' | 'calendar'
   | 'clock' | 'refreshCw' | 'logOut' | 'x' | 'arrowRight' | 'user'
-  | 'home' | 'receipt' | 'phone' | 'building' | 'map-pin' | 'wrench' | 'chevronRight';
+  | 'home' | 'receipt' | 'phone' | 'building' | 'map-pin' | 'wrench' | 'chevronRight'
+  | 'logIn' | 'calendarClock' | 'userRound' | 'receiptText';
 
 const map: Record<Name, React.ComponentType<L.LucideProps>> = {
   check: L.Check,
@@ -27,6 +28,10 @@ const map: Record<Name, React.ComponentType<L.LucideProps>> = {
   'map-pin': L.MapPin,
   wrench: L.Wrench,
   chevronRight: L.ChevronRight,
+  logIn: L.LogIn,
+  calendarClock: L.CalendarClock,
+  userRound: L.UserRound,
+  receiptText: L.ReceiptText,
 };
 
 const variants: Record<string, ColorValue> = {

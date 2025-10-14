@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Animated } from 'react-native';
+import { View, Animated, StyleSheet } from 'react-native';
 import { BaseComponentProps } from '../types';
 
 interface SkeletonProps extends BaseComponentProps {
@@ -13,6 +13,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
   height = 20,
   borderRadius = 8,
   className = '',
+  style,
 }) => {
   const opacity = useRef(new Animated.Value(0.3)).current;
 
@@ -38,6 +39,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
 
   return (
     <Animated.View
+      className={className}
       style={[
         styles.skeleton,
         {
@@ -51,3 +53,9 @@ export const Skeleton: React.FC<SkeletonProps> = ({
     />
   );
 };
+
+const styles = StyleSheet.create({
+  skeleton: {
+    backgroundColor: '#E5E7EB',
+  },
+});

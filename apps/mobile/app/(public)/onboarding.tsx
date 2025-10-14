@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Calendar, Clock, CheckCircle, TrendingUp, Zap } from 'lucide-react-native';
 import { StatusBar } from 'expo-status-bar';
+import StickyBottomActions from '../../components/StickyBottomActions';
 
 // Components
 import {
@@ -41,7 +42,7 @@ export default function OnboardingScreen() {
       <SafeAreaView style={styles.container} edges={['top']}>
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: 96 }]}
           bounces={true}
         >
           {/* Hero Section avec gradient violet */}
@@ -53,24 +54,6 @@ export default function OnboardingScreen() {
           >
             <HeroSection />
 
-            {/* CTA Buttons */}
-            <Animated.View style={[styles.ctaContainer, ctaAnim]}>
-              <PrimaryCTA
-                label={ONBOARDING_CONTENT.cta.primary}
-                url={ONBOARDING_LINKS.calendly}
-                variant="primary"
-                icon={Calendar}
-                accessibilityLabel="Réserver un appel gratuit"
-                accessibilityHint="Ouvre la page de réservation Cal.com"
-              />
-              <PrimaryCTA
-                label={ONBOARDING_CONTENT.cta.secondary}
-                url={ONBOARDING_LINKS.whatsapp}
-                variant="secondary"
-                accessibilityLabel="Nous contacter sur WhatsApp"
-                accessibilityHint="Ouvre WhatsApp pour discuter de votre projet"
-              />
-            </Animated.View>
 
             {/* Arguments badges */}
             <Animated.View style={badgesAnim}>
@@ -118,6 +101,16 @@ export default function OnboardingScreen() {
 
         {/* WhatsApp FAB flottant */}
         <WhatsAppFAB />
+        
+        {/* Sticky Bottom Actions */}
+        <StickyBottomActions
+          items={[
+            { key: "book",  label: "Prendre RDV", iconName: "CalendarClock", href: "/call", testID: "onboarding-book" },
+            { key: "login", label: "Se connecter", iconName: "LogIn",         href: "/(auth)/login", testID: "onboarding-login" },
+          ]}
+          elevated
+          hideWhenKeyboardShown
+        />
       </SafeAreaView>
     </>
   );
