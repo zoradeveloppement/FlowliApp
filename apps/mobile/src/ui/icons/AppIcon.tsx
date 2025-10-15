@@ -6,7 +6,8 @@ type Name =
   | 'check' | 'bell' | 'mail' | 'search' | 'shield' | 'calendar'
   | 'clock' | 'refreshCw' | 'logOut' | 'x' | 'arrowRight' | 'user'
   | 'home' | 'receipt' | 'phone' | 'building' | 'map-pin' | 'wrench' | 'chevronRight'
-  | 'logIn' | 'calendarClock' | 'userRound' | 'receiptText';
+  | 'logIn' | 'calendarClock' | 'userRound' | 'receiptText'
+  | 'chevronUp' | 'chevronDown' | 'inbox';
 
 const map: Record<Name, React.ComponentType<L.LucideProps>> = {
   check: L.Check,
@@ -32,6 +33,9 @@ const map: Record<Name, React.ComponentType<L.LucideProps>> = {
   calendarClock: L.CalendarClock,
   userRound: L.UserRound,
   receiptText: L.ReceiptText,
+  chevronUp: L.ChevronUp,
+  chevronDown: L.ChevronDown,
+  inbox: L.Inbox,
 };
 
 const variants: Record<string, ColorValue> = {

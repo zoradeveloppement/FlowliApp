@@ -8,6 +8,7 @@ import { TaskDetailModal } from '../../src/ui/components/TaskDetailModal';
 import { supabase } from '@/src/lib/supabase';
 import { registerForPushToken, registerDeviceOnApi } from '@/src/utils/push';
 import { fetchTasks } from '@/src/api/tasks';
+import { fetchProjects, type Project } from '@/src/api/projects';
 import { get } from '@/src/utils/http';
 import { useFadeInDelayed } from '@/src/animations';
 
@@ -198,6 +199,9 @@ export default function Home() {
   const [refreshing, setRefreshing] = useState(false);
   const [items, setItems] = useState<TaskItem[]>([]);
   const [logoutLoading, setLogoutLoading] = useState(false);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
+  const [showDone, setShowDone] = useState(false);
   
   // Animations d'apparition
   const headerAnim = useFadeInDelayed({ delay: 0 });
@@ -341,7 +345,7 @@ export default function Home() {
   };
 
   const load = useCallback(async () => {
-    console.log('[HOME] 🔄 Début du chargement des tâches...');
+    console.log('[HOME] 🔄 Début du chargement des projets et tâches...');
     setLoading(true);
     setError(null);
     try {
@@ -362,8 +366,13 @@ export default function Home() {
       const qs = queryParts.join('&');
       
       const url = `me/tasks${qs ? `?${qs}` : ''}`;
-      console.log('[HOME] 🌐 Appel API:', url);
-      const resp = await get(url);
+      console.log('[HOME] 🌐 Appel API projets et tâches...');
+      
+      // Charger projets ET tâches en parallèle
+      const [projectsData, resp] = await Promise.all([
+        fetchProjects(),
+        get(url)
+      ]);
 
       if (!resp.ok) {
         throw new Error(resp.raw || `HTTP ${resp.status}`);
@@ -373,8 +382,13 @@ export default function Home() {
       const items = Array.isArray(responseData) ? responseData : responseData?.items ?? [];
       const count = Array.isArray(responseData) ? responseData.length : (responseData?.count ?? items.length);
       
-      console.log('[HOME] ✅ Tâches chargées:', { count, itemsLength: items.length });
+      console.log('[HOME] ✅ Données chargées:', { 
+        projectsCount: projectsData.length,
+        tasksCount: count, 
+        itemsLength: items.length 
+      });
 
+      setProjects(projectsData);
       setItems(items);
       setDebugInfo({ apiUrl: process.env.EXPO_PUBLIC_API_URL!, email, count, hasAuth: true });
     } catch (e: any) {
@@ -453,28 +467,42 @@ export default function Home() {
     }
   }, [sessionChecked, load]);
 
-  const sections = useMemo(() => {
-    const inProgressStatuses = new Set(['A faire', 'En cours', 'En retard']);
-    const inProgress: TaskItem[] = [];
-    const done: TaskItem[] = [];
-    for (const t of items) {
-      if (inProgressStatuses.has(t.status)) inProgress.push(t); else if (t.status === 'Terminé') done.push(t); else inProgress.push(t);
+  const projectGroups = useMemo(() => {
+    const groups = new Map<string, TaskItem[]>();
+    const noProject: TaskItem[] = [];
+    
+    for (const task of items) {
+      if (task.projectId) {
+        if (!groups.has(task.projectId)) groups.set(task.projectId, []);
+        groups.get(task.projectId)!.push(task);
+      } else {
+        noProject.push(task);
+      }
     }
+    
+    // Trier les tâches dans chaque groupe par date
     const parseDate = (s: string | null) => (s ? new Date(s) : null);
-    inProgress.sort((a, b) => {
-      const da = parseDate(a.dueDate); const db = parseDate(b.dueDate);
+    for (const tasks of groups.values()) {
+      tasks.sort((a, b) => {
+        const da = parseDate(a.dueDate); 
+        const db = parseDate(b.dueDate);
+        if (da && db) return da.getTime() - db.getTime();
+        if (da && !db) return -1; 
+        if (!da && db) return 1; 
+        return 0;
+      });
+    }
+    
+    noProject.sort((a, b) => {
+      const da = parseDate(a.dueDate); 
+      const db = parseDate(b.dueDate);
       if (da && db) return da.getTime() - db.getTime();
-      if (da && !db) return -1; if (!da && db) return 1; return 0;
+      if (da && !db) return -1; 
+      if (!da && db) return 1; 
+      return 0;
     });
-    done.sort((a, b) => {
-      const da = parseDate(a.dueDate); const db = parseDate(b.dueDate);
-      if (da && db) return db.getTime() - da.getTime();
-      if (da && !db) return -1; if (!da && db) return 1; return 0;
-    });
-    return [
-      { title: 'En cours', data: inProgress },
-      { title: 'Terminées', data: done },
-    ];
+    
+    return { groups, noProject };
   }, [items]);
 
   const renderItem = ({ item }: { item: TaskItem }) => {
@@ -747,47 +775,83 @@ export default function Home() {
         </Animated.View>
 
 
-        {/* Liste des tâches */}
+        {/* Liste des projets avec accordéon */}
         <Animated.View style={tasksAnim}>
-          {sections.map((section) => {
-            const displayData = section.data;
-            
-            if (displayData.length === 0 && section.title === 'Terminées') return null;
+          {projects.map((project) => {
+            const tasks = projectGroups.groups.get(project.id) || [];
+            const isExpanded = expandedProjects.has(project.id);
             
             return (
-              <View key={section.title} className="mb-6" style={styles.sectionContainer}>
-                <View className="flex-row justify-between items-center mb-3 px-1" style={styles.sectionHeader}>
-                  <Text className="text-lg font-bold text-textMain" style={styles.sectionTitle}>
-                    {section.title} ({displayData.length})
-                  </Text>
-                  {section.title === 'Terminées' && section.data.length > 0 && (
-                    <TouchableOpacity 
-                      onPress={() => setShowDone(s => !s)}
-                      className="px-3 py-1.5 rounded-full bg-gray-100"
-                      style={styles.sectionToggle}
-                    >
-                      <Text className="text-primary font-semibold text-xs" style={styles.sectionToggleText}>
-                        {showDone ? 'Masquer' : 'Afficher'}
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-                
-                {displayData.length === 0 ? (
-                  <View className="bg-white p-6 rounded-2xl border border-gray-100 items-center" style={styles.emptyState}>
-                    <AppIcon name="x" size={24} variant="muted" />
-                    <Text className="text-gray-500 text-sm" style={styles.emptyStateText}>Aucune tâche {section.title.toLowerCase()}</Text>
+              <View key={project.id} className="mb-4" style={styles.projectSection}>
+                <TouchableOpacity 
+                  onPress={() => {
+                    setExpandedProjects(prev => {
+                      const next = new Set(prev);
+                      if (next.has(project.id)) {
+                        next.delete(project.id);
+                      } else {
+                        next.add(project.id);
+                      }
+                      return next;
+                    });
+                  }}
+                  activeOpacity={0.7}
+                  className="bg-white rounded-xl border border-gray-200 mb-2"
+                  style={styles.accordionHeader}
+                >
+                  <View className="flex-row items-center flex-1">
+                    <Text className="text-base font-semibold text-textMain flex-1" style={styles.accordionTitle}>
+                      {project.name}
+                    </Text>
+                    <Text className="text-sm font-bold text-primary mr-2" style={styles.accordionBadge}>
+                      {tasks.length}
+                    </Text>
+                    <AppIcon 
+                      name={isExpanded ? "chevronUp" : "chevronDown"} 
+                      size={20} 
+                      variant="default"
+                    />
                   </View>
-                ) : (
-                  displayData.map((item) => (
-                    <View key={item.id}>
-                      {renderItem({ item })}
-                    </View>
-                  ))
+                </TouchableOpacity>
+                
+                {isExpanded && (
+                  <View className="pl-2">
+                    {tasks.length === 0 ? (
+                      <View className="bg-white p-6 rounded-2xl border border-gray-100 items-center mb-2" style={styles.emptyState}>
+                        <AppIcon name="inbox" size={24} variant="muted" />
+                        <Text className="text-gray-500 text-sm mt-2" style={styles.emptyStateText}>
+                          Aucune tâche dans ce projet
+                        </Text>
+                      </View>
+                    ) : (
+                      tasks.map((task) => (
+                        <View key={task.id}>
+                          {renderItem({ item: task })}
+                        </View>
+                      ))
+                    )}
+                  </View>
                 )}
               </View>
             );
           })}
+          
+          {/* Section Sans Projet (fallback) */}
+          {projectGroups.noProject.length > 0 && (
+            <View className="mb-6" style={styles.sectionContainer}>
+              <View className="flex-row justify-between items-center mb-3 px-1" style={styles.sectionHeader}>
+                <Text className="text-lg font-bold text-textMain" style={styles.sectionTitle}>
+                  Sans projet ({projectGroups.noProject.length})
+                </Text>
+              </View>
+              
+              {projectGroups.noProject.map((task) => (
+                <View key={task.id}>
+                  {renderItem({ item: task })}
+                </View>
+              ))}
+            </View>
+          )}
         </Animated.View>
         
         {loading && (
@@ -1205,5 +1269,37 @@ const styles = StyleSheet.create({
   },
   registerStatusTextDefault: {
     color: '#6B7280',
+  },
+  // Accordion styles
+  projectSection: {
+    marginBottom: 16,
+  },
+  accordionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  accordionTitle: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1A1A1A',
+    fontFamily: 'Inter',
+  },
+  accordionBadge: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#7C3AED',
+    marginRight: 8,
   },
 });
