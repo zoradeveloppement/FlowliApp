@@ -60,7 +60,8 @@ const Pill: React.FC<{
   active: boolean;
   compact: boolean;
   itemClassName?: string;
-}> = ({ item, active, compact, itemClassName }) => {
+  pathname: string;
+}> = ({ item, active, compact, itemClassName, pathname }) => {
   console.log(`[Pill] ${item.label} - active: ${active}, href: ${item.href}`);
   if (active) {
     console.log(`[Pill] 🎯 ${item.label} is ACTIVE - applying pillActive styles`);
@@ -71,8 +72,40 @@ const Pill: React.FC<{
   const onPressInner = () => {
     if (item.disabled || item.loading) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (item.href) router.push(item.href);
-    else item.onPress?.();
+    if (item.href) {
+      // Logique de navigation directionnelle
+      const currentPath = pathname;
+      const targetPath = item.href;
+      
+      // Définir l'ordre des pages pour déterminer la direction
+      const pageOrder = ['/home', '/factures', '/profile'];
+      const currentIndex = pageOrder.findIndex(page => currentPath.startsWith(page));
+      const targetIndex = pageOrder.findIndex(page => targetPath.startsWith(page));
+      
+      if (currentIndex !== -1 && targetIndex !== -1) {
+        if (targetIndex > currentIndex) {
+          // Navigation vers la droite dans l'ordre (slide_from_right)
+          router.push({
+            pathname: targetPath,
+            params: { animation: 'slide_from_right' }
+          });
+        } else if (targetIndex < currentIndex) {
+          // Navigation vers la gauche dans l'ordre (slide_from_left)
+          router.push({
+            pathname: targetPath,
+            params: { animation: 'slide_from_left' }
+          });
+        } else {
+          // Même page, pas de navigation
+          return;
+        }
+      } else {
+        // Fallback normal
+        router.push(item.href);
+      }
+    } else {
+      item.onPress?.();
+    }
   };
 
   const onIn = () => Animated.spring(scale, { toValue: 0.98, useNativeDriver: true, speed: 50, bounciness: 0 }).start();
@@ -150,7 +183,7 @@ const StickyBottomActions: React.FC<StickyBottomActionsProps> = ({
       pointerEvents="box-none"
       style={[
         styles.stickyContainer,
-        { paddingBottom: insets.bottom + bottomOffset }
+        { paddingBottom: insets.bottom + bottomOffset + 8 }
       ]}
     >
       {/* Pas de fond opaque: on ne rend que les pills */}
@@ -162,6 +195,7 @@ const StickyBottomActions: React.FC<StickyBottomActionsProps> = ({
             active={isActiveHref(pathname, it.href, activeHrefStrategy)}
             compact={compact}
             itemClassName={itemClassName}
+            pathname={pathname}
           />
         ))}
       </View>

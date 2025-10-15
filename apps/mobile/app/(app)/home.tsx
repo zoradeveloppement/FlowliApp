@@ -209,11 +209,6 @@ export default function Home() {
   const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null);
   const [showTaskDetail, setShowTaskDetail] = useState(false);
   
-  // Filter states
-  const [showDone, setShowDone] = useState(false);
-  const [search, setSearch] = useState('');
-  const [projectId, setProjectId] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
   
   // Debug states
   const [debugInfo, setDebugInfo] = useState<{apiUrl:string; email:string; count:number; hasAuth:boolean}>();
@@ -227,11 +222,6 @@ export default function Home() {
     success: boolean;
   } | null>(null);
 
-  // Debounce search input
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(search), 300);
-    return () => clearTimeout(timer);
-  }, [search]);
 
   const logout = async () => {
     setLogoutLoading(true);
@@ -312,12 +302,6 @@ export default function Home() {
     }
   };
 
-  const resetFilters = () => {
-    setSearch('');
-    setProjectId('');
-    setShowDone(true);
-    console.log('[FILTERS] 🔄 Filtres réinitialisés');
-  };
 
   // Fonctions pour le modal de détail
   const openTaskDetail = (task: TaskItem) => {
@@ -371,14 +355,10 @@ export default function Home() {
       console.log('[HOME] 📧 Email de session:', email);
 
       const params: Record<string, string> = {};
-      if (!showDone) params.statuses = 'A faire,En cours,En retard';
-      if (debouncedSearch) params.search = debouncedSearch;
-      if (projectId) params.projectId = projectId;
+      params.statuses = 'A faire,En cours,En retard';
 
       const queryParts: string[] = [];
       if (params.statuses) queryParts.push(`statuses=${encodeURIComponent(params.statuses)}`);
-      if (params.search) queryParts.push(`search=${encodeURIComponent(params.search)}`);
-      if (params.projectId) queryParts.push(`projectId=${encodeURIComponent(params.projectId)}`);
       const qs = queryParts.join('&');
       
       const url = `me/tasks${qs ? `?${qs}` : ''}`;
@@ -404,7 +384,7 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  }, [showDone, debouncedSearch, projectId]);
+  }, []);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -535,20 +515,22 @@ export default function Home() {
         
         {/* Footer avec progression et date */}
         <View style={styles.footer}>
-          {/* Progression avec design Flowli */}
+          {/* Barre de progression avec design Flowli */}
           {pct !== null && (
             <View style={styles.progressWrapper}>
-              <View style={[
-                styles.progressCircle,
-                isCompleted ? styles.progressComplete : styles.progressActive
-              ]}>
-                <Text style={[
-                  styles.progressText,
-                  isCompleted ? styles.progressTextComplete : styles.progressTextActive
-                ]}>
-                  {pct}%
-                </Text>
+              <View style={styles.progressBarContainer}>
+                <View style={[
+                  styles.progressBar,
+                  { width: `${Math.max(pct, 2)}%` },
+                  isCompleted ? styles.progressBarComplete : styles.progressBarActive
+                ]} />
               </View>
+              <Text style={[
+                styles.progressText,
+                isCompleted ? styles.progressTextComplete : styles.progressTextActive
+              ]}>
+                {pct}%
+              </Text>
             </View>
           )}
           
@@ -566,13 +548,6 @@ export default function Home() {
     );
   };
 
-  const activeFilters = useMemo(() => {
-    const filters = [];
-    if (!showDone) filters.push('Ouvertes seulement');
-    if (debouncedSearch) filters.push(`Recherche: "${debouncedSearch}"`);
-    if (projectId) filters.push(`Projet: ${projectId}`);
-    return filters;
-  }, [showDone, debouncedSearch, projectId]);
 
   if (!sessionChecked) return null;
 
@@ -676,7 +651,7 @@ export default function Home() {
         )}
 
         {/* Debug Push - Style Flowli */}
-        {__DEV__ && (
+        {__DEV__ && false && (
           <Animated.View style={debugAnim} className="bg-yellow-50 p-4 rounded-2xl mb-4 border border-yellow-200">
             <Text className="text-sm font-bold mb-3 text-yellow-800">📱 Push Notifications</Text>
             
@@ -771,78 +746,11 @@ export default function Home() {
           </View>
         </Animated.View>
 
-        {/* Filtres - Style Flowli Card */}
-        <Animated.View style={[styles.filtersCard, statsAnim]} className="bg-white p-4 rounded-2xl mb-5 border border-gray-100 shadow-sm">
-          <Text className="text-base font-bold mb-3 text-textMain" style={styles.filtersTitle}>Filtres</Text>
-          
-          <View className="flex-row items-center mb-3 gap-2" style={styles.filtersToggleRow}>
-            <TouchableOpacity
-              onPress={() => setShowDone(!showDone)}
-              className={`flex-row items-center px-3.5 py-2 rounded-full flex-1 ${
-                showDone ? 'bg-primary' : 'bg-gray-100'
-              }`}
-              style={[
-                styles.filterToggle,
-                showDone ? styles.filterToggleActive : styles.filterToggleInactive
-              ]}
-            >
-              <Text className={`font-semibold text-sm ${
-                showDone ? 'text-white' : 'text-gray-500'
-              }`} style={[
-                styles.filterToggleText,
-                showDone ? styles.filterToggleTextActive : styles.filterToggleTextInactive
-              ]}>
-                {showDone ? '✅ Inclure terminées' : 'Ouvertes seulement'}
-              </Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              onPress={resetFilters}
-              className="px-3.5 py-2 rounded-full bg-gray-100"
-              style={styles.resetButton}
-            >
-              <Text className="text-gray-500 font-semibold text-sm" style={styles.resetButtonText}>Reset</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View className="space-y-2.5" style={styles.filtersInputs}>
-            <TextInput
-              placeholder="🔍 Rechercher dans les tâches..."
-              value={search}
-              onChangeText={setSearch}
-              className="border border-gray-200 rounded-xl px-3.5 py-3 text-sm bg-bgGray text-textMain"
-              style={styles.searchInput}
-              placeholderTextColor="#94a3b8"
-            />
-
-            <TextInput
-              placeholder="🏗️ ID du projet (optionnel)"
-              value={projectId}
-              onChangeText={setProjectId}
-              className="border border-gray-200 rounded-xl px-3.5 py-3 text-sm bg-bgGray text-textMain"
-              style={styles.projectInput}
-              placeholderTextColor="#94a3b8"
-            />
-          </View>
-
-          {activeFilters.length > 0 && (
-            <View className="mt-3" style={styles.activeFiltersContainer}>
-              <Text className="text-gray-500 text-xs mb-1.5 font-medium" style={styles.activeFiltersLabel}>Filtres actifs:</Text>
-              <View className="flex-row flex-wrap gap-1.5" style={styles.activeFiltersList}>
-                {activeFilters.map((filter, i) => (
-                  <View key={i} className="bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200" style={styles.activeFilterBadge}>
-                    <Text className="text-blue-700 text-xs font-medium" style={styles.activeFilterText}>{filter}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          )}
-        </Animated.View>
 
         {/* Liste des tâches */}
         <Animated.View style={tasksAnim}>
           {sections.map((section) => {
-            const displayData = section.title === 'Terminées' && !showDone ? [] : section.data;
+            const displayData = section.data;
             
             if (displayData.length === 0 && section.title === 'Terminées') return null;
             
@@ -921,6 +829,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 16,
+    paddingTop: 60, // Encore plus d'espace en haut
   },
   debugContainer: {
     marginBottom: 16,
@@ -1031,22 +940,25 @@ const styles = StyleSheet.create({
   progressWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
   },
-  progressCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
+  progressBarContainer: {
+    flex: 1,
+    height: 8,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 4,
+    overflow: 'hidden',
   },
-  progressComplete: {
-    backgroundColor: '#ECFDF5',
-    borderColor: '#10B981',
+  progressBar: {
+    height: '100%',
+    borderRadius: 4,
+    minWidth: 2,
   },
-  progressActive: {
-    backgroundColor: '#F5F3FF',
-    borderColor: '#7C3AED',
+  progressBarComplete: {
+    backgroundColor: '#10B981',
+  },
+  progressBarActive: {
+    backgroundColor: '#7C3AED',
   },
   progressText: {
     fontSize: 12,
@@ -1176,117 +1088,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '600',
     fontSize: 14,
-  },
-  // Nouveaux styles pour les filtres
-  filtersCard: {
-    backgroundColor: '#FFFFFF',
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: '#F3F4F6',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 1,
-  },
-  filtersTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#1A1A1A',
-    marginBottom: 12,
-  },
-  filtersToggleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-    gap: 8,
-  },
-  filterToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    flex: 1,
-  },
-  filterToggleActive: {
-    backgroundColor: '#7C3AED',
-  },
-  filterToggleInactive: {
-    backgroundColor: '#F3F4F6',
-  },
-  filterToggleText: {
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  filterToggleTextActive: {
-    color: '#FFFFFF',
-  },
-  filterToggleTextInactive: {
-    color: '#6B7280',
-  },
-  resetButton: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#F3F4F6',
-  },
-  resetButtonText: {
-    color: '#6B7280',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  filtersInputs: {
-    gap: 10,
-  },
-  searchInput: {
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 14,
-    backgroundColor: '#F7F8FA',
-    color: '#1A1A1A',
-  },
-  projectInput: {
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 14,
-    backgroundColor: '#F7F8FA',
-    color: '#1A1A1A',
-  },
-  activeFiltersContainer: {
-    marginTop: 12,
-  },
-  activeFiltersLabel: {
-    color: '#6B7280',
-    fontSize: 12,
-    marginBottom: 6,
-    fontWeight: '500',
-  },
-  activeFiltersList: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  activeFilterBadge: {
-    backgroundColor: '#EFF6FF',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#BFDBFE',
-  },
-  activeFilterText: {
-    color: '#1E40AF',
-    fontSize: 12,
-    fontWeight: '500',
   },
   // Nouveaux styles pour les sections
   sectionContainer: {

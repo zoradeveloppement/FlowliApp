@@ -29,11 +29,32 @@ export default function AppLayout() {
       <Stack
         screenOptions={{
           headerShown: false,
+          animation: 'slide_from_right',
+          gestureEnabled: true,
+          gestureDirection: 'horizontal',
         }}
       >
-        <Stack.Screen name="home" />
-        <Stack.Screen name="factures" />
-        <Stack.Screen name="profile" />
+        <Stack.Screen 
+          name="home" 
+          options={({ route }) => ({
+            animation: route.params?.animation || 'slide_from_right',
+            gestureEnabled: true,
+          })}
+        />
+        <Stack.Screen 
+          name="factures" 
+          options={({ route }) => ({
+            animation: route.params?.animation || 'slide_from_right',
+            gestureEnabled: true,
+          })}
+        />
+        <Stack.Screen 
+          name="profile" 
+          options={({ route }) => ({
+            animation: route.params?.animation || 'slide_from_right',
+            gestureEnabled: true,
+          })}
+        />
       </Stack>
       
       {/* Bottom Navigation */}

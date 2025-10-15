@@ -241,6 +241,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 16,
+    paddingTop: 60, // Encore plus d'espace en haut
   },
   headerSection: {
     paddingHorizontal: 16,

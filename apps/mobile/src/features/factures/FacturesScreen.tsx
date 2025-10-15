@@ -133,6 +133,7 @@ const styles = StyleSheet.create({
   },
   container: {
     padding: tokens.spacing[4],
+    paddingTop: tokens.spacing[16], // Encore plus d'espace en haut
   },
   header: {
     marginBottom: tokens.spacing[6],
