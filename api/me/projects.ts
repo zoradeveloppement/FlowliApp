@@ -122,9 +122,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const contactId = contact.id;
+    const contactName = String(contact.fields?.['Nom'] ?? contact.fields?.['Name'] ?? '').trim();
 
-    // 2) Find projects linked to this contact
-    const formulaProjects = `FIND('${contactId}',ARRAYJOIN({${FIELD_PROJECT_CONTACT}}))`;
+    // 2) Find projects linked to this contact by NAME (not ID)
+    const escapedName = contactName.replace(/'/g, "\\'");
+    const formulaProjects = `FIND('${escapedName}',ARRAYJOIN({${FIELD_PROJECT_CONTACT}}))`;
     const urlProjects = buildUrl(baseId, TABLE_PROJECTS_ID, {
       filterByFormula: formulaProjects,
       pageSize: '100'
@@ -134,6 +136,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       event: 'me_projects_fetch_projects',
       email,
       contactId,
+      contactName,
+      escapedName,
+      formulaProjects,
       timestamp: new Date().toISOString()
     }));
 
