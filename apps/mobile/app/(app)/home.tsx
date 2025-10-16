@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, SectionList, RefreshControl, Platform, Alert, StyleSheet, Animated } from 'react-native';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, SectionList, RefreshControl, Platform, Alert, StyleSheet, Animated, LayoutAnimation, UIManager, Easing } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { Screen, AppLayout } from '../../src/ui/layout';
 import { AppIcon } from '@/src/ui/icons/AppIcon';
@@ -11,6 +12,11 @@ import { fetchTasks } from '@/src/api/tasks';
 import { fetchProjects, type Project } from '@/src/api/projects';
 import { get } from '@/src/utils/http';
 import { useFadeInDelayed } from '@/src/animations';
+
+// Enable LayoutAnimation on Android
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 type TaskItem = {
   id: string;
@@ -202,6 +208,55 @@ export default function Home() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
   const [showDone, setShowDone] = useState(false);
+  
+  // Animation refs for accordion arrows
+  const arrowAnimations = useRef<Map<string, Animated.Value>>(new Map());
+  
+  // Function to get or create arrow animation for a project
+  const getArrowAnimation = (projectId: string) => {
+    if (!arrowAnimations.current.has(projectId)) {
+      arrowAnimations.current.set(projectId, new Animated.Value(0));
+    }
+    return arrowAnimations.current.get(projectId)!;
+  };
+  
+  // Function to toggle accordion with animation
+  const toggleAccordion = (projectId: string) => {
+    const isExpanded = expandedProjects.has(projectId);
+    const arrowAnim = getArrowAnimation(projectId);
+    
+    // Haptic feedback iOS
+    if (Platform.OS === 'ios') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    
+    // Configure LayoutAnimation for smooth expand/collapse
+    LayoutAnimation.configureNext({
+      duration: 200,
+      create: { type: 'easeOut', property: 'opacity' },
+      update: { type: 'easeOut', property: 'opacity' },
+      delete: { type: 'easeOut', property: 'opacity' }
+    });
+    
+    // Animate arrow rotation
+    Animated.timing(arrowAnim, {
+      toValue: isExpanded ? 0 : 1,
+      duration: 200,
+      easing: Easing.out(Easing.ease),
+      useNativeDriver: true,
+    }).start();
+    
+    // Update expanded state
+    setExpandedProjects(prev => {
+      const next = new Set(prev);
+      if (next.has(projectId)) {
+        next.delete(projectId);
+      } else {
+        next.add(projectId);
+      }
+      return next;
+    });
+  };
   
   // Animations d'apparition
   const headerAnim = useFadeInDelayed({ delay: 0 });
@@ -525,13 +580,6 @@ export default function Home() {
           <StatusBadge status={item.status} />
         </View>
         
-        {/* Projet (optionnel) */}
-        {item.projectName && (
-          <View style={styles.projectContainer}>
-            <AppIcon name="home" size={14} variant="muted" />
-            <Text style={styles.project}>{item.projectName}</Text>
-          </View>
-        )}
         
         {/* Alerte retard avec style Flowli */}
         {isOverdue && (
@@ -738,9 +786,11 @@ export default function Home() {
           <View className="flex-row justify-between items-center mb-2" style={styles.headerRow}>
             <View>
               <Text className="text-3xl font-bold text-textMain mb-1" style={styles.headerTitle}>
-                Mes <Text className="text-primary" style={styles.headerTitleAccent}>tâches</Text>
+                Mes <Text className="text-primary" style={styles.headerTitleAccent}>projets</Text>
               </Text>
-              <Text className="text-secondary" style={styles.headerSubtitle}>{items.length} tâche{items.length > 1 ? 's' : ''} au total</Text>
+              <Text className="text-secondary" style={styles.headerSubtitle}>
+                {projects.length} projet{projects.length > 1 ? 's' : ''} • {items.length} tâche{items.length > 1 ? 's' : ''} au total
+              </Text>
             </View>
             
             <View className="flex-row gap-2" style={styles.headerActions}>
@@ -775,60 +825,67 @@ export default function Home() {
         </Animated.View>
 
 
-        {/* Liste des projets avec accordéon */}
+        {/* Liste des projets avec accordéon amélioré */}
         <Animated.View style={tasksAnim}>
           {projects.map((project) => {
             const tasks = projectGroups.groups.get(project.id) || [];
             const isExpanded = expandedProjects.has(project.id);
+            const arrowAnim = getArrowAnimation(project.id);
+            
+            // Create rotation interpolation for arrow
+            const rotateInterpolate = arrowAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: ['0deg', '180deg'],
+            });
             
             return (
-              <View key={project.id} className="mb-4" style={styles.projectSection}>
+              <View key={project.id} style={styles.projectSection}>
                 <TouchableOpacity 
-                  onPress={() => {
-                    setExpandedProjects(prev => {
-                      const next = new Set(prev);
-                      if (next.has(project.id)) {
-                        next.delete(project.id);
-                      } else {
-                        next.add(project.id);
-                      }
-                      return next;
-                    });
-                  }}
+                  onPress={() => toggleAccordion(project.id)}
                   activeOpacity={0.7}
-                  className="bg-white rounded-xl border border-gray-200 mb-2"
-                  style={styles.accordionHeader}
+                  style={[
+                    styles.accordionHeader,
+                    isExpanded && styles.accordionHeaderExpanded
+                  ]}
                 >
-                  <View className="flex-row items-center flex-1">
-                    <Text className="text-base font-semibold text-textMain flex-1" style={styles.accordionTitle}>
-                      {project.name}
-                    </Text>
-                    <Text className="text-sm font-bold text-primary mr-2" style={styles.accordionBadge}>
-                      {tasks.length}
-                    </Text>
-                    <AppIcon 
-                      name={isExpanded ? "chevronUp" : "chevronDown"} 
-                      size={20} 
-                      variant="default"
-                    />
+                  <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.accordionTitle}>
+                        {project.name}
+                      </Text>
+                      <Text style={styles.accordionSubtitle}>
+                        {tasks.length} tâche{tasks.length > 1 ? 's' : ''}
+                      </Text>
+                    </View>
+                    
+                    <Animated.View style={{ transform: [{ rotate: rotateInterpolate }] }}>
+                      <AppIcon 
+                        name="chevronDown" 
+                        size={22} 
+                        variant="default"
+                        style={styles.accordionArrow}
+                      />
+                    </Animated.View>
                   </View>
                 </TouchableOpacity>
                 
                 {isExpanded && (
-                  <View className="pl-2">
+                  <View style={styles.accordionContent}>
                     {tasks.length === 0 ? (
-                      <View className="bg-white p-6 rounded-2xl border border-gray-100 items-center mb-2" style={styles.emptyState}>
+                      <View style={styles.emptyProjectState}>
                         <AppIcon name="inbox" size={24} variant="muted" />
-                        <Text className="text-gray-500 text-sm mt-2" style={styles.emptyStateText}>
+                        <Text style={styles.emptyProjectText}>
                           Aucune tâche dans ce projet
                         </Text>
                       </View>
                     ) : (
-                      tasks.map((task) => (
-                        <View key={task.id}>
-                          {renderItem({ item: task })}
-                        </View>
-                      ))
+                      <View style={styles.tasksContainer}>
+                        {tasks.map((task, index) => (
+                          <View key={task.id} style={[styles.taskItem, index === 0 && styles.firstTaskItem]}>
+                            {renderItem({ item: task })}
+                          </View>
+                        ))}
+                      </View>
                     )}
                   </View>
                 )}
@@ -836,20 +893,29 @@ export default function Home() {
             );
           })}
           
-          {/* Section Sans Projet (fallback) */}
+          {/* Section Sans Projet (fallback) - Style cohérent */}
           {projectGroups.noProject.length > 0 && (
-            <View className="mb-6" style={styles.sectionContainer}>
-              <View className="flex-row justify-between items-center mb-3 px-1" style={styles.sectionHeader}>
-                <Text className="text-lg font-bold text-textMain" style={styles.sectionTitle}>
-                  Sans projet ({projectGroups.noProject.length})
-                </Text>
+            <View style={styles.noProjectSection}>
+              <View style={styles.noProjectHeader}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.noProjectTitle}>
+                      Sans projet
+                    </Text>
+                    <Text style={styles.noProjectSubtitle}>
+                      {projectGroups.noProject.length} tâche{projectGroups.noProject.length > 1 ? 's' : ''} non assignée{projectGroups.noProject.length > 1 ? 's' : ''}
+                    </Text>
+                  </View>
+                </View>
               </View>
               
-              {projectGroups.noProject.map((task) => (
-                <View key={task.id}>
-                  {renderItem({ item: task })}
-                </View>
-              ))}
+              <View style={styles.noProjectTasks}>
+                {projectGroups.noProject.map((task, index) => (
+                  <View key={task.id} style={[styles.taskItem, index === 0 && styles.firstTaskItem]}>
+                    {renderItem({ item: task })}
+                  </View>
+                ))}
+              </View>
             </View>
           )}
         </Animated.View>
@@ -937,7 +1003,7 @@ const styles = StyleSheet.create({
   // Styles Flowli pour les cartes de tâches
   card: {
     backgroundColor: '#FFFFFF',
-    marginBottom: 12,
+    marginBottom: 8,
     padding: 20,
     borderRadius: 16,
     borderWidth: 1,
@@ -961,22 +1027,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 12,
     lineHeight: 24,
-    fontFamily: 'Inter',
-  },
-  projectContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-    gap: 8,
-  },
-  projectIcon: {
-    fontSize: 14,
-  },
-  project: {
-    fontSize: 13,
-    color: '#6E6E6E',
-    fontWeight: '500',
-    fontFamily: 'Inter',
+    fontFamily: '-apple-system, "system-ui", "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
   },
   overdueContainer: {
     flexDirection: 'row',
@@ -1270,9 +1321,9 @@ const styles = StyleSheet.create({
   registerStatusTextDefault: {
     color: '#6B7280',
   },
-  // Accordion styles
+  // Enhanced Accordion styles
   projectSection: {
-    marginBottom: 16,
+    marginBottom: 12,
   },
   accordionHeader: {
     flexDirection: 'row',
@@ -1282,24 +1333,84 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 1,
+    borderColor: '#F0F0F0',
+  },
+  accordionHeaderExpanded: {
+    borderColor: '#E8E8E8',
+    backgroundColor: '#FAFAFA',
   },
   accordionTitle: {
-    flex: 1,
-    fontSize: 16,
+    fontSize: Platform.OS === 'ios' ? 17 : 16,
     fontWeight: '600',
-    color: '#1A1A1A',
-    fontFamily: 'Inter',
+    color: '#1C1C1E',
+    letterSpacing: Platform.OS === 'ios' ? -0.4 : 0,
+    marginBottom: 2,
   },
-  accordionBadge: {
+  accordionSubtitle: {
     fontSize: 14,
-    fontWeight: '700',
-    color: '#7C3AED',
-    marginRight: 8,
+    fontWeight: '400',
+    color: '#8E8E93',
+  },
+  accordionArrow: {
+    color: '#C7C7CC',
+  },
+  accordionContent: {
+    paddingLeft: 16,           // Indentation
+    paddingTop: 8,
+    paddingBottom: 8,
+    paddingRight: 8,
+    borderLeftWidth: 4,        // Bordure gauche épaisse
+    borderLeftColor: '#7C3AED', // Violet Flowli
+    backgroundColor: '#FAFBFF',  // Fond très légèrement teinté
+    borderRadius: 12,
+    marginLeft: 4,
+    marginBottom: 8,
+  },
+  tasksContainer: {
+    gap: 6,
+  },
+  taskItem: {
+    marginBottom: 6,
+  },
+  firstTaskItem: {
+    marginTop: 4,
+  },
+  emptyProjectState: {
+    backgroundColor: '#F9F9F9',
+    padding: 24,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  emptyProjectText: {
+    fontSize: 14,
+    color: '#8E8E93',
+    textAlign: 'center',
+  },
+  // No Project section styles
+  noProjectSection: {
+    marginBottom: 16,
+  },
+  noProjectHeader: {
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
+    padding: 16,
+  },
+  noProjectTitle: {
+    fontSize: Platform.OS === 'ios' ? 17 : 16,
+    fontWeight: '600',
+    color: '#1C1C1E',
+    letterSpacing: Platform.OS === 'ios' ? -0.4 : 0,
+    marginBottom: 2,
+  },
+  noProjectSubtitle: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: '#8E8E93',
+  },
+  noProjectTasks: {
+    gap: 6,
   },
 });
