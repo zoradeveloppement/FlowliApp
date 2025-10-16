@@ -138,6 +138,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }));
 
     const projectsResp = await airtableGet(urlProjects, token);
+    
+    console.log(JSON.stringify({
+      event: 'me_projects_airtable_response',
+      email,
+      contactId,
+      recordsCount: projectsResp.records.length,
+      records: projectsResp.records.map(r => ({
+        id: r.id,
+        fields: r.fields
+      })),
+      timestamp: new Date().toISOString()
+    }));
+    
     const projects = projectsResp.records.map(r => ({
       id: r.id,
       name: String(r.fields?.[FIELD_PROJECT_NAME] ?? '').trim() || 'Sans nom'
@@ -148,6 +161,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       email,
       contactId,
       count: projects.length,
+      projects: projects.map(p => ({ id: p.id, name: p.name })),
       timestamp: new Date().toISOString()
     }));
 
