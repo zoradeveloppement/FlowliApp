@@ -131,6 +131,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const contactName = String(contact.fields?.[FIELD_CONTACT_NAME] ?? '').trim();
+    
+    console.log(JSON.stringify({
+      event: 'me_invoices_contact_found',
+      email,
+      contactId: contact.id,
+      contactName,
+      contactFields: Object.keys(contact.fields || {}),
+      timestamp: new Date().toISOString()
+    }));
 
     // 2) Find projects linked to this contact by NAME
     const escapedName = contactName.replace(/'/g, "\\'");
