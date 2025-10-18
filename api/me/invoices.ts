@@ -131,19 +131,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const contactName = String(contact.fields?.[FIELD_CONTACT_NAME] ?? '').trim();
+    const contactFirstName = String(contact.fields?.['Prénom'] ?? '').trim();
+    const fullName = contactFirstName && contactName ? `${contactFirstName} ${contactName}` : contactName;
     
     console.log(JSON.stringify({
       event: 'me_invoices_contact_found',
       email,
       contactId: contact.id,
       contactName,
+      contactFirstName,
+      fullName,
       contactFields: Object.keys(contact.fields || {}),
       timestamp: new Date().toISOString()
     }));
 
     // 2) Find projects linked to this contact by NAME
-    const escapedName = contactName.replace(/'/g, "\\'");
-    const formulaProjects = `FIND('${escapedName}',ARRAYJOIN({${FIELD_PROJECT_CONTACT}}))`;
+    // Try both the last name and the full name
+    const searchNames = [contactName, fullName].filter(Boolean);
+    const escapedNames = searchNames.map(name => name.replace(/'/g, "\\'"));
+    const formulaProjects = `OR(${escapedNames.map(name => `FIND('${name}',ARRAYJOIN({${FIELD_PROJECT_CONTACT}}))`).join(',')})`;
     const urlProjects = buildUrl(baseId, TABLE_PROJECTS_ID, {
       filterByFormula: formulaProjects,
       pageSize: '100'
