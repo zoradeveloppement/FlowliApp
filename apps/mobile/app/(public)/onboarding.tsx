@@ -37,8 +37,8 @@ export default function OnboardingScreen() {
 
   return (
     <>
-      <StatusBar style="light" />
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <StatusBar style="light" translucent backgroundColor="transparent" />
+      <View style={styles.container}>
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={[styles.scrollContent, { paddingBottom: 96 }]}
@@ -136,7 +136,7 @@ export default function OnboardingScreen() {
           elevated
           hideWhenKeyboardShown
         />
-      </SafeAreaView>
+      </View>
     </>
   );
 }
@@ -144,12 +144,13 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: tokens.colors.backgroundLight,
+    backgroundColor: tokens.gradients.hero[0], // Utilise la première couleur du gradient
   },
   scrollContent: {
     flexGrow: 1,
   },
   heroWrapper: {
+    paddingTop: 60, // Espace pour la status bar
     paddingBottom: 0,
   },
   ctaContainer: {

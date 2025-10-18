@@ -1,47 +1,33 @@
-import React from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
 import { Screen, AppLayout } from '../../ui/layout';
 import { Card, Button } from '../../ui/components';
-import { AppIcon } from '@/src/ui/icons/AppIcon';
+import AppIcon from '@/src/ui/icons/AppIcon';
 import { tokens } from '@/src/theme/tokens';
+import { getInvoices } from '@/src/lib/api';
+import * as WebBrowser from 'expo-web-browser';
 
 interface Invoice {
   id: string;
   number: string;
-  date: string;
   amount: number;
-  status: 'paid' | 'pending' | 'overdue';
-  downloadUrl?: string;
+  month?: string;
+  year?: number;
+  projectName: string;
+  pdfUrl?: string;
 }
 
-const InvoiceCard: React.FC<{ invoice: Invoice; onDownload: (invoice: Invoice) => void }> = ({
+const InvoiceCard: React.FC<{ invoice: Invoice; onViewPdf: (invoice: Invoice) => void }> = ({
   invoice,
-  onDownload,
+  onViewPdf,
 }) => {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'paid':
-        return 'text-success';
-      case 'pending':
-        return 'text-warn';
-      case 'overdue':
-        return 'text-danger';
-      default:
-        return 'text-textMuted';
+  const getDateDisplay = () => {
+    if (invoice.month && invoice.year) {
+      return `${invoice.month} ${invoice.year}`;
+    } else if (invoice.year) {
+      return `${invoice.year}`;
     }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'paid':
-        return 'Payée';
-      case 'pending':
-        return 'En attente';
-      case 'overdue':
-        return 'En retard';
-      default:
-        return 'Inconnu';
-    }
+    return '';
   };
 
   return (
@@ -51,61 +37,104 @@ const InvoiceCard: React.FC<{ invoice: Invoice; onDownload: (invoice: Invoice) =
           <Text style={styles.invoiceNumber}>
             Facture #{invoice.number}
           </Text>
-          <Text style={styles.invoiceDate}>
-            {new Date(invoice.date).toLocaleDateString('fr-FR')}
+          {getDateDisplay() && (
+            <Text style={styles.invoiceDate}>
+              {getDateDisplay()}
+            </Text>
+          )}
+          <Text style={styles.invoiceProject}>
+            {invoice.projectName}
           </Text>
           <Text style={styles.invoiceAmount}>
-            {invoice.amount.toLocaleString('fr-FR')} €
-          </Text>
-        </View>
-        <View style={styles.invoiceStatus}>
-          <Text style={[
-            styles.statusText,
-            getStatusColor(invoice.status) === 'text-success' && styles.statusSuccess,
-            getStatusColor(invoice.status) === 'text-warn' && styles.statusWarn,
-            getStatusColor(invoice.status) === 'text-danger' && styles.statusDanger,
-          ]}>
-            {getStatusText(invoice.status)}
+            {invoice.amount.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €
           </Text>
         </View>
       </View>
       
       <View style={styles.invoiceActions}>
-        <Button
-          title="📄 Voir PDF"
-          variant="secondary"
-          size="sm"
-          onPress={() => onDownload(invoice)}
-        />
-        {invoice.downloadUrl && (
+        {invoice.pdfUrl ? (
           <Button
-            title="⬇️ Télécharger"
+            title="📄 Voir PDF"
             variant="primary"
             size="sm"
-            onPress={() => onDownload(invoice)}
+            onPress={() => onViewPdf(invoice)}
           />
+        ) : (
+          <Text style={styles.noPdfText}>PDF non disponible</Text>
         )}
       </View>
     </Card>
   );
 };
 
-const DevelopmentState: React.FC = () => (
-  <Card style={styles.developmentCard}>
-    <AppIcon name="wrench" size={48} variant="muted" />
-    <Text style={styles.developmentTitle}>
-      En cours de développement
+const EmptyState: React.FC = () => (
+  <Card style={styles.emptyCard}>
+    <AppIcon name="receipt" size={48} variant="muted" />
+    <Text style={styles.emptyTitle}>
+      Aucune facture
     </Text>
-    <Text style={styles.developmentMessage}>
-      La gestion des factures sera bientôt disponible.
+    <Text style={styles.emptyMessage}>
+      Vous n'avez pas encore de factures associées à vos projets.
     </Text>
-    <View style={styles.developmentBadge}>
-      <Text style={styles.developmentBadgeText}>Prochainement</Text>
-    </View>
+  </Card>
+);
+
+const ErrorState: React.FC<{ onRetry: () => void }> = ({ onRetry }) => (
+  <Card style={styles.errorCard}>
+    <AppIcon name="x" size={48} variant="destructive" />
+    <Text style={styles.errorTitle}>
+      Erreur de chargement
+    </Text>
+    <Text style={styles.errorMessage}>
+      Impossible de charger les factures. Veuillez réessayer.
+    </Text>
+    <Button
+      title="Réessayer"
+      variant="primary"
+      size="md"
+      onPress={onRetry}
+    />
   </Card>
 );
 
 export const FacturesScreen: React.FC = () => {
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  const fetchInvoices = async () => {
+    try {
+      setLoading(true);
+      setError(false);
+      const response = await getInvoices();
+      setInvoices(response.invoices || []);
+    } catch (err) {
+      console.error('Error fetching invoices:', err);
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchInvoices();
+  }, []);
+
+  const handleViewPdf = async (invoice: Invoice) => {
+    if (!invoice.pdfUrl) {
+      console.warn('No PDF URL for invoice:', invoice.id);
+      return;
+    }
+
+    try {
+      await WebBrowser.openBrowserAsync(invoice.pdfUrl, {
+        presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET,
+      });
+    } catch (err) {
+      console.error('Error opening PDF:', err);
+    }
+  };
+
   return (
     <AppLayout>
       <Screen>
@@ -119,7 +148,26 @@ export const FacturesScreen: React.FC = () => {
             </Text>
           </View>
           
-          <DevelopmentState />
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={tokens.colors.primary} />
+              <Text style={styles.loadingText}>Chargement des factures...</Text>
+            </View>
+          ) : error ? (
+            <ErrorState onRetry={fetchInvoices} />
+          ) : invoices.length === 0 ? (
+            <EmptyState />
+          ) : (
+            <>
+              {invoices.map((invoice) => (
+                <InvoiceCard
+                  key={invoice.id}
+                  invoice={invoice}
+                  onViewPdf={handleViewPdf}
+                />
+              ))}
+            </>
+          )}
         </ScrollView>
       </Screen>
     </AppLayout>
@@ -151,7 +199,17 @@ const styles = StyleSheet.create({
     fontSize: tokens.font.sizes.sm,
     color: tokens.colors.mutedForegroundLight,
   },
-  developmentCard: {
+  loadingContainer: {
+    padding: tokens.spacing[12],
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    marginTop: tokens.spacing[4],
+    fontSize: tokens.font.sizes.md,
+    color: tokens.colors.mutedForegroundLight,
+  },
+  emptyCard: {
     backgroundColor: tokens.colors.backgroundLight,
     borderRadius: tokens.radius['2xl'],
     padding: tokens.spacing[12],
@@ -164,36 +222,47 @@ const styles = StyleSheet.create({
     elevation: 2,
     alignItems: 'center',
   },
-  developmentIcon: {
-    fontSize: 72,
-    marginBottom: tokens.spacing[6],
-  },
-  developmentTitle: {
+  emptyTitle: {
     fontSize: tokens.font.sizes.xl,
     fontWeight: tokens.font.weights.semibold,
     color: tokens.colors.foregroundLight,
-    marginBottom: tokens.spacing[3],
+    marginTop: tokens.spacing[4],
+    marginBottom: tokens.spacing[2],
     textAlign: 'center',
   },
-  developmentMessage: {
+  emptyMessage: {
+    fontSize: tokens.font.sizes.md,
+    color: tokens.colors.mutedForegroundLight,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  errorCard: {
+    backgroundColor: tokens.colors.backgroundLight,
+    borderRadius: tokens.radius['2xl'],
+    padding: tokens.spacing[12],
+    borderWidth: 1,
+    borderColor: tokens.colors.borderLight,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+    alignItems: 'center',
+  },
+  errorTitle: {
+    fontSize: tokens.font.sizes.xl,
+    fontWeight: tokens.font.weights.semibold,
+    color: tokens.colors.foregroundLight,
+    marginTop: tokens.spacing[4],
+    marginBottom: tokens.spacing[2],
+    textAlign: 'center',
+  },
+  errorMessage: {
     fontSize: tokens.font.sizes.md,
     color: tokens.colors.mutedForegroundLight,
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: tokens.spacing[6],
-  },
-  developmentBadge: {
-    backgroundColor: '#F5F3FF',
-    paddingHorizontal: tokens.spacing[6],
-    paddingVertical: tokens.spacing[2],
-    borderRadius: tokens.radius.full,
-    borderWidth: 1,
-    borderColor: '#C4B5FD',
-  },
-  developmentBadgeText: {
-    fontSize: tokens.font.sizes.sm,
-    fontWeight: tokens.font.weights.semibold,
-    color: tokens.colors.primary,
   },
   invoiceCard: {
     marginBottom: tokens.spacing[4],
@@ -216,28 +285,23 @@ const styles = StyleSheet.create({
   invoiceDate: {
     fontSize: tokens.font.sizes.sm,
     color: tokens.colors.mutedForegroundLight,
+    marginBottom: tokens.spacing[1],
+  },
+  invoiceProject: {
+    fontSize: tokens.font.sizes.sm,
+    color: tokens.colors.primary,
     marginBottom: tokens.spacing[2],
+    fontWeight: tokens.font.weights.medium,
   },
   invoiceAmount: {
     fontSize: tokens.font.sizes.lg,
     color: tokens.colors.foregroundLight,
     fontWeight: tokens.font.weights.semibold,
   },
-  invoiceStatus: {
-    alignItems: 'flex-end',
-  },
-  statusText: {
-    fontSize: tokens.font.sizes.md,
-    fontWeight: tokens.font.weights.medium,
-  },
-  statusSuccess: {
-    color: '#4CAF50',
-  },
-  statusWarn: {
-    color: '#FF9800',
-  },
-  statusDanger: {
-    color: '#F44336',
+  noPdfText: {
+    fontSize: tokens.font.sizes.sm,
+    color: tokens.colors.mutedForegroundLight,
+    fontStyle: 'italic',
   },
   invoiceActions: {
     flexDirection: 'row',

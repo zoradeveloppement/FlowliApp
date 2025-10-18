@@ -595,11 +595,11 @@ export default function Home() {
           {pct !== null && (
             <View style={styles.progressWrapper}>
               <View style={styles.progressBarContainer}>
-                <View style={[
-                  styles.progressBar,
-                  { width: `${Math.max(pct, 2)}%` },
-                  isCompleted ? styles.progressBarComplete : styles.progressBarActive
-                ]} />
+                  <View style={[
+                    styles.progressBar,
+                    { width: `${Math.max(Math.min(pct, 100), 0)}%` },
+                    isCompleted ? styles.progressBarComplete : styles.progressBarActive
+                  ]} />
               </View>
               <Text style={[
                 styles.progressText,
@@ -610,15 +610,19 @@ export default function Home() {
             </View>
           )}
           
-          {/* Date avec icône */}
-          {item.dueDate && (
-            <View style={styles.dateContainer}>
-              <AppIcon name="calendar" size={12} variant="muted" />
-              <Text style={[styles.date, isOverdue && styles.dateOverdue]}>
-                {fmtRel(item.dueDate)}
-              </Text>
-            </View>
-          )}
+          {/* Date avec icône - toujours réserver l'espace */}
+          <View style={styles.dateContainer}>
+            {item.dueDate ? (
+              <>
+                <AppIcon name="calendar" size={12} variant="muted" />
+                <Text style={[styles.date, isOverdue && styles.dateOverdue]}>
+                  {fmtRel(item.dueDate)}
+                </Text>
+              </>
+            ) : (
+              <View style={styles.datePlaceholder} />
+            )}
+          </View>
         </View>
       </TouchableOpacity>
     );
@@ -858,10 +862,10 @@ export default function Home() {
                       </Text>
                     </View>
                     
-                    <Animated.View style={{ transform: [{ rotate: rotateInterpolate }] }}>
+                    <Animated.View style={[styles.accordionArrowContainer, { transform: [{ rotate: rotateInterpolate }] }]}>
                       <AppIcon 
                         name="chevronDown" 
-                        size={22} 
+                        size={20} 
                         variant="default"
                         style={styles.accordionArrow}
                       />
@@ -1056,13 +1060,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flex: 1,
   },
   progressBarContainer: {
-    flex: 1,
+    width: '70%',
     height: 8,
     backgroundColor: '#E5E7EB',
     borderRadius: 4,
     overflow: 'hidden',
+    marginRight: 12,
   },
   progressBar: {
     height: '100%',
@@ -1089,6 +1095,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    minWidth: 80,
+  },
+  datePlaceholder: {
+    width: 80,
+    height: 20,
   },
   dateIcon: {
     fontSize: 12,
@@ -1351,8 +1362,15 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     color: '#8E8E93',
   },
+  accordionArrowContainer: {
+    backgroundColor: '#7C3AED',
+    borderRadius: 16,
+    padding: 8,
+    marginLeft: 8,
+  },
   accordionArrow: {
-    color: '#C7C7CC',
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
   accordionContent: {
     paddingLeft: 16,           // Indentation

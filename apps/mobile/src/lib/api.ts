@@ -1,4 +1,5 @@
-import { post, authHeaders } from './http';
+import { post } from './http';
+import { authHeaders } from './auth';
 
 export async function registerDevice(params: {
   userId: string;
@@ -18,4 +19,9 @@ export async function registerDevice(params: {
 export async function getTasks() {
   const headers = await authHeaders();
   return await import('./http').then(({ get }) => get('me/tasks', headers));
+}
+
+export async function getInvoices() {
+  const headers = await authHeaders();
+  return await import('./http').then(({ get }) => get('me/invoices', headers));
 }

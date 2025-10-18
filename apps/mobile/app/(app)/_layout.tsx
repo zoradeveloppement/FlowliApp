@@ -1,11 +1,14 @@
 import { Stack } from 'expo-router';
 import { useEffect } from 'react';
 import * as Notifications from 'expo-notifications';
-import { Platform, Text, View } from 'react-native';
+import { Platform, Text, View, StatusBar } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppIcon } from '@/src/ui/icons/AppIcon';
 import AppBottomNav from '../../components/AppBottomNav';
 
 export default function AppLayout() {
+  const insets = useSafeAreaInsets();
+  
   // Configuration du channel Android par défaut
   useEffect(() => {
     if (Platform.OS === 'android') {
@@ -25,7 +28,7 @@ export default function AppLayout() {
   }, []);
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, paddingTop: insets.top }}>
       <Stack
         screenOptions={{
           headerShown: false,
