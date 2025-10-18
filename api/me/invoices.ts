@@ -247,6 +247,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       } else if (Array.isArray(rawAmount) && rawAmount.length > 0) {
         amount = typeof rawAmount[0] === 'number' ? rawAmount[0] : 0;
       }
+      
+      // If no amount from flux financiers, try to get from "Numéro" field as fallback
+      if (amount === 0) {
+        const numeroField = fields['Numéro'];
+        if (typeof numeroField === 'number' && numeroField > 0) {
+          amount = numeroField;
+        }
+      }
 
       return {
         id: r.id,
