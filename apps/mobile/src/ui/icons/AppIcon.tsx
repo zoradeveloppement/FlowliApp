@@ -82,6 +82,7 @@ export function AppIcon({
   return <Cmp size={size} color={c} strokeWidth={strokeWidth} style={style} />;
 }
 
+// Ensure both named and default exports are available
 export default AppIcon;
 
 

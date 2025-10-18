@@ -159,7 +159,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       event: 'me_invoices_fetch_projects',
       email,
       contactName,
-      escapedName,
+      escapedNames,
       formulaProjects,
       timestamp: new Date().toISOString()
     }));
