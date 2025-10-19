@@ -191,17 +191,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }));
 
     // 3) Find invoices linked to these projects
-    // Try multiple approaches for linked records
+    // For linked records (arrays), use FIND with ARRAYJOIN
     const projectFormulas = projectIds.map(
-      id => `{${FIELD_INVOICE_PROJECTS}} = '${id}'`
+      id => `FIND('${id}', ARRAYJOIN({${FIELD_INVOICE_PROJECTS}}))`
     );
     const formulaInvoices = projectFormulas.length === 1 
       ? projectFormulas[0] 
       : `OR(${projectFormulas.join(',')})`;
     
-    // Alternative formula using SEARCH if direct comparison fails
+    // Alternative formula using SEARCH with ARRAYJOIN if FIND fails
     const alternativeFormulas = projectIds.map(
-      id => `SEARCH('${id}', {${FIELD_INVOICE_PROJECTS}})`
+      id => `SEARCH('${id}', ARRAYJOIN({${FIELD_INVOICE_PROJECTS}}))`
     );
     const alternativeFormula = alternativeFormulas.length === 1 
       ? alternativeFormulas[0] 
