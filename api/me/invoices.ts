@@ -191,9 +191,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }));
 
     // 3) Find invoices linked to these projects
-    // Build formula: OR(FIND('recXXX', ARRAYJOIN({Projets})), FIND('recYYY', ARRAYJOIN({Projets})), ...)
+    // Use simple OR with project IDs directly (Airtable handles linked records automatically)
     const projectFormulas = projectIds.map(
-      id => `FIND('${id}',ARRAYJOIN({${FIELD_INVOICE_PROJECTS}}))`
+      id => `{${FIELD_INVOICE_PROJECTS}} = '${id}'`
     );
     const formulaInvoices = projectFormulas.length === 1 
       ? projectFormulas[0] 
