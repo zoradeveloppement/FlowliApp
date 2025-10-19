@@ -110,8 +110,21 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   // Don't render until theme is loaded to prevent flash
+  // But provide a fallback to prevent blank screen on iOS
   if (!isLoaded) {
-    return null;
+    return (
+      <ThemeContext.Provider value={{
+        mode: 'system',
+        resolvedTheme: 'light',
+        setMode: () => {},
+        colors: resolveColors('light'),
+        tokens,
+        isWeb,
+        isMobile,
+      }}>
+        {children}
+      </ThemeContext.Provider>
+    );
   }
 
   return (

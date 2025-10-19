@@ -104,14 +104,22 @@ export const FacturesScreen: React.FC = () => {
 
   const fetchInvoices = async () => {
     try {
+      console.log('🔍 [FacturesScreen] Starting fetchInvoices...');
       setLoading(true);
       setError(false);
+      
+      console.log('🔍 [FacturesScreen] Calling getInvoices()...');
       const response = await getInvoices();
-      setInvoices(response.invoices || []);
+      console.log('🔍 [FacturesScreen] API Response:', JSON.stringify(response, null, 2));
+      
+      const invoices = response.invoices || [];
+      console.log('🔍 [FacturesScreen] Setting invoices:', invoices.length, 'invoices');
+      setInvoices(invoices);
     } catch (err) {
-      console.error('Error fetching invoices:', err);
+      console.error('❌ [FacturesScreen] Error fetching invoices:', err);
       setError(true);
     } finally {
+      console.log('🔍 [FacturesScreen] fetchInvoices completed, setting loading to false');
       setLoading(false);
     }
   };
@@ -134,6 +142,9 @@ export const FacturesScreen: React.FC = () => {
       console.error('Error opening PDF:', err);
     }
   };
+
+  // Debug logs for render state
+  console.log('🔍 [FacturesScreen] Render state:', { loading, error, invoicesCount: invoices.length });
 
   return (
     <AppLayout>
