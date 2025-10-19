@@ -190,64 +190,53 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       timestamp: new Date().toISOString()
     }));
 
-    // 3) Find invoices linked to these projects
-    // For linked records (arrays), use FIND with ARRAYJOIN
-    const projectFormulas = projectIds.map(
-      id => `FIND('${id}', ARRAYJOIN({${FIELD_INVOICE_PROJECTS}}))`
-    );
-    const formulaInvoices = projectFormulas.length === 1 
-      ? projectFormulas[0] 
-      : `OR(${projectFormulas.join(',')})`;
-    
-    // Alternative formula using SEARCH with ARRAYJOIN if FIND fails
-    const alternativeFormulas = projectIds.map(
-      id => `SEARCH('${id}', ARRAYJOIN({${FIELD_INVOICE_PROJECTS}}))`
-    );
-    const alternativeFormula = alternativeFormulas.length === 1 
-      ? alternativeFormulas[0] 
-      : `OR(${alternativeFormulas.join(',')})`;
-
+    // 3) Get all invoices and filter by project IDs in code
+    // Airtable formulas don't work well with linked records, so we fetch all and filter
     const urlInvoices = buildUrl(baseId, TABLE_INVOICES_ID, {
-      filterByFormula: formulaInvoices,
       pageSize: '100'
     });
 
     console.log(JSON.stringify({
-      event: 'me_invoices_fetch_invoices',
+      event: 'me_invoices_fetch_all_invoices',
       email,
-      formulaInvoices,
+      projectIds,
       timestamp: new Date().toISOString()
     }));
 
-    let invoicesResp = await airtableGet(urlInvoices, token);
+    const invoicesResp = await airtableGet(urlInvoices, token);
 
-    // If no results with direct comparison, try SEARCH formula
-    if (invoicesResp.records.length === 0) {
-      console.log(JSON.stringify({
-        event: 'me_invoices_try_alternative_formula',
-        email,
-        originalFormula: formulaInvoices,
-        alternativeFormula: alternativeFormula,
-        timestamp: new Date().toISOString()
-      }));
+    // Filter invoices that are linked to any of the user's projects
+    const filteredInvoices = invoicesResp.records.filter(record => {
+      const linkedProjects = record.fields[FIELD_INVOICE_PROJECTS];
+      if (!Array.isArray(linkedProjects)) return false;
       
-      const alternativeUrl = buildUrl(baseId, TABLE_INVOICES_ID, {
-        filterByFormula: alternativeFormula,
-        pageSize: '100'
-      });
-      
-      invoicesResp = await airtableGet(alternativeUrl, token);
-    }
+      // Check if any of the linked projects match the user's project IDs
+      return projectIds.some(projectId => linkedProjects.includes(projectId));
+    });
+
+    // Create a new response object with filtered records
+    const filteredResponse = {
+      ...invoicesResp,
+      records: filteredInvoices
+    };
+
+    console.log(JSON.stringify({
+      event: 'me_invoices_filtered_results',
+      email,
+      totalInvoices: invoicesResp.records.length,
+      filteredInvoices: filteredInvoices.length,
+      timestamp: new Date().toISOString()
+    }));
 
     console.log(JSON.stringify({
       event: 'me_invoices_airtable_response',
       email,
-      recordsCount: invoicesResp.records.length,
+      recordsCount: filteredResponse.records.length,
       timestamp: new Date().toISOString()
     }));
 
     // 4) Map invoices to response format
-    const invoices = invoicesResp.records.map(r => {
+    const invoices = filteredResponse.records.map(r => {
       const fields = r.fields;
       
       // Extract PDF URL from attachment field
