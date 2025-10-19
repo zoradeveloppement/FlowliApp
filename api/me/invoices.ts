@@ -13,9 +13,9 @@ const supaAdmin = createClient(
 type AirtableRecord = { id: string; fields: Record<string, any> };
 type AirtableList = { records: AirtableRecord[]; offset?: string };
 
-const TABLE_CONTACTS_ID = 'tblK73rIQAGyK8lDb';
-const TABLE_PROJECTS_ID = 'tblJBx1UgRMDkI6P5';
-const TABLE_INVOICES_ID = 'tblMRdwMIMgKTzSEn';
+const TABLE_CONTACTS_ID = 'tblK73rIQAGyK8lDb'; // ✅ CORRECT
+const TABLE_PROJECTS_ID = 'tblJBx1UgRMDkI6P5'; // ✅ CORRECT
+const TABLE_INVOICES_ID = 'tblMRdwMIMgKTzSEn'; // ✅ CORRECT
 
 const FIELD_CONTACT_EMAIL = 'Email';
 const FIELD_CONTACT_NAME = 'Nom';
