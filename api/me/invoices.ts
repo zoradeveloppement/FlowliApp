@@ -191,13 +191,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }));
 
     // 3) Find invoices linked to these projects
-    // Use SEARCH function for linked records (Airtable specific)
+    // Try multiple approaches for linked records
     const projectFormulas = projectIds.map(
-      id => `SEARCH('${id}', {${FIELD_INVOICE_PROJECTS}})`
+      id => `{${FIELD_INVOICE_PROJECTS}} = '${id}'`
     );
     const formulaInvoices = projectFormulas.length === 1 
       ? projectFormulas[0] 
       : `OR(${projectFormulas.join(',')})`;
+    
+    // Alternative formula using SEARCH if direct comparison fails
+    const alternativeFormulas = projectIds.map(
+      id => `SEARCH('${id}', {${FIELD_INVOICE_PROJECTS}})`
+    );
+    const alternativeFormula = alternativeFormulas.length === 1 
+      ? alternativeFormulas[0] 
+      : `OR(${alternativeFormulas.join(',')})`;
 
     const urlInvoices = buildUrl(baseId, TABLE_INVOICES_ID, {
       filterByFormula: formulaInvoices,
@@ -211,7 +219,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       timestamp: new Date().toISOString()
     }));
 
-    const invoicesResp = await airtableGet(urlInvoices, token);
+    let invoicesResp = await airtableGet(urlInvoices, token);
+
+    // If no results with direct comparison, try SEARCH formula
+    if (invoicesResp.records.length === 0) {
+      console.log(JSON.stringify({
+        event: 'me_invoices_try_alternative_formula',
+        email,
+        originalFormula: formulaInvoices,
+        alternativeFormula: alternativeFormula,
+        timestamp: new Date().toISOString()
+      }));
+      
+      const alternativeUrl = buildUrl(baseId, TABLE_INVOICES_ID, {
+        filterByFormula: alternativeFormula,
+        pageSize: '100'
+      });
+      
+      invoicesResp = await airtableGet(alternativeUrl, token);
+    }
 
     console.log(JSON.stringify({
       event: 'me_invoices_airtable_response',
