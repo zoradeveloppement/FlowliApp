@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { Screen, AppLayout } from '../../ui/layout';
 import { Card, Button } from '../../ui/components';
 import AppIcon from '@/src/ui/icons/AppIcon';
@@ -147,41 +147,264 @@ export const FacturesScreen: React.FC = () => {
   console.log('🔍 [FacturesScreen] Render state:', { loading, error, invoicesCount: invoices.length });
 
   return (
-    <AppLayout>
-      <Screen>
-        <ScrollView style={styles.scrollView} contentContainerStyle={[styles.container, { paddingBottom: 96 }]}>
-          <View style={styles.header}>
-            <Text style={styles.headerTitle}>
-              <Text style={styles.headerTitleAccent}>Facturation</Text>
+    <View style={{
+      flex: 1,
+      backgroundColor: '#F7F8FA', // Fond gris clair comme les autres pages
+      paddingTop: 60, // Espace pour la navigation
+      paddingHorizontal: 20,
+      paddingBottom: 100, // Espace pour la navigation du bas
+    }}>
+      {/* Header élégant */}
+      <View style={{
+        marginBottom: 30,
+      }}>
+        <Text style={{
+          fontSize: 32,
+          fontWeight: 'bold',
+          color: '#181C25',
+          marginBottom: 8,
+        }}>
+          <Text style={{ color: '#7C3AED' }}>Facturation</Text>
+        </Text>
+        <Text style={{
+          fontSize: 16,
+          color: '#6B7280',
+        }}>
+          Gérez vos factures et paiements
+        </Text>
+      </View>
+      
+      {/* Contenu principal */}
+      {loading ? (
+        <View style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          paddingVertical: 60,
+        }}>
+          <ActivityIndicator size="large" color="#7C3AED" />
+          <Text style={{
+            marginTop: 20,
+            fontSize: 16,
+            color: '#6B7280',
+          }}>
+            Chargement des factures...
+          </Text>
+        </View>
+      ) : error ? (
+        <View style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          paddingVertical: 60,
+        }}>
+          <View style={{
+            backgroundColor: '#FFFFFF',
+            padding: 30,
+            borderRadius: 16,
+            alignItems: 'center',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 8,
+            elevation: 4,
+          }}>
+            <Text style={{
+              fontSize: 48,
+              marginBottom: 16,
+            }}>
+              ❌
             </Text>
-            <Text style={styles.headerSubtitle}>
-              Gérez vos factures et paiements
+            <Text style={{
+              fontSize: 20,
+              fontWeight: 'bold',
+              color: '#181C25',
+              marginBottom: 8,
+              textAlign: 'center',
+            }}>
+              Erreur de chargement
+            </Text>
+            <Text style={{
+              fontSize: 16,
+              color: '#6B7280',
+              textAlign: 'center',
+              marginBottom: 24,
+              lineHeight: 24,
+            }}>
+              Impossible de charger les factures. Veuillez réessayer.
+            </Text>
+            <TouchableOpacity
+              onPress={fetchInvoices}
+              style={{
+                backgroundColor: '#7C3AED',
+                paddingHorizontal: 24,
+                paddingVertical: 12,
+                borderRadius: 12,
+                shadowColor: '#7C3AED',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.3,
+                shadowRadius: 8,
+                elevation: 4,
+              }}
+            >
+              <Text style={{
+                color: '#FFFFFF',
+                fontWeight: 'bold',
+                fontSize: 16,
+              }}>
+                Réessayer
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      ) : invoices.length === 0 ? (
+        <View style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          paddingVertical: 60,
+        }}>
+          <View style={{
+            backgroundColor: '#FFFFFF',
+            padding: 30,
+            borderRadius: 16,
+            alignItems: 'center',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 8,
+            elevation: 4,
+          }}>
+            <Text style={{
+              fontSize: 48,
+              marginBottom: 16,
+            }}>
+              📄
+            </Text>
+            <Text style={{
+              fontSize: 20,
+              fontWeight: 'bold',
+              color: '#181C25',
+              marginBottom: 8,
+              textAlign: 'center',
+            }}>
+              Aucune facture
+            </Text>
+            <Text style={{
+              fontSize: 16,
+              color: '#6B7280',
+              textAlign: 'center',
+              lineHeight: 24,
+            }}>
+              Vous n'avez pas encore de factures associées à vos projets.
             </Text>
           </View>
+        </View>
+      ) : (
+        <View>
+          <Text style={{
+            fontSize: 18,
+            fontWeight: 'bold',
+            color: '#181C25',
+            marginBottom: 20,
+          }}>
+            📄 Factures ({invoices.length})
+          </Text>
           
-          {loading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={tokens.colors.primary} />
-              <Text style={styles.loadingText}>Chargement des factures...</Text>
+          {invoices.map((invoice) => (
+            <View
+              key={invoice.id}
+              style={{
+                backgroundColor: '#FFFFFF',
+                padding: 20,
+                borderRadius: 16,
+                marginBottom: 16,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 8,
+                elevation: 4,
+                borderWidth: 1,
+                borderColor: '#E5E7EB',
+              }}
+            >
+              {/* Header de la facture */}
+              <View style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                marginBottom: 12,
+              }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{
+                    fontSize: 18,
+                    fontWeight: 'bold',
+                    color: '#181C25',
+                    marginBottom: 4,
+                  }}>
+                    {invoice.number}
+                  </Text>
+                  <Text style={{
+                    fontSize: 14,
+                    color: '#7C3AED',
+                    fontWeight: '500',
+                  }}>
+                    {invoice.projectName}
+                  </Text>
+                </View>
+                <Text style={{
+                  fontSize: 20,
+                  fontWeight: 'bold',
+                  color: '#181C25',
+                }}>
+                  {invoice.amount.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €
+                </Text>
+              </View>
+              
+              {/* Actions */}
+              <View style={{
+                flexDirection: 'row',
+                justifyContent: 'flex-end',
+                marginTop: 8,
+              }}>
+                {invoice.pdfUrl ? (
+                  <TouchableOpacity
+                    onPress={() => handleViewPdf(invoice)}
+                    style={{
+                      backgroundColor: '#7C3AED',
+                      paddingHorizontal: 16,
+                      paddingVertical: 10,
+                      borderRadius: 8,
+                      shadowColor: '#7C3AED',
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.2,
+                      shadowRadius: 4,
+                      elevation: 2,
+                    }}
+                  >
+                    <Text style={{
+                      color: '#FFFFFF',
+                      fontWeight: 'bold',
+                      fontSize: 14,
+                    }}>
+                      📄 Voir PDF
+                    </Text>
+                  </TouchableOpacity>
+                ) : (
+                  <Text style={{
+                    fontSize: 14,
+                    color: '#9CA3AF',
+                    fontStyle: 'italic',
+                  }}>
+                    PDF non disponible
+                  </Text>
+                )}
+              </View>
             </View>
-          ) : error ? (
-            <ErrorState onRetry={fetchInvoices} />
-          ) : invoices.length === 0 ? (
-            <EmptyState />
-          ) : (
-            <>
-              {invoices.map((invoice) => (
-                <InvoiceCard
-                  key={invoice.id}
-                  invoice={invoice}
-                  onViewPdf={handleViewPdf}
-                />
-              ))}
-            </>
-          )}
-        </ScrollView>
-      </Screen>
-    </AppLayout>
+          ))}
+        </View>
+      )}
+    </View>
   );
 };
 
