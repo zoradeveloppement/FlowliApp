@@ -484,13 +484,6 @@ export default function Home() {
         </View>
         
         
-        {/* Alerte retard avec style Flowli */}
-        {isOverdue && (
-          <View style={styles.overdueContainer}>
-            <View style={styles.overdueBar} />
-            <Text style={styles.overdueText}>⚠️ En retard</Text>
-          </View>
-        )}
         
         {/* Footer avec progression et date */}
         <View style={styles.footer}>
@@ -752,23 +745,6 @@ const styles = StyleSheet.create({
     marginRight: 12,
     lineHeight: 24,
     fontFamily: '-apple-system, "system-ui", "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-  },
-  overdueContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-    gap: 8,
-  },
-  overdueBar: {
-    height: 3,
-    backgroundColor: '#EF4444',
-    borderRadius: 2,
-    flex: 1,
-  },
-  overdueText: {
-    fontSize: 12,
-    color: '#EF4444',
-    fontWeight: '600',
   },
   footer: {
     flexDirection: 'row',

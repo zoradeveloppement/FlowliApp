@@ -79,34 +79,38 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
       <View className="flex-1 bg-white" style={styles.container}>
         {/* Header simplifié blanc */}
         <View className="pt-12 pb-6 px-6 bg-white border-b border-gray-100" style={styles.header}>
+          {/* Légende */}
+          <View style={styles.legendContainer}>
+            <Text style={styles.legendText}>Détail de la tâche</Text>
+          </View>
+          
           {/* Bouton fermer */}
           <TouchableOpacity
             onPress={onClose}
-            className="absolute top-12 left-6 w-10 h-10 items-center justify-center"
             style={styles.closeButton}
           >
-            <Text className="text-gray-900 text-xl" style={styles.closeButtonText}>✕</Text>
+            <Text style={styles.closeButtonText}>✕</Text>
           </TouchableOpacity>
           
           {/* Titre de la tâche */}
-          <View className="mt-12" style={styles.titleContainer}>
-            <Text className="text-gray-900 text-2xl font-bold mb-3 leading-tight" style={styles.taskTitle}>
-              {task.title || '(Sans titre)'}
-            </Text>
-            
-            {/* Badge de statut */}
-            <View 
-              className="px-3 py-1.5 rounded-full self-start"
-              style={[styles.statusBadge, { backgroundColor: `${getStatusColor(task.status)}15` }]}
-            >
-              <View className="flex-row items-center">
-                <View style={{ marginRight: 6 }}>{renderStatusIcon(task.status)}</View>
-                <Text 
-                  className="text-sm font-semibold"
-                  style={[styles.statusText, { color: getStatusColor(task.status) }]}
-                >
-                  {task.status}
-                </Text>
+          <View style={styles.titleContainer}>
+            <View style={styles.titleRow}>
+              <Text style={styles.taskTitle}>
+                {task.title || '(Sans titre)'}
+              </Text>
+              
+              {/* Badge de statut */}
+              <View 
+                style={[styles.statusBadge, { backgroundColor: `${getStatusColor(task.status)}15` }]}
+              >
+                <View style={styles.statusBadgeContent}>
+                  <View style={{ marginRight: 6 }}>{renderStatusIcon(task.status)}</View>
+                  <Text 
+                    style={[styles.statusText, { color: getStatusColor(task.status) }]}
+                  >
+                    {task.status}
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
@@ -115,24 +119,26 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
         <ScrollView className="flex-1 px-6 py-6 bg-gray-50" showsVerticalScrollIndicator={false}>
           {/* Informations principales */}
           <View className="bg-white rounded-2xl p-5 mb-4 shadow-sm" style={styles.infoCard}>
-            <Text className="text-base font-bold text-gray-900 mb-4" style={styles.sectionTitle}>Informations</Text>
+            <Text style={styles.sectionTitle}>Informations</Text>
             
             <View className="space-y-4">
               {/* Projet */}
               {task.projectName && (
                 <View style={styles.infoItem}>
-                  <Text className="text-sm text-gray-600 mb-1 font-medium" style={styles.infoLabel}>Projet</Text>
-                  <Text className="text-base font-semibold text-gray-900" style={styles.infoValue}>{task.projectName}</Text>
+                  <Text style={styles.infoLabel}>Projet</Text>
+                  <Text style={styles.infoValue}>{task.projectName}</Text>
                 </View>
               )}
 
               {/* Date d'échéance */}
               {task.dueDate && (
                 <View style={styles.infoItem}>
-                  <Text className="text-sm text-gray-600 mb-1 font-medium" style={styles.infoLabel}>Date d'échéance</Text>
+                  <Text style={styles.infoLabel}>Date d'échéance</Text>
                   <Text 
-                    className={`text-base font-semibold ${isOverdue(task.dueDate) ? 'text-red-600' : 'text-gray-900'}`}
-                    style={styles.infoValue}
+                    style={[
+                      styles.infoValue,
+                      isOverdue(task.dueDate) && { color: '#EF4444' }
+                    ]}
                   >
                     {formatDate(task.dueDate)}
                   </Text>
@@ -144,13 +150,12 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
           {/* Progression */}
           {task.progress !== null && (
             <View className="bg-white rounded-2xl p-5 mb-4 shadow-sm" style={styles.progressCard}>
-              <Text className="text-base font-bold text-gray-900 mb-4" style={styles.sectionTitle}>Progression</Text>
+              <Text style={styles.sectionTitle}>Progression</Text>
               
-              <View className="space-y-3">
-                <View className="flex-row items-center justify-between mb-2">
-                  <Text className="text-sm text-gray-600 font-medium" style={styles.progressLabel}>Avancement</Text>
+              <View style={styles.progressContainer}>
+                <View style={styles.progressHeader}>
+                  <Text style={styles.progressLabel}>Avancement</Text>
                   <Text 
-                    className="text-sm font-bold"
                     style={[styles.progressValue, { color: getStatusColor(task.status) }]}
                   >
                     {Math.round(task.progress <= 1 ? task.progress * 100 : task.progress)}%
@@ -176,9 +181,9 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 
           {/* Actions */}
           <View className="bg-white rounded-2xl p-5 mb-4 shadow-sm" style={styles.actionsCard}>
-            <Text className="text-base font-bold text-gray-900 mb-4" style={styles.sectionTitle}>Actions</Text>
+            <Text style={styles.sectionTitle}>Actions</Text>
             
-            <View className="space-y-3">
+            <View style={styles.actionsContainer}>
               {task.status === 'A faire' && onMarkInProgress && (
                 <TouchableOpacity
                   onPress={() => onMarkInProgress(task.id)}
@@ -205,34 +210,6 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
             </View>
           </View>
 
-          {/* Informations techniques (debug) - Style Flowli */}
-          {__DEV__ && (
-            <View className="bg-yellow-50 rounded-2xl p-6 mb-6 border border-yellow-200 shadow-sm" style={styles.debugCard}>
-              <View className="flex-row items-center gap-3 mb-5">
-                <Text className="text-2xl">🔧</Text>
-                <Text className="text-lg font-bold text-yellow-800" style={styles.sectionTitle}>Debug</Text>
-              </View>
-              
-              <View className="space-y-3">
-                <View className="flex-row justify-between items-center p-3 bg-yellow-100 rounded-lg">
-                  <Text className="text-sm font-semibold text-yellow-800">ID:</Text>
-                  <Text className="text-sm text-yellow-700 font-mono">{task.id}</Text>
-                </View>
-                <View className="flex-row justify-between items-center p-3 bg-yellow-100 rounded-lg">
-                  <Text className="text-sm font-semibold text-yellow-800">Projet ID:</Text>
-                  <Text className="text-sm text-yellow-700">{task.projectId || 'N/A'}</Text>
-                </View>
-                <View className="flex-row justify-between items-center p-3 bg-yellow-100 rounded-lg">
-                  <Text className="text-sm font-semibold text-yellow-800">Progression brute:</Text>
-                  <Text className="text-sm text-yellow-700">{task.progress}</Text>
-                </View>
-                <View className="flex-row justify-between items-center p-3 bg-yellow-100 rounded-lg">
-                  <Text className="text-sm font-semibold text-yellow-800">Date brute:</Text>
-                  <Text className="text-sm text-yellow-700">{task.dueDate || 'N/A'}</Text>
-                </View>
-              </View>
-            </View>
-          )}
         </ScrollView>
       </View>
     </Modal>
@@ -254,30 +231,56 @@ const styles = StyleSheet.create({
     borderBottomColor: tokens.colors.borderLight,
   },
   closeButton: {
+    position: 'absolute',
+    top: 44,
+    right: tokens.spacing[6],
     width: 40,
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    borderRadius: 20,
   },
   closeButtonText: {
     color: tokens.colors.foregroundLight,
     fontSize: tokens.font.sizes.lg,
   },
+  legendContainer: {
+    alignItems: 'center',
+    marginBottom: tokens.spacing[2],
+  },
+  legendText: {
+    fontSize: tokens.font.sizes.sm,
+    color: tokens.colors.mutedForegroundLight,
+    fontWeight: tokens.font.weights.medium,
+  },
   titleContainer: {
     marginTop: tokens.spacing[12],
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: tokens.spacing[4],
   },
   taskTitle: {
     color: tokens.colors.foregroundLight,
     fontSize: tokens.font.sizes.xl,
     fontWeight: tokens.font.weights.bold,
-    marginBottom: tokens.spacing[3],
     lineHeight: 32,
+    flex: 1,
+    marginRight: tokens.spacing[3],
   },
   statusBadge: {
     paddingHorizontal: tokens.spacing[3],
     paddingVertical: tokens.spacing[1] + 2,
     borderRadius: tokens.radius.full,
     alignSelf: 'flex-start',
+    flexShrink: 0,
+  },
+  statusBadgeContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   statusText: {
     fontSize: tokens.font.sizes.sm,
@@ -316,37 +319,27 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 1,
   },
-  debugCard: {
-    backgroundColor: '#FEF3C7',
-    borderRadius: tokens.radius['2xl'],
-    padding: tokens.spacing[6],
-    marginBottom: tokens.spacing[6],
-    borderWidth: 1,
-    borderColor: '#FDE68A',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 2,
-  },
   sectionTitle: {
     fontSize: tokens.font.sizes.md,
     fontWeight: tokens.font.weights.bold,
     color: tokens.colors.foregroundLight,
+    marginBottom: 20,
+    lineHeight: 24,
   },
   infoItem: {
-    marginBottom: tokens.spacing[4],
+    marginBottom: tokens.spacing[6],
   },
   infoLabel: {
     fontSize: tokens.font.sizes.sm,
     color: tokens.colors.mutedForegroundLight,
     fontWeight: tokens.font.weights.medium,
-    marginBottom: tokens.spacing[1],
+    marginBottom: tokens.spacing[3],
   },
   infoValue: {
     fontSize: tokens.font.sizes.md,
     color: tokens.colors.foregroundLight,
     fontWeight: tokens.font.weights.semibold,
+    lineHeight: 24,
   },
   progressBarContainer: {
     backgroundColor: tokens.colors.borderLight,
@@ -366,6 +359,15 @@ const styles = StyleSheet.create({
   progressValue: {
     fontSize: tokens.font.sizes.sm,
     fontWeight: tokens.font.weights.bold,
+    lineHeight: 20,
+  },
+  progressContainer: {
+    gap: tokens.spacing[4],
+  },
+  progressHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   primaryActionButton: {
     backgroundColor: tokens.colors.primary,
@@ -383,5 +385,9 @@ const styles = StyleSheet.create({
     fontSize: tokens.font.sizes.md,
     fontWeight: tokens.font.weights.semibold,
     textAlign: 'center',
+  },
+  actionsContainer: {
+    marginTop: tokens.spacing[2],
+    gap: tokens.spacing[3],
   },
 });

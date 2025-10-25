@@ -166,7 +166,7 @@ export const FacturesScreen: React.FC = () => {
           color: '#181C25',
           marginBottom: 8,
         }}>
-          <Text style={{ color: '#7C3AED' }}>Facturation</Text>
+          Mes <Text style={{ color: '#7C3AED' }}>factures</Text>
         </Text>
         <Text style={{
           fontSize: 16,
