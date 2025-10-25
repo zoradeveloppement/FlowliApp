@@ -1,9 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, Platform, Alert } from 'react-native';
 import { PDFViewer } from '@/src/components/PDFViewer';
 import { tokens } from '@/src/theme/tokens';
-import * as Sharing from 'expo-sharing';
-import * as FileSystem from 'expo-file-system';
 
 interface PDFPreviewScreenProps {
   visible: boolean;
@@ -18,65 +16,6 @@ export const PDFPreviewScreen: React.FC<PDFPreviewScreenProps> = ({
   title,
   onClose,
 }) => {
-  const [sharing, setSharing] = useState(false);
-
-  const handleShare = async () => {
-    if (!pdfUrl) return;
-
-    try {
-      setSharing(true);
-
-      if (Platform.OS === 'web') {
-        // Sur web, on ouvre dans un nouvel onglet
-        window.open(pdfUrl, '_blank');
-        return;
-      }
-
-      // Sur mobile, on télécharge et partage le fichier
-      const fileName = `facture-${title.replace(/[^a-zA-Z0-9]/g, '-')}.pdf`;
-      const documentDir = FileSystem.documentDirectory;
-      if (!documentDir) {
-        throw new Error('Document directory not available');
-      }
-      const fileUri = documentDir + fileName;
-
-      try {
-        // Télécharger le fichier avec fetch
-        const response = await fetch(pdfUrl);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const arrayBuffer = await response.arrayBuffer();
-        const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-        
-        // Sauvegarder le fichier
-        await FileSystem.writeAsStringAsync(fileUri, base64, {
-          encoding: FileSystem.EncodingType.Base64,
-        });
-
-        // Vérifier si le partage est disponible
-        const isAvailable = await Sharing.isAvailableAsync();
-        
-        if (isAvailable) {
-          await Sharing.shareAsync(fileUri, {
-            mimeType: 'application/pdf',
-            dialogTitle: `Partager ${title}`,
-          });
-        } else {
-          Alert.alert('Partage non disponible', 'Le partage n\'est pas disponible sur cet appareil.');
-        }
-      } catch (error) {
-        console.error('Erreur lors du téléchargement:', error);
-        Alert.alert('Erreur', 'Impossible de télécharger le fichier pour le partage.');
-      }
-    } catch (error) {
-      console.error('Erreur lors du partage:', error);
-      Alert.alert('Erreur', 'Impossible de partager le fichier.');
-    } finally {
-      setSharing(false);
-    }
-  };
 
   const handleDownload = async () => {
     if (!pdfUrl) return;
@@ -93,37 +32,24 @@ export const PDFPreviewScreen: React.FC<PDFPreviewScreenProps> = ({
         return;
       }
 
-      // Sur mobile, on télécharge dans le dossier Documents
-      const fileName = `facture-${title.replace(/[^a-zA-Z0-9]/g, '-')}.pdf`;
-      const documentDir = FileSystem.documentDirectory;
-      if (!documentDir) {
-        throw new Error('Document directory not available');
-      }
-      const fileUri = documentDir + fileName;
-
+      // Sur mobile, on ouvre directement le PDF dans le navigateur
       try {
-        // Télécharger le fichier avec fetch
-        const response = await fetch(pdfUrl);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+        const { Linking } = require('react-native');
+        const canOpen = await Linking.canOpenURL(pdfUrl);
+        
+        if (canOpen) {
+          await Linking.openURL(pdfUrl);
+          Alert.alert(
+            'Ouverture du PDF',
+            'Le PDF s\'ouvre dans votre navigateur. Vous pouvez le télécharger depuis là.',
+            [{ text: 'OK' }]
+          );
+        } else {
+          Alert.alert('Erreur', 'Impossible d\'ouvrir le PDF.');
         }
-        
-        const arrayBuffer = await response.arrayBuffer();
-        const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-        
-        // Sauvegarder le fichier
-        await FileSystem.writeAsStringAsync(fileUri, base64, {
-          encoding: FileSystem.EncodingType.Base64,
-        });
-
-        Alert.alert(
-          'Téléchargement réussi',
-          `Le fichier a été sauvegardé dans vos documents.`,
-          [{ text: 'OK' }]
-        );
       } catch (error) {
-        console.error('Erreur lors du téléchargement:', error);
-        Alert.alert('Erreur', 'Impossible de télécharger le fichier.');
+        console.error('Erreur lors de l\'ouverture:', error);
+        Alert.alert('Erreur', 'Impossible d\'ouvrir le PDF.');
       }
     } catch (error) {
       console.error('Erreur lors du téléchargement:', error);
@@ -148,17 +74,6 @@ export const PDFPreviewScreen: React.FC<PDFPreviewScreenProps> = ({
           </View>
           
           <View style={styles.headerActions}>
-            {/* Bouton de partage */}
-            <TouchableOpacity
-              style={[styles.actionButton, sharing && styles.actionButtonDisabled]}
-              onPress={handleShare}
-              disabled={sharing}
-            >
-              <Text style={styles.actionButtonText}>
-                {sharing ? '⏳' : '📤'}
-              </Text>
-            </TouchableOpacity>
-
             {/* Bouton de téléchargement */}
             <TouchableOpacity
               style={styles.actionButton}
@@ -237,11 +152,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 2,
-  },
-  actionButtonDisabled: {
-    backgroundColor: tokens.colors.mutedForegroundLight,
-    shadowOpacity: 0,
-    elevation: 0,
   },
   actionButtonText: {
     fontSize: 16,
