@@ -201,7 +201,6 @@ export default function Home() {
   const [sessionChecked, setSessionChecked] = useState(false);
   const [email, setEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [showDebug, setShowDebug] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [items, setItems] = useState<TaskItem[]>([]);
   const [logoutLoading, setLogoutLoading] = useState(false);
@@ -262,18 +261,13 @@ export default function Home() {
   const headerAnim = useFadeInDelayed({ delay: 0 });
   const statsAnim = useFadeInDelayed({ delay: 200 });
   const tasksAnim = useFadeInDelayed({ delay: 400 });
-  const debugAnim = useFadeInDelayed({ delay: 600 });
   
   // États pour le modal de détail
   const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null);
   const [showTaskDetail, setShowTaskDetail] = useState(false);
   
   
-  // Debug states
-  const [debugInfo, setDebugInfo] = useState<{apiUrl:string; email:string; count:number; hasAuth:boolean}>();
   const [error, setError] = useState<string | null>(null);
-  const [pushToken, setPushToken] = useState<string | null>(null);
-  const [pushRegisterLoading, setPushRegisterLoading] = useState(false);
   const [lastRegisterStatus, setLastRegisterStatus] = useState<{
     timestamp: string;
     status: number | null;
@@ -295,71 +289,6 @@ export default function Home() {
     }
   };
 
-  const reRegisterDevice = async () => {
-    setPushRegisterLoading(true);
-    try {
-      console.log('[DEBUG PUSH] 🔄 Re-enregistrement du device...');
-      
-      const { data } = await supabase.auth.getSession();
-      const session = data.session;
-      
-      if (!session) {
-        throw new Error('Aucune session active');
-      }
-      
-      const newToken = await registerForPushToken();
-      setPushToken(newToken);
-      
-      if (!newToken) {
-        setLastRegisterStatus({
-          timestamp: new Date().toISOString(),
-          status: null,
-          message: 'No token - impossible d\'obtenir le token push',
-          success: false
-        });
-        return;
-      }
-      
-      console.log('[DEBUG PUSH] 🔑 Nouveau token (8 chars):', newToken.slice(0, 8));
-      console.log('[DEBUG PUSH] 📧 Email session:', session.user.email);
-      console.log('[DEBUG PUSH] 🌐 URL API:', process.env.EXPO_PUBLIC_API_URL);
-      
-      const r = await registerDeviceOnApi(newToken);
-      console.log('[DEBUG PUSH] result', r);
-      
-      // Update status state with API response
-      setLastRegisterStatus({
-        timestamp: new Date().toISOString(),
-        status: r.status,
-        message: r.data?.message || r.data?.error || r.raw || (r.ok ? 'OK' : 'Error'),
-        success: r.ok
-      });
-      
-      if (r.ok) {
-        console.log('[DEBUG PUSH] ✅ Device re-enregistré avec succès');
-        console.log('[DEBUG PUSH] 📊 Status:', r.status);
-      } else {
-        console.log('[DEBUG PUSH] ❌ Erreur re-enregistrement:', r.raw || r.data);
-        console.log('[DEBUG PUSH] 📊 Status:', r.status);
-        Alert.alert('Erreur', `Échec du re-enregistrement: ${r.raw || r.data?.error || 'Unknown error'}`);
-      }
-      
-    } catch (error: any) {
-      console.log('[DEBUG PUSH] ❌ Erreur re-enregistrement:', error?.message);
-      
-      // Update status state for error
-      setLastRegisterStatus({
-        timestamp: new Date().toISOString(),
-        status: error?.status || null,
-        message: error?.message || 'Erreur inconnue',
-        success: false
-      });
-      
-      Alert.alert('Erreur', `Échec du re-enregistrement: ${error?.message || 'Unknown error'}`);
-    } finally {
-      setPushRegisterLoading(false);
-    }
-  };
 
 
   // Fonctions pour le modal de détail
@@ -445,7 +374,6 @@ export default function Home() {
 
       setProjects(projectsData);
       setItems(items);
-      setDebugInfo({ apiUrl: process.env.EXPO_PUBLIC_API_URL!, email, count, hasAuth: true });
     } catch (e: any) {
       console.log('[HOME] ❌ Erreur lors du chargement:', e?.message);
       setError(e.message ?? String(e));
@@ -482,32 +410,7 @@ export default function Home() {
       setEmail(session.user.email ?? null);
 
       const isTester = true;
-      const token = await registerForPushToken();
-      setPushToken(token);
-      
-      if (token) {
-        try {
-          console.log('[HOME] 📱 Enregistrement du device push...');
-          console.log('[HOME] 🔑 Token push (8 chars):', token.slice(0, 8));
-          console.log('[HOME] 🌐 URL API:', process.env.EXPO_PUBLIC_API_URL);
-          
-          const r = await registerDeviceOnApi(token);
-          console.log('[HOME] result', r);
-          
-          if (r.ok) {
-            console.log('[HOME] ✅ Device enregistré (200 OK)');
-          } else {
-            console.log('[HOME] ❌ Erreur enregistrement device:', r.raw || r.data);
-            console.log('[HOME] 📊 Status:', r.status);
-            Alert.alert('Erreur enregistrement device', r.raw || r.data?.error || 'unknown');
-          }
-        } catch (e: any) {
-          console.log('[HOME] ❌ Erreur enregistrement device:', e?.message);
-          console.log('[HOME] 📊 Status:', e?.status || 'Unknown');
-          console.log('[HOME] 🔗 URL:', e?.url || 'Unknown');
-          Alert.alert('Erreur enregistrement device', e?.message ?? 'unknown');
-        }
-      }
+      await registerForPushToken();
       
       console.log('[HOME] 🚀 Session vérifiée, chargement des tâches...');
       setSessionChecked(true);
@@ -639,151 +542,7 @@ export default function Home() {
         contentContainerStyle={styles.scrollContent}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
-        {/* Debug UI - Style Flowli */}
-        {__DEV__ && (
-          <Animated.View style={[styles.debugContainer, debugAnim]} className="mb-4">
-            <View className="flex-row gap-2 mb-2" style={styles.debugButtons}>
-              <TouchableOpacity 
-                onPress={() => setShowDebug(!showDebug)}
-                className={`px-4 py-2.5 rounded-full ${
-                  showDebug 
-                    ? 'bg-primary shadow-lg shadow-primary/30' 
-                    : 'bg-gray-200 shadow-sm'
-                }`}
-                style={[
-                  styles.debugButton,
-                  showDebug ? styles.debugButtonActive : styles.debugButtonInactive
-                ]}
-              >
-                <Text className={`text-xs font-semibold ${
-                  showDebug ? 'text-white' : 'text-gray-500'
-                }`} style={[
-                  styles.debugButtonText,
-                  showDebug ? styles.debugButtonTextActive : styles.debugButtonTextInactive
-                ]}>
-                  {showDebug ? '⚙️ Masquer Debug' : '⚙️ Debug'}
-                </Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                onPress={() => router.push('/(dev)/nw-check')}
-                className="px-4 py-2.5 rounded-full bg-violet-600 shadow-lg shadow-violet-600/30"
-                style={styles.debugButton}
-              >
-                <Text className="text-xs font-semibold text-white" style={styles.debugButtonText}>
-                  🎨 Test NativeWind
-                </Text>
-              </TouchableOpacity>
-              
-            </View>
 
-            {showDebug && (
-              <View className="bg-white p-4 rounded-2xl mt-3 border border-gray-200">
-                <Text className="text-sm font-bold mb-3 text-textMain">⚙️ Debug Info</Text>
-                <View className="space-y-1.5">
-                  <Text className="text-xs text-gray-500">API URL: <Text className="font-semibold text-gray-700">{process.env.EXPO_PUBLIC_API_URL}</Text></Text>
-                  <Text className="text-xs text-gray-500">Email: <Text className="font-semibold text-gray-700">{debugInfo?.email ?? '—'}</Text></Text>
-                  <Text className="text-xs text-gray-500">JWT envoyé: {debugInfo?.hasAuth ? '✅ oui' : '❌ non'}</Text>
-                  <Text className="text-xs text-gray-500">Session: {sessionChecked ? '✅ vérifiée' : '❌ non vérifiée'}</Text>
-                  <Text className="text-xs text-gray-500">Chargement: {loading ? '⏳ en cours' : '✅ terminé'}</Text>
-                  {error
-                    ? <Text className="text-xs text-red-600 font-medium">❌ {error}</Text>
-                    : <Text className="text-xs text-green-600 font-medium">✅ {debugInfo?.count ?? 0} tâches</Text>
-                  }
-                </View>
-                
-                <View className="flex-row flex-wrap gap-2 mt-3">
-                  {[
-                    { label: 'Load', color: 'bg-blue-600', onPress: load },
-                    { label: 'Session', color: 'bg-green-600', onPress: async () => {
-                      const { data } = await supabase.auth.getSession();
-                      console.log('[DEBUG] Session:', data.session ? '✅' : '❌');
-                    }},
-                    { label: 'X-Debug', color: 'bg-yellow-600', onPress: async () => {
-                      try {
-                        const resp = await get('me/tasks?email=louis.lemay02@gmail.com&statuses=A faire,En cours,En retard', { headers: { 'X-Debug': '1' } });
-                        console.log('[DEBUG] X-Debug:', resp);
-                      } catch (error) {
-                        console.log('[DEBUG] Erreur:', error);
-                      }
-                    }},
-                    { label: 'Sans Filtres', color: 'bg-purple-600', onPress: async () => {
-                      try {
-                        const resp = await get('me/tasks?email=louis.lemay02@gmail.com', { headers: { 'X-Debug': '1' } });
-                        console.log('[DEBUG] Sans filtres:', resp);
-                      } catch (error) {
-                        console.log('[DEBUG] Erreur:', error);
-                      }
-                    }}
-                  ].map((btn, i) => (
-                    <TouchableOpacity 
-                      key={i}
-                      onPress={btn.onPress}
-                      className={`${btn.color} px-3 py-1.5 rounded-full`}
-                    >
-                      <Text className="text-white text-xs font-semibold">{btn.label}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-            )}
-          </Animated.View>
-        )}
-
-        {/* Debug Push - Style Flowli */}
-        {__DEV__ && false && (
-          <Animated.View style={debugAnim} className="bg-yellow-50 p-4 rounded-2xl mb-4 border border-yellow-200">
-            <Text className="text-sm font-bold mb-3 text-yellow-800">📱 Push Notifications</Text>
-            
-            <View className="space-y-2 mb-3">
-              <View>
-                <Text className="text-xs text-yellow-700 font-semibold mb-1">API URL</Text>
-                <Text className="text-xs text-yellow-600 font-mono">{process.env.EXPO_PUBLIC_API_URL}</Text>
-              </View>
-              
-              <View>
-                <Text className="text-xs text-yellow-700 font-semibold mb-1">Email</Text>
-                <Text className="text-xs text-yellow-600">{email || '—'}</Text>
-              </View>
-              
-              <View>
-                <Text className="text-xs text-yellow-700 font-semibold mb-1">Push Token</Text>
-                <Text className="text-xs text-yellow-600 font-mono">
-                  {pushToken ? `${pushToken.slice(0, 8)}...` : 'Non disponible'}
-                </Text>
-              </View>
-
-              {/* Last Registration Status */}
-              {lastRegisterStatus && (
-                <View>
-                  <Text className="text-xs text-yellow-700 font-semibold mb-1">Dernier enregistrement</Text>
-                  <View className="flex-row items-center gap-2 mb-1">
-                    <RegisterStatusBadge status={lastRegisterStatus.status} />
-                    <Text className={`text-xs ${lastRegisterStatus.success ? 'text-green-700' : 'text-red-700'}`}>
-                      {lastRegisterStatus.success ? '✅' : '❌'}
-                    </Text>
-                  </View>
-                  <Text className="text-xs text-yellow-600 mb-1">{lastRegisterStatus.message}</Text>
-                  <Text className="text-xs text-yellow-500">{formatTimestamp(lastRegisterStatus.timestamp)}</Text>
-                </View>
-              )}
-            </View>
-            
-            <TouchableOpacity
-              onPress={reRegisterDevice}
-              disabled={pushRegisterLoading}
-              className={`px-4 py-2.5 rounded-full ${
-                pushRegisterLoading 
-                  ? 'bg-gray-400 opacity-60' 
-                  : 'bg-yellow-600'
-              }`}
-            >
-              <Text className="text-white text-sm font-semibold text-center">
-                {pushRegisterLoading ? 'Re-enregistrement...' : 'Re-enregistrer device'}
-              </Text>
-            </TouchableOpacity>
-          </Animated.View>
-        )}
 
         {/* Header - Style Flowli */}
         <Animated.View style={[styles.headerSection, headerAnim]} className="mb-6">
@@ -964,45 +723,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 16,
     paddingTop: 60, // Encore plus d'espace en haut
-  },
-  debugContainer: {
-    marginBottom: 16,
-  },
-  debugButtons: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 8,
-  },
-  debugButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-  },
-  debugButtonActive: {
-    backgroundColor: '#7C3AED',
-    shadowColor: '#7C3AED',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  debugButtonInactive: {
-    backgroundColor: '#E5E7EB',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  debugButtonText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  debugButtonTextActive: {
-    color: '#FFFFFF',
-  },
-  debugButtonTextInactive: {
-    color: '#6B7280',
   },
   // Styles Flowli pour les cartes de tâches
   card: {
