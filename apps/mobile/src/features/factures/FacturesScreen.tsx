@@ -5,7 +5,7 @@ import { Card, Button } from '../../ui/components';
 import AppIcon from '@/src/ui/icons/AppIcon';
 import { tokens } from '@/src/theme/tokens';
 import { getInvoices } from '@/src/lib/api';
-import * as WebBrowser from 'expo-web-browser';
+import { PDFPreviewScreen } from './PDFPreviewScreen';
 
 interface Invoice {
   id: string;
@@ -101,6 +101,7 @@ export const FacturesScreen: React.FC = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [selectedPdf, setSelectedPdf] = useState<{url: string, title: string} | null>(null);
 
   const fetchInvoices = async () => {
     try {
@@ -128,19 +129,20 @@ export const FacturesScreen: React.FC = () => {
     fetchInvoices();
   }, []);
 
-  const handleViewPdf = async (invoice: Invoice) => {
+  const handleViewPdf = (invoice: Invoice) => {
     if (!invoice.pdfUrl) {
       console.warn('No PDF URL for invoice:', invoice.id);
       return;
     }
 
-    try {
-      await WebBrowser.openBrowserAsync(invoice.pdfUrl, {
-        presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET,
-      });
-    } catch (err) {
-      console.error('Error opening PDF:', err);
-    }
+    setSelectedPdf({
+      url: invoice.pdfUrl,
+      title: `Facture ${invoice.number} - ${invoice.projectName}`
+    });
+  };
+
+  const handleClosePdf = () => {
+    setSelectedPdf(null);
   };
 
   // Debug logs for render state
@@ -404,6 +406,14 @@ export const FacturesScreen: React.FC = () => {
           ))}
         </View>
       )}
+
+      {/* Modal de prévisualisation PDF */}
+      <PDFPreviewScreen
+        visible={selectedPdf !== null}
+        pdfUrl={selectedPdf?.url || ''}
+        title={selectedPdf?.title || ''}
+        onClose={handleClosePdf}
+      />
     </View>
   );
 };
