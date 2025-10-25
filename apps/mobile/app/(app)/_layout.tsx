@@ -40,21 +40,21 @@ export default function AppLayout() {
         <Stack.Screen 
           name="home" 
           options={({ route }) => ({
-            animation: route.params?.animation || 'slide_from_right',
+            animation: (route.params as { animation?: string })?.animation as any || 'slide_from_right' as any,
             gestureEnabled: true,
           })}
         />
         <Stack.Screen 
           name="factures" 
           options={({ route }) => ({
-            animation: route.params?.animation || 'slide_from_right',
+            animation: (route.params as { animation?: string })?.animation as any || 'slide_from_right' as any,
             gestureEnabled: true,
           })}
         />
         <Stack.Screen 
           name="profile" 
           options={({ route }) => ({
-            animation: route.params?.animation || 'slide_from_right',
+            animation: (route.params as { animation?: string })?.animation as any || 'slide_from_right' as any,
             gestureEnabled: true,
           })}
         />
