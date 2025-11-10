@@ -23,7 +23,6 @@ export default function RootLayout() {
           <Stack.Screen name="(public)" />
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(app)" />
-          <Stack.Screen name="auth" />
           <Stack.Screen name="(design)" options={{ headerShown: false }} />
         </Stack>
       </ToastProvider>
