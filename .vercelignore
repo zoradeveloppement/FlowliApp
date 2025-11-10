@@ -1,0 +1,4 @@
+# Exclure le dossier API du build web
+# Les fonctions API sont déployées séparément
+api/
+

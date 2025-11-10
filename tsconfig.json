@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "noEmit": true,
+    "allowJs": true
+  },
+  "exclude": [
+    "api",
+    "api/**/*",
+    "node_modules",
+    "apps/mobile/node_modules",
+    "apps/mobile/dist",
+    "apps/mobile/.expo",
+    "supabase",
+    "scripts"
+  ],
+  "include": []
+}
+

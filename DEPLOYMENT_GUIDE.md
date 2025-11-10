@@ -7,6 +7,8 @@ Les fichiers suivants ont été créés/modifiés :
 1. **`vercel.json`** (nouveau) - Configuration Vercel pour le déploiement
 2. **`apps/mobile/package.json`** - Ajout du script `build:web`
 3. **`apps/mobile/app.config.ts`** - Amélioration de la gestion de `EXPO_PUBLIC_WEB_BASE_URL` en production
+4. **`tsconfig.json`** (nouveau) - Configuration TypeScript pour exclure `api/` du build web
+5. **`.vercelignore`** (nouveau) - Exclusion du dossier `api/` du build web
 
 ---
 
@@ -22,13 +24,17 @@ git status
 git add vercel.json
 git add apps/mobile/package.json
 git add apps/mobile/app.config.ts
+git add tsconfig.json
+git add .vercelignore
 
 # Commit
 git commit -m "feat: add Vercel configuration for web deployment
 
 - Add vercel.json with build and deployment settings
 - Add build:web script to package.json
-- Improve EXPO_PUBLIC_WEB_BASE_URL handling for production"
+- Improve EXPO_PUBLIC_WEB_BASE_URL handling for production
+- Add tsconfig.json to exclude api/ from TypeScript compilation
+- Add .vercelignore to exclude api/ from web build"
 
 # Push vers votre repo
 git push origin main
@@ -132,17 +138,20 @@ Vous pouvez avoir des valeurs différentes selon l'environnement :
 
 ## 🐛 Dépannage
 
-### Erreur : "Build failed"
+### Erreur : "Build failed" ou "Cannot find module '@vercel/node'"
 
 **Causes possibles :**
+- Vercel essaie de compiler les fichiers TypeScript dans `api/`
 - Variables d'environnement manquantes
 - Erreur dans le code TypeScript
 - Problème de dépendances
 
 **Solution :**
-1. Vérifier les logs de build dans Vercel
-2. Tester le build localement : `cd apps/mobile && npm run build:web`
-3. Vérifier que toutes les variables d'environnement sont configurées
+1. Vérifier que `tsconfig.json` et `.vercelignore` sont bien commités
+2. Vérifier les logs de build dans Vercel
+3. Tester le build localement : `cd apps/mobile && npm run build:web`
+4. Vérifier que toutes les variables d'environnement sont configurées
+5. Si l'erreur persiste, vérifier que `api/` est bien exclu dans `tsconfig.json`
 
 ### Erreur : "Cannot find module"
 
