@@ -1,11 +1,16 @@
 {
-  "buildCommand": "cd apps/mobile && npm install && npx expo export --platform web",
+  "buildCommand": "cd apps/mobile && npm ci && npx expo export --platform web --clear",
   "outputDirectory": "apps/mobile/dist",
-  "installCommand": "cd apps/mobile && npm install",
+  "installCommand": "cd apps/mobile && npm ci",
   "framework": null,
+  "functions": {
+    "api/**/*.ts": {
+      "runtime": "@vercel/node"
+    }
+  },
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ],
