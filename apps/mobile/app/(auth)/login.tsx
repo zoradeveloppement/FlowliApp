@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View, Text, KeyboardAvoidingView, Platform, ScrollView, StatusBar, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '../../src/lib/supabase';
 import { Screen } from '../../src/ui/layout';
 import { Input, Button, Snackbar, Card } from '../../src/ui/components';
 import { tokens } from '../../src/theme/tokens';

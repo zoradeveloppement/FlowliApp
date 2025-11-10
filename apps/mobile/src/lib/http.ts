@@ -1,4 +1,4 @@
-import { supabase } from '@/src/lib/supabase';
+import { supabase } from './supabase';
 
 // Sécuriser l'URL de base
 const rawBase = process.env.EXPO_PUBLIC_API_URL!;
