@@ -3,11 +3,6 @@
   "outputDirectory": "apps/mobile/dist",
   "installCommand": "cd apps/mobile && npm ci",
   "framework": null,
-  "functions": {
-    "api/**/*.ts": {
-      "runtime": "@vercel/node"
-    }
-  },
   "rewrites": [
     {
       "source": "/((?!api/).*)",

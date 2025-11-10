@@ -1,4 +1,3 @@
-# Exclure le dossier API du build web
-# Les fonctions API sont déployées séparément
-api/
+# Le dossier API est géré automatiquement par Vercel comme serverless functions
+# Pas besoin de l'exclure - Vercel le détecte automatiquement
 
