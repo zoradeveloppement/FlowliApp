@@ -1,4 +1,4 @@
-import { get } from '../utils/http';
+import { get } from '@/src/utils/http';
 
 export type Project = {
   id: string;

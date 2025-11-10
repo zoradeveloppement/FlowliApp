@@ -8,9 +8,9 @@ import { Card, Progress, Badge, Button } from '../../src/ui/components';
 import { TaskDetailModal } from '../../src/ui/components/TaskDetailModal';
 import { supabase } from '@/src/lib/supabase';
 import { registerForPushToken, registerDeviceOnApi } from '@/src/utils/push';
-import { fetchTasks } from '../../src/api/tasks';
-import { fetchProjects, type Project } from '../../src/api/projects';
-import { get } from '../../src/utils/http';
+import { fetchTasks } from '@/src/api/tasks';
+import { fetchProjects, type Project } from '@/src/api/projects';
+import { get } from '@/src/utils/http';
 import { useFadeInDelayed } from '@/src/animations';
 
 // Enable LayoutAnimation on Android
