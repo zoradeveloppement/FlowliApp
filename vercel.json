@@ -1,7 +1,7 @@
 {
-  "buildCommand": "cd apps/mobile && npm ci && npx expo export --platform web --clear",
+  "buildCommand": "cd apps/mobile && npm install && npx expo export --platform web --clear",
   "outputDirectory": "apps/mobile/dist",
-  "installCommand": "cd apps/mobile && npm ci",
+  "installCommand": "cd apps/mobile && npm install",
   "framework": null,
   "rewrites": [
     {
