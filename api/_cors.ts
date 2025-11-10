@@ -2,12 +2,18 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 const PROD_ORIGIN = 'https://flowli-app.vercel.app';
 
-const isAllowedDevOrigin = (origin?: string) => {
+const isAllowedOrigin = (origin?: string) => {
   if (!origin) return false;
   try {
     const u = new URL(origin);
     const host = u.hostname;
-    // Expo dev tunnels & localhost - plus permissif
+    
+    // Vercel domains (production + preview deployments)
+    if (host.endsWith('.vercel.app')) {
+      return true;
+    }
+    
+    // Expo dev tunnels & localhost
     return (
       host.endsWith('.exp.direct') ||
       host.endsWith('.expo.dev') ||
@@ -16,7 +22,6 @@ const isAllowedDevOrigin = (origin?: string) => {
       host.startsWith('192.168.') ||
       host.startsWith('10.') ||
       host.startsWith('172.') ||
-      // Ajout pour les tunnels Expo dynamiques
       host.includes('exp.direct') ||
       host.includes('expo.dev')
     );
@@ -27,11 +32,11 @@ const isAllowedDevOrigin = (origin?: string) => {
 
 export function applyCors(req: VercelRequest, res: VercelResponse) {
   const origin = (req.headers.origin as string) || '';
-  const allowOrigin = isAllowedDevOrigin(origin) ? origin : PROD_ORIGIN;
+  const allowOrigin = isAllowedOrigin(origin) ? origin : PROD_ORIGIN;
   
-  // Debug CORS en dev
-  if (process.env.NODE_ENV !== 'production') {
-    console.log(`[CORS] Origin: ${origin}, Allowed: ${isAllowedDevOrigin(origin)}, Setting: ${allowOrigin}`);
+  // Debug CORS
+  if (process.env.NODE_ENV !== 'production' || process.env.DEBUG_CORS === 'true') {
+    console.log(`[CORS] Origin: ${origin}, Allowed: ${isAllowedOrigin(origin)}, Setting: ${allowOrigin}`);
   }
   
   res.setHeader('Access-Control-Allow-Origin', allowOrigin);
