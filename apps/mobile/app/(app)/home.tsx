@@ -550,19 +550,17 @@ export default function Home() {
               </Text>
             </View>
             
-            <View className="flex-row gap-2" style={styles.headerActions}>
+            <View style={styles.headerActions}>
               <TouchableOpacity 
                 onPress={logout} 
                 disabled={logoutLoading}
-                className={`px-4 py-2 rounded-full bg-white border border-red-200 ${
-                  logoutLoading ? 'opacity-60' : ''
-                }`}
                 style={[
                   styles.logoutButton,
                   logoutLoading && styles.logoutButtonDisabled
                 ]}
+                activeOpacity={0.7}
               >
-                <Text className="font-semibold text-red-600 text-sm" style={[
+                <Text style={[
                   styles.logoutButtonText,
                   logoutLoading && styles.logoutButtonTextDisabled
                 ]}>
@@ -572,10 +570,10 @@ export default function Home() {
               
               <TouchableOpacity 
                 onPress={load} 
-                className="px-4 py-2 rounded-full bg-primary shadow-lg shadow-primary/30"
                 style={styles.refreshButton}
+                activeOpacity={0.7}
               >
-                <Text className="text-white font-semibold text-sm" style={styles.refreshButtonText}>↻</Text>
+                <Text style={styles.refreshButtonText}>↻</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -894,6 +892,7 @@ const styles = StyleSheet.create({
   headerActions: {
     flexDirection: 'row',
     gap: 8,
+    alignItems: 'center',
   },
   logoutButton: {
     paddingHorizontal: 16,
@@ -902,6 +901,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#FECACA',
+    ...(Platform.OS === 'web' ? {
+      cursor: 'pointer',
+      transition: 'all 0.2s ease-in-out',
+    } : {}),
   },
   logoutButtonDisabled: {
     opacity: 0.6,
@@ -924,6 +927,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
+    ...(Platform.OS === 'web' ? {
+      cursor: 'pointer',
+      transition: 'all 0.2s ease-in-out',
+    } : {}),
   },
   refreshButtonText: {
     color: '#FFFFFF',

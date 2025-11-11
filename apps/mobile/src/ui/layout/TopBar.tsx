@@ -45,35 +45,44 @@ export const TopBar: React.FC<TopBarProps> = ({
   };
 
   return (
-    <View className="bg-white border-b border-gray-200 px-6 py-4 flex-row items-center justify-between">
-      <View className="flex-row items-center gap-4 flex-1">
+    <View style={styles.container}>
+      <View style={styles.leftSection}>
         {showBackButton && (
           <TouchableOpacity
             onPress={handleBack}
-            className="flex-row items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50"
-            style={Platform.OS === 'web' ? {
-              cursor: 'pointer',
-              transition: 'all 0.2s ease-in-out'
-            } : undefined}
+            style={styles.backButton}
+            activeOpacity={0.7}
+            {...(Platform.OS === 'web' ? {
+              onMouseEnter: (e: any) => {
+                e.currentTarget.style.backgroundColor = '#F9FAFB';
+              },
+              onMouseLeave: (e: any) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              },
+            } : {})}
           >
-            <Text style={{ fontSize: 18 }}>←</Text>
-            <Text className="text-textMain font-medium">Retour aux projets</Text>
+            <Text style={styles.backArrow}>←</Text>
+            <Text style={styles.backText}>Retour aux projets</Text>
           </TouchableOpacity>
         )}
         
         {projectName && (
-          <View className="flex-row items-center gap-3">
-            <Text className="text-h2 text-textMain font-semibold">
+          <View style={styles.projectSection}>
+            <Text style={styles.projectName}>
               {projectName}
             </Text>
             {projectStatus && (
               <View
-                className="px-3 py-1 rounded-full"
-                style={[styles.statusBadge, { backgroundColor: getStatusBadgeStyle(projectStatus).backgroundColor }]}
+                style={[
+                  styles.statusBadge,
+                  { backgroundColor: getStatusBadgeStyle(projectStatus).backgroundColor }
+                ]}
               >
                 <Text
-                  className="text-xs font-semibold"
-                  style={{ color: getStatusBadgeStyle(projectStatus).color }}
+                  style={[
+                    styles.statusText,
+                    { color: getStatusBadgeStyle(projectStatus).color }
+                  ]}
                 >
                   {projectStatus}
                 </Text>
@@ -83,23 +92,28 @@ export const TopBar: React.FC<TopBarProps> = ({
         )}
         
         {!showBackButton && !projectName && (
-          <Text className="text-h1 text-primary font-poppins font-semibold">
+          <Text style={styles.title}>
             {title}
           </Text>
         )}
       </View>
       
       {showProfile && (
-        <View className="flex-row items-center space-x-4">
+        <View style={styles.rightSection}>
           <TouchableOpacity
-            className="px-4 py-2 border border-primary rounded-lg"
+            style={styles.logoutButton}
             onPress={onLogout}
-            style={Platform.OS === 'web' ? {
-              cursor: 'pointer',
-              transition: 'all 0.2s ease-in-out'
-            } : undefined}
+            activeOpacity={0.7}
+            {...(Platform.OS === 'web' ? {
+              onMouseEnter: (e: any) => {
+                e.currentTarget.style.backgroundColor = '#F9FAFB';
+              },
+              onMouseLeave: (e: any) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              },
+            } : {})}
           >
-            <Text className="text-primary font-medium">Déconnexion</Text>
+            <Text style={styles.logoutText}>Déconnexion</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -108,7 +122,87 @@ export const TopBar: React.FC<TopBarProps> = ({
 };
 
 const styles = StyleSheet.create({
+  container: {
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  leftSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    flex: 1,
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    ...(Platform.OS === 'web' ? {
+      cursor: 'pointer',
+      transition: 'all 0.2s ease-in-out',
+    } : {}),
+  },
+  backArrow: {
+    fontSize: 18,
+    color: '#111827',
+  },
+  backText: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#111827',
+  },
+  projectSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  projectName: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#111827',
+  },
   statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 9999,
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: '#7C3AED',
+    fontFamily: Platform.OS === 'web' ? 'Inter, sans-serif' : undefined,
+  },
+  rightSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  logoutButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: '#7C3AED',
+    borderRadius: 8,
+    ...(Platform.OS === 'web' ? {
+      cursor: 'pointer',
+      transition: 'all 0.2s ease-in-out',
+    } : {}),
+  },
+  logoutText: {
+    color: '#7C3AED',
+    fontWeight: '500',
+    fontSize: 15,
   },
 });
