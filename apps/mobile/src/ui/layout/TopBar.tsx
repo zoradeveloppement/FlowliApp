@@ -6,6 +6,7 @@ import { useTheme } from '../theme/ThemeProvider';
 interface TopBarProps {
   title?: string;
   onLogout?: () => void;
+  onRefresh?: () => void;
   showProfile?: boolean;
   showBackButton?: boolean;
   projectName?: string;
@@ -15,6 +16,7 @@ interface TopBarProps {
 export const TopBar: React.FC<TopBarProps> = ({
   title = 'Flowli',
   onLogout,
+  onRefresh,
   showProfile = true,
   showBackButton = false,
   projectName,
@@ -98,23 +100,42 @@ export const TopBar: React.FC<TopBarProps> = ({
         )}
       </View>
       
-      {showProfile && (
+      {Platform.OS === 'web' && (
         <View style={styles.rightSection}>
-          <TouchableOpacity
-            style={styles.logoutButton}
-            onPress={onLogout}
-            activeOpacity={0.7}
-            {...(Platform.OS === 'web' ? {
-              onMouseEnter: (e: any) => {
-                e.currentTarget.style.backgroundColor = '#F9FAFB';
-              },
-              onMouseLeave: (e: any) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-              },
-            } : {})}
-          >
-            <Text style={styles.logoutText}>Déconnexion</Text>
-          </TouchableOpacity>
+          {onRefresh && (
+            <TouchableOpacity
+              style={styles.refreshButton}
+              onPress={onRefresh}
+              activeOpacity={0.7}
+              {...(Platform.OS === 'web' ? {
+                onMouseEnter: (e: any) => {
+                  e.currentTarget.style.backgroundColor = '#F5F3FF';
+                },
+                onMouseLeave: (e: any) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                },
+              } : {})}
+            >
+              <Text style={styles.refreshButtonText}>↻</Text>
+            </TouchableOpacity>
+          )}
+          {onLogout && (
+            <TouchableOpacity
+              style={styles.logoutButton}
+              onPress={onLogout}
+              activeOpacity={0.7}
+              {...(Platform.OS === 'web' ? {
+                onMouseEnter: (e: any) => {
+                  e.currentTarget.style.backgroundColor = '#FEF2F2';
+                },
+                onMouseLeave: (e: any) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                },
+              } : {})}
+            >
+              <Text style={styles.logoutText}>Déco</Text>
+            </TouchableOpacity>
+          )}
         </View>
       )}
     </View>
@@ -189,20 +210,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 16,
   },
+  refreshButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: 'transparent',
+    ...(Platform.OS === 'web' ? {
+      cursor: 'pointer',
+      transition: 'all 0.2s ease-in-out',
+    } : {}),
+  },
+  refreshButtonText: {
+    color: '#7C3AED',
+    fontWeight: '600',
+    fontSize: 18,
+  },
   logoutButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderWidth: 1,
-    borderColor: '#7C3AED',
+    borderColor: '#FECACA',
     borderRadius: 8,
+    backgroundColor: 'transparent',
     ...(Platform.OS === 'web' ? {
       cursor: 'pointer',
       transition: 'all 0.2s ease-in-out',
     } : {}),
   },
   logoutText: {
-    color: '#7C3AED',
-    fontWeight: '500',
-    fontSize: 15,
+    color: '#DC2626',
+    fontWeight: '600',
+    fontSize: 14,
   },
 });

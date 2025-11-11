@@ -53,6 +53,7 @@ function AppLayoutContent() {
         <View style={styles.webContent}>
           <TopBar 
             onLogout={logout} 
+            onRefresh={topBarState.onRefresh}
             showBackButton={topBarState.showBackButton}
             projectName={topBarState.projectName}
             projectStatus={topBarState.projectStatus}

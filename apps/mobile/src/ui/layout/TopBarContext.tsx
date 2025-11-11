@@ -4,6 +4,7 @@ interface TopBarState {
   showBackButton?: boolean;
   projectName?: string;
   projectStatus?: string;
+  onRefresh?: () => void;
 }
 
 interface TopBarContextType {
