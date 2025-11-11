@@ -12,3 +12,7 @@ export { NotificationBadge } from './NotificationBadge';
 export { InAppNotification } from './InAppNotification';
 export { TaskDetailModal } from './TaskDetailModal';
 export { ToastProvider, useToast } from './ToastProvider';
+export { SprintCard } from './SprintCard';
+export type { SprintTask, SprintCardProps } from './SprintCard';
+export { TaskCard } from './TaskCard';
+export type { TaskCardProps } from './TaskCard';

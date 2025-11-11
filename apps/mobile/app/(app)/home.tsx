@@ -529,12 +529,13 @@ export default function Home() {
 
 
   return (
-    <View className="flex-1 bg-bgGray" style={styles.container}>
-      <ScrollView
-        className="flex-1"
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-      >
+    <AppLayout onLogout={logout}>
+      <View className="flex-1 bg-bgGray" style={styles.container}>
+        <ScrollView
+          className="flex-1"
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        >
 
 
         {/* Header - Style Flowli */}
@@ -597,7 +598,13 @@ export default function Home() {
             return (
               <View key={project.id} style={styles.projectSection}>
                 <TouchableOpacity 
-                  onPress={() => toggleAccordion(project.id)}
+                  onPress={() => {
+                    if (Platform.OS === 'web') {
+                      router.push(`/projets/${project.id}`);
+                    } else {
+                      toggleAccordion(project.id);
+                    }
+                  }}
                   activeOpacity={0.7}
                   style={[
                     styles.accordionHeader,
@@ -614,14 +621,25 @@ export default function Home() {
                       </Text>
                     </View>
                     
-                    <Animated.View style={[styles.accordionArrowContainer, { transform: [{ rotate: rotateInterpolate }] }]}>
-                      <AppIcon 
-                        name="chevronDown" 
-                        size={20} 
-                        variant="default"
-                        style={styles.accordionArrow}
-                      />
-                    </Animated.View>
+                    {Platform.OS === 'web' ? (
+                      <View style={styles.accordionArrowContainer}>
+                        <AppIcon 
+                          name="chevronRight" 
+                          size={20} 
+                          variant="default"
+                          style={styles.accordionArrow}
+                        />
+                      </View>
+                    ) : (
+                      <Animated.View style={[styles.accordionArrowContainer, { transform: [{ rotate: rotateInterpolate }] }]}>
+                        <AppIcon 
+                          name="chevronDown" 
+                          size={20} 
+                          variant="default"
+                          style={styles.accordionArrow}
+                        />
+                      </Animated.View>
+                    )}
                   </View>
                 </TouchableOpacity>
                 
@@ -703,7 +721,8 @@ export default function Home() {
         onMarkComplete={handleMarkComplete}
         onMarkInProgress={handleMarkInProgress}
       />
-    </View>
+      </View>
+    </AppLayout>
   );
 }
 
